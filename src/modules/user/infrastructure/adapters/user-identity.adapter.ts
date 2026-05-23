@@ -32,6 +32,8 @@ export class UserIdentityAdapter implements UserIdentityPort {
     return {
       id: user.id,
       email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
       roles,
       permissions: Array.from(permissions),
     };

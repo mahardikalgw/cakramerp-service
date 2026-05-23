@@ -4,6 +4,11 @@ export class InitialSchema20250519000001 implements MigrationInterface {
   name = 'InitialSchema20250519000001';
 
   async up(queryRunner: QueryRunner): Promise<void> {
+    // Create user_status enum type
+    await queryRunner.query(`
+      CREATE TYPE user_status AS ENUM ('active', 'inactive', 'suspended');
+    `);
+
     // users
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -12,7 +17,7 @@ export class InitialSchema20250519000001 implements MigrationInterface {
         password_hash varchar(255) NOT NULL,
         first_name varchar(100) NOT NULL,
         last_name varchar(100) NOT NULL,
-        status enum ('active', 'inactive', 'suspended') DEFAULT 'active',
+        status user_status DEFAULT 'active',
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now()
       );
@@ -86,5 +91,6 @@ export class InitialSchema20250519000001 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS permissions CASCADE;`);
     await queryRunner.query(`DROP TABLE IF EXISTS roles CASCADE;`);
     await queryRunner.query(`DROP TABLE IF EXISTS users CASCADE;`);
+    await queryRunner.query(`DROP TYPE IF EXISTS user_status;`);
   }
 }

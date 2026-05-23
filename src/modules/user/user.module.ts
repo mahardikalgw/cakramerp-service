@@ -32,6 +32,11 @@ import { USER_ROLE_ASSIGNER_PORT } from '../../shared/kernel/domain/ports/user-r
       useClass: UserRoleAssignerAdapter,
     },
   ],
-  exports: [USER_SERVICE, USER_REPOSITORY, USER_IDENTITY_PORT, USER_ROLE_ASSIGNER_PORT],
+  exports: [
+    USER_SERVICE,
+    USER_REPOSITORY,
+    USER_IDENTITY_PORT,
+    USER_ROLE_ASSIGNER_PORT,
+  ],
 })
 export class UserModule {}

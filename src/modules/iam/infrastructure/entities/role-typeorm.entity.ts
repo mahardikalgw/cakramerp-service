@@ -11,7 +11,9 @@ export class RoleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @ManyToMany(() => PermissionTypeOrmEntity, (permission) => permission.roles, { eager: true })
+  @ManyToMany(() => PermissionTypeOrmEntity, (permission) => permission.roles, {
+    eager: true,
+  })
   @JoinTable({
     name: 'role_permissions',
     joinColumn: { name: 'role_id', referencedColumnName: 'id' },

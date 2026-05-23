@@ -23,7 +23,7 @@ export class DatabaseConfigService {
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_NAME ?? 'cakramerp',
       schema: process.env.DB_SCHEMA ?? 'public',
-      synchronize: process.env.DB_SYNCHRONIZE === 'true',
+      synchronize: false, // Always false — use migrations instead
       logging: process.env.DB_LOGGING === 'true',
       ssl: process.env.DB_SSL === 'true',
       poolSize: parseInt(process.env.DB_POOL_SIZE ?? '10', 10),

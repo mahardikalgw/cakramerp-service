@@ -9,8 +9,7 @@ import { BaseEntity } from '../../../shared/kernel/domain/entities/base.entity';
 export abstract class BaseTypeOrmRepositoryAdapter<
   T extends BaseEntity,
   E extends ObjectLiteral,
-> implements RepositoryPort<T>
-{
+> implements RepositoryPort<T> {
   protected abstract readonly repository: Repository<E>;
 
   constructor(protected readonly dataSource: DataSource) {}
@@ -19,6 +18,7 @@ export abstract class BaseTypeOrmRepositoryAdapter<
   abstract toEntity(domain: T): E;
 
   async findById(id: string): Promise<T | null> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const entity = await this.repository.findOne({ where: { id } as any });
     return entity ? this.toDomain(entity) : null;
   }
@@ -31,6 +31,7 @@ export abstract class BaseTypeOrmRepositoryAdapter<
     const [entities, total] = await this.repository.findAndCount({
       take: limit,
       skip: offset,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       order: options?.orderBy
         ? ({ [options.orderBy]: options.orderDirection ?? 'ASC' } as any)
         : undefined,
@@ -69,6 +70,7 @@ export abstract class BaseTypeOrmRepositoryAdapter<
   }
 
   async exists(id: string): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const count = await this.repository.count({ where: { id } as any });
     return count > 0;
   }

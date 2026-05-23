@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import * as bcryptjs from 'bcryptjs';
 import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
-import { User } from '../../domain/entities/user.entity';
+import { User, UserStatus } from '../../domain/entities/user.entity';
 import type { UserRepositoryPort } from '../../domain/repositories/user-repository.port';
 import { USER_REPOSITORY } from '../../domain/repositories/user-repository.port';
+import type { UserRoleAssignerPort } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
 import { CreateUserCommand } from '../commands/create-user.command';
 import { UpdateUserCommand } from '../commands/update-user.command';
+import { ChangePasswordCommand } from '../commands/change-password.command';
 import { UserServicePort } from '../ports/user-service.port';
 
 @Injectable()
@@ -18,6 +21,8 @@ export class UserService implements UserServicePort {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
+    @Inject(USER_ROLE_ASSIGNER_PORT)
+    private readonly userRoleAssigner: UserRoleAssignerPort,
   ) {}
 
   async create(command: CreateUserCommand): Promise<User> {
@@ -32,13 +37,31 @@ export class UserService implements UserServicePort {
       passwordHash,
       firstName: command.firstName,
       lastName: command.lastName,
+      status: command.status
+        ? UserStatus[command.status.toUpperCase() as keyof typeof UserStatus]
+        : UserStatus.ACTIVE,
     });
 
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    // Handle role assignments if provided
+    if (command.roleIds && command.roleIds.length > 0) {
+      await this.userRoleAssigner.assignRoles(savedUser.id, command.roleIds);
+    }
+
+    return savedUser;
   }
 
-  async findAll(page = 1, limit = 20): Promise<FindResult<User>> {
-    return this.userRepository.findAll({ page, limit });
+  async findAll(
+    page = 1,
+    limit = 20,
+    status?: string,
+    role?: string,
+  ): Promise<FindResult<User>> {
+    const filters: Record<string, string> = {};
+    if (status) filters.status = status;
+    if (role) filters.role = role;
+    return this.userRepository.findAll({ page, limit, filters });
   }
 
   async findById(id: string): Promise<User> {
@@ -64,11 +87,49 @@ export class UserService implements UserServicePort {
       else if (command.status === 'inactive') user.deactivate();
     }
 
+    // Handle role assignments if provided
+    if (command.roleIds !== undefined) {
+      await this.userRoleAssigner.assignRoles(id, command.roleIds);
+    }
+
     return this.userRepository.save(user);
   }
 
+  async changePassword(command: ChangePasswordCommand): Promise<void> {
+    const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const passwordHash = await bcryptjs.hash(command.password, 12);
+    user.passwordHash = passwordHash;
+    await this.userRepository.save(user);
+  }
+
   async delete(id: string): Promise<void> {
-    const deleted = await this.userRepository.delete(id);
-    if (!deleted) throw new NotFoundException('User not found');
+    // Never physically delete - only deactivate
+    await this.deactivate(id);
+  }
+
+  async deactivate(id: string): Promise<void> {
+    const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.deactivate();
+    await this.userRepository.save(user);
+
+    // TODO: Invalidate all active sessions for this user
+    // This would require deleting refresh tokens from the database
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async logAuditAction(data: {
+    userId: string;
+    action: string;
+    module: string;
+    recordId: string;
+    payload: any;
+  }): Promise<void> {
+    // TODO: Implement audit logging
+    // This would require creating an audit_logs table and a service to log actions
+    console.log('Audit log:', data);
   }
 }

@@ -8,7 +8,13 @@ export class Permission extends BaseEntity {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(props: Partial<Permission> & { name: string; resource: string; action: string }) {
+  constructor(
+    props: Partial<Permission> & {
+      name: string;
+      resource: string;
+      action: string;
+    },
+  ) {
     super();
     Object.assign(this, props);
   }

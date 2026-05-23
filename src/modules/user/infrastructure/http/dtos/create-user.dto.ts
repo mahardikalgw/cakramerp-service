@@ -3,4 +3,6 @@ export class CreateUserHttpDto {
   password: string;
   firstName: string;
   lastName: string;
+  roleIds?: string[];
+  status?: 'active' | 'inactive' | 'suspended';
 }

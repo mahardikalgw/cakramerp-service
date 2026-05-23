@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Permission } from '../../domain/entities/permission.entity';
 import type { PermissionRepositoryPort } from '../../domain/repositories/permission-repository.port';
 import { PERMISSION_REPOSITORY } from '../../domain/repositories/permission-repository.port';

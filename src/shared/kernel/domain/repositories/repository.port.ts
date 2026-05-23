@@ -6,6 +6,7 @@ export interface FindOptions {
   offset?: number;
   orderBy?: string;
   orderDirection?: 'ASC' | 'DESC';
+  filters?: Record<string, any>;
 }
 
 export interface PaginationMeta {

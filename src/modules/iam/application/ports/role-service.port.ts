@@ -2,6 +2,7 @@ import { FindResult } from '../../../../shared/kernel/domain/repositories/reposi
 import { Role } from '../../domain/entities/role.entity';
 import { CreateRoleCommand } from '../commands/create-role.command';
 import { AssignRoleCommand } from '../commands/assign-role.command';
+import { UpdateRolePermissionsCommand } from '../commands/update-role-permissions.command';
 
 export const ROLE_SERVICE = Symbol('ROLE_SERVICE');
 
@@ -12,4 +13,12 @@ export interface RoleServicePort {
   findByName(name: string): Promise<Role>;
   delete(id: string): Promise<void>;
   assignRolesToUser(command: AssignRoleCommand): Promise<void>;
+  updatePermissions(command: UpdateRolePermissionsCommand): Promise<Role>;
+  logAuditAction(data: {
+    userId: string;
+    action: string;
+    module: string;
+    recordId: string;
+    payload: any;
+  }): Promise<void>;
 }

@@ -1,5 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { DatabaseConfig } from '../config/database-config.service';
+import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 export class TypeOrmConfigFactory {
   static createOptions(config: DatabaseConfig): DataSourceOptions {
@@ -15,7 +16,11 @@ export class TypeOrmConfigFactory {
       logging: config.logging,
       ssl: config.ssl ? { rejectUnauthorized: false } : false,
       poolSize: config.poolSize,
-      entities: [__dirname + '/../../../modules/**/infrastructure/entities/*.entity{.ts,.js}'],
+      namingStrategy: new SnakeNamingStrategy(),
+      entities: [
+        __dirname +
+          '/../../../modules/**/infrastructure/entities/*.entity{.ts,.js}',
+      ],
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       migrationsRun: false,
     };

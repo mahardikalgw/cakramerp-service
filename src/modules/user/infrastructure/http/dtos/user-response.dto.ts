@@ -7,8 +7,11 @@ export class UserResponseDto {
   lastName: string;
   fullName: string;
   status: UserStatus;
+  lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  roles?: string[];
+  permissions?: string[];
 
   static fromDomain(user: User): UserResponseDto {
     const dto = new UserResponseDto();
@@ -18,8 +21,11 @@ export class UserResponseDto {
     dto.lastName = user.lastName;
     dto.fullName = user.fullName;
     dto.status = user.status;
+    dto.lastLogin = undefined;
     dto.createdAt = user.createdAt;
     dto.updatedAt = user.updatedAt;
+    dto.roles = user.roles;
+    dto.permissions = user.permissions;
     return dto;
   }
 }

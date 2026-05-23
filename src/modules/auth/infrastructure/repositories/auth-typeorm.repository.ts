@@ -40,7 +40,9 @@ export class AuthTypeOrmRepository
   }
 
   async findByTokenHash(hash: string): Promise<RefreshToken | null> {
-    const entity = await this.repository.findOne({ where: { tokenHash: hash } });
+    const entity = await this.repository.findOne({
+      where: { tokenHash: hash },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 

@@ -8,7 +8,13 @@ export class RefreshToken extends BaseEntity {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(props: Partial<RefreshToken> & { userId: string; tokenHash: string; expiresAt: Date }) {
+  constructor(
+    props: Partial<RefreshToken> & {
+      userId: string;
+      tokenHash: string;
+      expiresAt: Date;
+    },
+  ) {
     super();
     Object.assign(this, props);
   }

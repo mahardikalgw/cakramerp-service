@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '../../domain/entities/role.entity';
 import type { RoleRepositoryPort } from '../../domain/repositories/role-repository.port';
 import { ROLE_REPOSITORY } from '../../domain/repositories/role-repository.port';
@@ -13,6 +9,7 @@ import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/
 import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
 import { CreateRoleCommand } from '../commands/create-role.command';
 import { AssignRoleCommand } from '../commands/assign-role.command';
+import { UpdateRolePermissionsCommand } from '../commands/update-role-permissions.command';
 import { RoleServicePort } from '../ports/role-service.port';
 
 @Injectable()
@@ -30,7 +27,9 @@ export class RoleService implements RoleServicePort {
     const permissions = await Promise.all(
       command.permissionIds.map((id) => this.permissionRepository.findById(id)),
     );
-    const validPermissions = permissions.filter((p): p is NonNullable<typeof p> => p !== null);
+    const validPermissions = permissions.filter(
+      (p): p is NonNullable<typeof p> => p !== null,
+    );
 
     const role = new Role({
       name: command.name,
@@ -66,11 +65,43 @@ export class RoleService implements RoleServicePort {
     const roles = await Promise.all(
       command.roleIds.map((id) => this.roleRepository.findById(id)),
     );
-    const validRoles = roles.filter((r): r is NonNullable<typeof r> => r !== null);
+    const validRoles = roles.filter(
+      (r): r is NonNullable<typeof r> => r !== null,
+    );
     if (validRoles.length !== command.roleIds.length) {
       throw new NotFoundException('Some roles not found');
     }
 
     await this.userRoleAssigner.assignRoles(command.userId, command.roleIds);
+  }
+
+  async updatePermissions(
+    command: UpdateRolePermissionsCommand,
+  ): Promise<Role> {
+    const role = await this.roleRepository.findById(command.roleId);
+    if (!role) throw new NotFoundException('Role not found');
+
+    const permissions = await Promise.all(
+      command.permissionIds.map((id) => this.permissionRepository.findById(id)),
+    );
+    const validPermissions = permissions.filter(
+      (p): p is NonNullable<typeof p> => p !== null,
+    );
+
+    role.permissions = validPermissions;
+    return this.roleRepository.save(role);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async logAuditAction(data: {
+    userId: string;
+    action: string;
+    module: string;
+    recordId: string;
+    payload: any;
+  }): Promise<void> {
+    // TODO: Implement audit logging
+    // This would require creating an audit_logs table and a service to log actions
+    console.log('Audit log:', data);
   }
 }

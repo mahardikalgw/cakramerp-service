@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, In } from 'typeorm';
-import {
-  UserRoleAssignerPort,
-} from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { UserRoleAssignerPort } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
 import { RoleTypeOrmEntity } from '../../../iam/infrastructure/entities/role-typeorm.entity';
 import { UserTypeOrmEntity } from '../entities/user-typeorm.entity';
 

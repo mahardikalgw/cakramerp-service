@@ -1,13 +1,15 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Inject } from '@nestjs/common';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import type { UserIdentityPort } from '../../../../shared/kernel/domain/ports/user-identity.port';
 import { USER_IDENTITY_PORT } from '../../../../shared/kernel/domain/ports/user-identity.port';
+
+interface RequestWithUser {
+  user?: {
+    sub?: string;
+  };
+}
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -27,7 +29,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const userId = request.user?.sub;
 
     if (!userId) {

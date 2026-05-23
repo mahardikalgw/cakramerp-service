@@ -8,7 +8,10 @@ export interface JwtRefreshPayload {
 }
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
@@ -17,6 +20,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async validate(payload: JwtRefreshPayload): Promise<JwtRefreshPayload> {
     return { sub: payload.sub, email: payload.email };
   }

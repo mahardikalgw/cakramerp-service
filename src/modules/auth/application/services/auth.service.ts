@@ -42,7 +42,7 @@ export class AuthService implements AuthServicePort {
     });
 
     const saved = await this.userRepository.save(user);
-    return this.generateTokens(saved.id, saved.email);
+    return this.generateTokens(saved.id, saved.email, undefined);
   }
 
   async login(command: LoginCommand): Promise<AuthTokensResult> {
@@ -56,7 +56,10 @@ export class AuthService implements AuthServicePort {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateTokens(user.id, user.email);
+    // Fetch user with roles and permissions
+    const userWithRoles = await this.userRepository.findById(user.id);
+
+    return this.generateTokens(user.id, user.email, userWithRoles ?? undefined);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokensResult> {
@@ -73,7 +76,7 @@ export class AuthService implements AuthServicePort {
     }
 
     await this.authRepository.delete(stored.id);
-    return this.generateTokens(user.id, user.email);
+    return this.generateTokens(user.id, user.email, user);
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -84,7 +87,11 @@ export class AuthService implements AuthServicePort {
     }
   }
 
-  private async generateTokens(userId: string, email: string): Promise<AuthTokensResult> {
+  private async generateTokens(
+    userId: string,
+    email: string,
+    user?: User,
+  ): Promise<AuthTokensResult> {
     const payload = { sub: userId, email };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET ?? 'default-secret',
@@ -105,7 +112,7 @@ export class AuthService implements AuthServicePort {
     });
     await this.authRepository.save(refresh);
 
-    return new AuthTokensResult(accessToken, refreshToken, 900);
+    return new AuthTokensResult(accessToken, refreshToken, 900, user);
   }
 
   private async hashToken(token: string): Promise<string> {

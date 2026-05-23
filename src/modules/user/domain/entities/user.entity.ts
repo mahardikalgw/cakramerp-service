@@ -13,6 +13,8 @@ export class User extends BaseEntity {
   firstName: string;
   lastName: string;
   status: UserStatus;
+  roles?: string[];
+  permissions?: string[];
   createdAt: Date;
   updatedAt: Date;
 
