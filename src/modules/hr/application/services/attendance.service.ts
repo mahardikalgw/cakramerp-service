@@ -135,10 +135,18 @@ export class AttendanceService implements AttendanceServicePort {
       new Date(dto.date),
     )
 
+    const parseClockTime = (time: string | undefined): Date | undefined => {
+      if (!time) return undefined
+      // If already a full ISO string, use directly
+      if (time.includes('T') || time.includes('-')) return new Date(time)
+      // Otherwise combine date + time (e.g. "08:00" → "2026-05-23T08:00:00")
+      return new Date(`${dto.date}T${time}:00`)
+    }
+
     if (existing) {
       return this.attendanceRepo.update(existing.id, {
-        clockIn: dto.clockIn ? new Date(dto.clockIn) : existing.clockIn,
-        clockOut: dto.clockOut ? new Date(dto.clockOut) : existing.clockOut,
+        clockIn: parseClockTime(dto.clockIn) ?? existing.clockIn,
+        clockOut: parseClockTime(dto.clockOut) ?? existing.clockOut,
         status: dto.status,
         absenceReason: dto.absenceReason ?? existing.absenceReason,
       })
@@ -147,8 +155,8 @@ export class AttendanceService implements AttendanceServicePort {
     return this.attendanceRepo.create({
       employeeId: dto.employeeId,
       date: new Date(dto.date),
-      clockIn: dto.clockIn ? new Date(dto.clockIn) : undefined,
-      clockOut: dto.clockOut ? new Date(dto.clockOut) : undefined,
+      clockIn: parseClockTime(dto.clockIn),
+      clockOut: parseClockTime(dto.clockOut),
       status: dto.status,
       absenceReason: dto.absenceReason,
       isImported: false,
