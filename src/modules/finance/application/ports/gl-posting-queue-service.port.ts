@@ -1,3 +1,6 @@
+import type { GlPostingQueueResponse } from '../services/gl-posting-queue.service'
+import type { PostGlToJournalCommand } from '../commands/post-gl-to-journal.command'
+
 export const GL_POSTING_QUEUE_SERVICE = Symbol('GL_POSTING_QUEUE_SERVICE')
 
 export interface GlPostingQueueServicePort {
@@ -6,8 +9,8 @@ export interface GlPostingQueueServicePort {
     sourceType?: string
     page?: number
     limit?: number
-  }): Promise<{ data: any[]; total: number }>
-  findById(id: string): Promise<any | null>
+  }): Promise<{ data: GlPostingQueueResponse[]; total: number }>
+  findById(id: string): Promise<GlPostingQueueResponse | null>
   createEntry(item: {
     sourceType: string
     sourceId: string
@@ -17,6 +20,6 @@ export interface GlPostingQueueServicePort {
     description: string
     suggestedLines: Record<string, unknown>[]
   }): Promise<any>
-  postToJournal(id: string, dto: any, userId: string): Promise<{ journalEntryId: string; journalEntryNumber: string }>
+  postToJournal(id: string, command: PostGlToJournalCommand, userId: string): Promise<{ journalEntryId: string; journalEntryNumber: string }>
   cancel(id: string): Promise<void>
 }

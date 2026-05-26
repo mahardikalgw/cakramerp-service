@@ -1,12 +1,10 @@
 import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common'
 import { CUSTOMER_REPOSITORY } from '../../domain/repositories/customer-repository.port'
 import type { CustomerRepositoryPort } from '../../domain/repositories/customer-repository.port'
-import type {
-  CustomerServicePort,
-  CustomerResponseDto,
-  CreateCustomerDto,
-  UpdateCustomerDto,
-} from '../ports/customer-service.port'
+import { Customer } from '../../domain/entities/customer.entity'
+import { CreateCustomerCommand } from '../commands/create-customer.command'
+import { UpdateCustomerCommand } from '../commands/update-customer.command'
+import { CustomerServicePort } from '../ports/customer-service.port'
 
 @Injectable()
 export class CustomerService implements CustomerServicePort {
@@ -20,76 +18,55 @@ export class CustomerService implements CustomerServicePort {
     status?: string
     page?: number
     limit?: number
-  }): Promise<{ data: CustomerResponseDto[]; total: number }> {
-    const { data, total } = await this.repo.findAll(filters)
-    return { data: data.map(this.toResponse), total }
+  }): Promise<{ data: Customer[]; total: number }> {
+    return this.repo.findAll(filters)
   }
 
-  async findById(id: string): Promise<CustomerResponseDto | null> {
-    const entity = await this.repo.findById(id)
-    return entity ? this.toResponse(entity) : null
+  async findById(id: string): Promise<Customer | null> {
+    return this.repo.findById(id)
   }
 
-  async create(dto: CreateCustomerDto): Promise<CustomerResponseDto> {
-    const existing = await this.repo.findByName(dto.name)
+  async create(command: CreateCustomerCommand): Promise<Customer> {
+    const existing = await this.repo.findByName(command.name)
     if (existing) {
       throw new ConflictException('Customer with this name already exists')
     }
 
     const entity = this.repo.create({
-      name: dto.name,
-      email: dto.email,
-      phone: dto.phone,
-      address: dto.address,
-      city: dto.city,
-      contactPerson: dto.contactPerson,
-      taxId: dto.taxId,
-      notes: dto.notes,
+      name: command.name,
+      email: command.email,
+      phone: command.phone,
+      address: command.address,
+      city: command.city,
+      contactPerson: command.contactPerson,
+      taxId: command.taxId,
+      notes: command.notes,
       status: 'active',
     })
 
-    const saved = await this.repo.save(entity)
-    return this.toResponse(saved)
+    return this.repo.save(entity)
   }
 
-  async update(id: string, dto: UpdateCustomerDto): Promise<CustomerResponseDto> {
+  async update(id: string, command: UpdateCustomerCommand): Promise<Customer> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new NotFoundException('Customer not found')
 
-    if (dto.name !== undefined) entity.name = dto.name
-    if (dto.email !== undefined) entity.email = dto.email
-    if (dto.phone !== undefined) entity.phone = dto.phone
-    if (dto.address !== undefined) entity.address = dto.address
-    if (dto.city !== undefined) entity.city = dto.city
-    if (dto.contactPerson !== undefined) entity.contactPerson = dto.contactPerson
-    if (dto.taxId !== undefined) entity.taxId = dto.taxId
-    if (dto.notes !== undefined) entity.notes = dto.notes
-    if (dto.status !== undefined) entity.status = dto.status
+    if (command.name !== undefined) entity.name = command.name
+    if (command.email !== undefined) entity.email = command.email
+    if (command.phone !== undefined) entity.phone = command.phone
+    if (command.address !== undefined) entity.address = command.address
+    if (command.city !== undefined) entity.city = command.city
+    if (command.contactPerson !== undefined) entity.contactPerson = command.contactPerson
+    if (command.taxId !== undefined) entity.taxId = command.taxId
+    if (command.notes !== undefined) entity.notes = command.notes
+    if (command.status !== undefined) entity.status = command.status as 'active' | 'inactive'
 
-    const saved = await this.repo.save(entity)
-    return this.toResponse(saved)
+    return this.repo.save(entity)
   }
 
   async delete(id: string): Promise<void> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new NotFoundException('Customer not found')
     await this.repo.delete(id)
-  }
-
-  private toResponse(entity: any): CustomerResponseDto {
-    return {
-      id: entity.id,
-      name: entity.name,
-      email: entity.email ?? undefined,
-      phone: entity.phone ?? undefined,
-      address: entity.address ?? undefined,
-      city: entity.city ?? undefined,
-      contactPerson: entity.contactPerson ?? undefined,
-      taxId: entity.taxId ?? undefined,
-      notes: entity.notes ?? undefined,
-      status: entity.status,
-      createdAt: entity.createdAt?.toISOString?.() ?? String(entity.createdAt),
-      updatedAt: entity.updatedAt?.toISOString?.() ?? String(entity.updatedAt),
-    }
   }
 }

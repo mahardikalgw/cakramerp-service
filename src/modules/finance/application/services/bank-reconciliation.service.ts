@@ -12,25 +12,8 @@ import type {
   ReconciliationSessionRepositoryPort,
   JournalEntryLineRepositoryPort,
 } from '../../domain/repositories/finance-repository.port'
-
-export interface ImportStatementDto {
-  bankAccountId: string
-  periodStart: string
-  periodEnd: string
-  lines: {
-    date: string
-    description: string
-    debit: number
-    credit: number
-    balance: number
-    reference?: string
-  }[]
-}
-
-export interface ManualMatchDto {
-  bankStatementLineId: string
-  journalLineId: string
-}
+import { ImportBankStatementCommand } from '../commands/import-bank-statement.command'
+import { ManualReconciliationMatchCommand } from '../commands/manual-reconciliation-match.command'
 
 export interface ReconciliationReport {
   id: string
@@ -65,21 +48,19 @@ export class BankReconciliationService implements BankReconciliationServicePort 
     return this.bankAccountRepo.findActive()
   }
 
-  async importStatement(dto: ImportStatementDto, userId: string): Promise<{ sessionId: string; linesImported: number }> {
-    // Create reconciliation session
+  async importStatement(command: ImportBankStatementCommand, userId: string): Promise<{ sessionId: string; linesImported: number }> {
     const session = await this.sessionRepo.save(
       this.sessionRepo.create({
-        bankAccountId: dto.bankAccountId,
-        periodStart: new Date(dto.periodStart),
-        periodEnd: new Date(dto.periodEnd),
+        bankAccountId: command.bankAccountId,
+        periodStart: new Date(command.periodStart),
+        periodEnd: new Date(command.periodEnd),
         status: 'in_progress',
         isLocked: false,
         createdBy: userId,
       }),
     )
 
-    // Import statement lines
-    for (const line of dto.lines) {
+    for (const line of command.lines) {
       await this.statementLineRepo.save(
         this.statementLineRepo.create({
           reconciliationSessionId: session.id,
@@ -94,7 +75,7 @@ export class BankReconciliationService implements BankReconciliationServicePort 
       )
     }
 
-    return { sessionId: session.id, linesImported: dto.lines.length }
+    return { sessionId: session.id, linesImported: command.lines.length }
   }
 
   async autoMatch(sessionId: string): Promise<{ matchedCount: number }> {
@@ -106,7 +87,6 @@ export class BankReconciliationService implements BankReconciliationServicePort 
       where: { reconciliationSessionId: sessionId, matchStatus: 'unmatched' },
     })
 
-    // Get GL transactions for the same period and bank account
     const glLines = await this.journalLineRepo.findByAccountIdsAndDateRange(
       [session.bankAccountId],
       session.periodStart,
@@ -119,7 +99,6 @@ export class BankReconciliationService implements BankReconciliationServicePort 
       const bankAmount = Number(bankLine.debit) - Number(bankLine.credit)
       const bankDate = new Date(bankLine.date)
 
-      // Find matching GL line: exact amount match + date within ±1 day
       const match = glLines.find((gl) => {
         const glAmount = gl.debit.toNumber() - gl.credit.toNumber()
         if (Math.abs(glAmount - bankAmount) > 0.01) return false
@@ -134,7 +113,6 @@ export class BankReconciliationService implements BankReconciliationServicePort 
         bankLine.matchStatus = 'matched'
         await this.statementLineRepo.save(bankLine)
 
-        // Remove from available GL lines
         const idx = glLines.indexOf(match)
         if (idx > -1) glLines.splice(idx, 1)
 
@@ -142,23 +120,22 @@ export class BankReconciliationService implements BankReconciliationServicePort 
       }
     }
 
-    // Update session stats
     await this.updateSessionStats(sessionId)
 
     return { matchedCount }
   }
 
-  async manualMatch(sessionId: string, dto: ManualMatchDto): Promise<void> {
+  async manualMatch(sessionId: string, command: ManualReconciliationMatchCommand): Promise<void> {
     const session = await this.sessionRepo.findOne({ where: { id: sessionId } })
     if (!session) throw new BadRequestException('Session not found')
     if (session.isLocked) throw new BadRequestException('Session is locked')
 
     const bankLine = await this.statementLineRepo.findOne({
-      where: { id: dto.bankStatementLineId, reconciliationSessionId: sessionId },
+      where: { id: command.bankStatementLineId, reconciliationSessionId: sessionId },
     })
     if (!bankLine) throw new BadRequestException('Bank statement line not found')
 
-    bankLine.matchedJournalLineId = dto.journalLineId
+    bankLine.matchedJournalLineId = command.journalLineId
     bankLine.matchStatus = 'matched'
     await this.statementLineRepo.save(bankLine)
 
@@ -188,7 +165,6 @@ export class BankReconciliationService implements BankReconciliationServicePort 
     const matchedBankLines = allBankLines.filter((l: any) => l.matchStatus === 'matched')
     const unmatchedBankLines = allBankLines.filter((l: any) => l.matchStatus === 'unmatched')
 
-    // Get GL lines for the period
     const glLines = await this.journalLineRepo.findByAccountIdsAndDateRange(
       [session.bankAccountId],
       session.periodStart,

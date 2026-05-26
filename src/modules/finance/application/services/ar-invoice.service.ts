@@ -20,52 +20,9 @@ import { ARInvoiceLineTypeOrmEntity } from '../../infrastructure/entities/ar-inv
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
 import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
 import { Repository, DataSource } from 'typeorm'
-
-export interface CreateInvoiceDto {
-  clientId: string
-  clientName: string
-  customerId?: string
-  invoiceDate: string
-  dueDate: string
-  segment?: string
-  projectId?: string
-  sendEmail?: boolean
-  paymentTermDays?: number
-  paymentTermLabel?: string
-  additionalDiscount?: number
-  lines: {
-    description: string
-    quantity: number
-    unitPrice: number
-    taxPercent: number
-  }[]
-}
-
-export interface RecordPaymentDto {
-  amount: number
-  paymentDate: string
-  bankAccountId: string
-  reference?: string
-}
-
-export interface UpdateInvoiceDto {
-  clientId?: string
-  clientName?: string
-  customerId?: string
-  invoiceDate?: string
-  dueDate?: string
-  segment?: string
-  projectId?: string
-  paymentTermDays?: number
-  paymentTermLabel?: string
-  additionalDiscount?: number
-  lines?: {
-    description: string
-    quantity: number
-    unitPrice: number
-    taxPercent: number
-  }[]
-}
+import { CreateARInvoiceCommand } from '../commands/create-ar-invoice.command'
+import { UpdateARInvoiceCommand } from '../commands/update-ar-invoice.command'
+import { RecordPaymentCommand } from '../commands/record-payment.command'
 
 export interface InvoiceWithLines {
   id: string
@@ -159,15 +116,14 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     return await this.toInvoiceWithLines(inv, lines)
   }
 
-  async create(dto: CreateInvoiceDto, asDraft = true): Promise<InvoiceWithLines> {
+  async create(command: CreateARInvoiceCommand, asDraft = true): Promise<InvoiceWithLines> {
     const invoiceNumber = await this.getNextInvoiceNumber()
 
-    // Calculate totals
     let subtotal = 0
     let taxTotal = 0
     const lineEntities: Partial<ARInvoiceLineTypeOrmEntity>[] = []
 
-    for (const line of dto.lines) {
+    for (const line of command.lines) {
       const lineAmount = line.quantity * line.unitPrice
       const lineTax = lineAmount * (line.taxPercent / 100)
       subtotal += lineAmount
@@ -182,25 +138,24 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     }
 
     const grandTotal = subtotal + taxTotal
-
-    const additionalDiscount = dto.additionalDiscount ?? 0
+    const additionalDiscount = command.additionalDiscount ?? 0
     const finalTotal = grandTotal - additionalDiscount
 
     const invoice = await this.invoiceRepo.save(
       this.invoiceRepo.create({
         invoiceNumber,
-        clientId: dto.clientId,
-        clientName: dto.clientName,
-        customerId: dto.customerId,
-        projectId: dto.projectId,
-        segment: dto.segment,
+        clientId: command.clientId,
+        clientName: command.clientName,
+        customerId: command.customerId,
+        projectId: command.projectId,
+        segment: command.segment,
         amount: finalTotal,
         paidAmount: 0,
-        dueDate: new Date(dto.dueDate),
-        issueDate: new Date(dto.invoiceDate),
+        dueDate: new Date(command.dueDate),
+        issueDate: new Date(command.invoiceDate),
         status: asDraft ? 'draft' : 'sent',
-        paymentTermDays: dto.paymentTermDays,
-        paymentTermLabel: dto.paymentTermLabel,
+        paymentTermDays: command.paymentTermDays,
+        paymentTermLabel: command.paymentTermLabel,
         additionalDiscount,
       }),
     )
@@ -216,25 +171,25 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     return await this.toInvoiceWithLines(invoice, savedLines)
   }
 
-  async update(id: string, dto: UpdateInvoiceDto): Promise<InvoiceWithLines> {
+  async update(id: string, command: UpdateARInvoiceCommand): Promise<InvoiceWithLines> {
     const inv = await this.invoiceRepo.findOne({ where: { id } })
     if (!inv) throw new BadRequestException('Invoice not found')
     if (inv.status !== 'draft') {
       throw new BadRequestException('Only draft invoices can be edited')
     }
 
-    if (dto.clientId !== undefined) inv.clientId = dto.clientId
-    if (dto.clientName !== undefined) inv.clientName = dto.clientName
-    if (dto.customerId !== undefined) (inv as any).customerId = dto.customerId
-    if (dto.invoiceDate !== undefined) inv.issueDate = new Date(dto.invoiceDate)
-    if (dto.dueDate !== undefined) inv.dueDate = new Date(dto.dueDate)
-    if (dto.segment !== undefined) inv.segment = dto.segment
-    if (dto.projectId !== undefined) inv.projectId = dto.projectId
-    if (dto.paymentTermDays !== undefined) inv.paymentTermDays = dto.paymentTermDays
-    if (dto.paymentTermLabel !== undefined) inv.paymentTermLabel = dto.paymentTermLabel
-    if (dto.additionalDiscount !== undefined) inv.additionalDiscount = dto.additionalDiscount
+    if (command.clientId !== undefined) inv.clientId = command.clientId
+    if (command.clientName !== undefined) inv.clientName = command.clientName
+    if (command.customerId !== undefined) (inv as any).customerId = command.customerId
+    if (command.invoiceDate !== undefined) inv.issueDate = new Date(command.invoiceDate)
+    if (command.dueDate !== undefined) inv.dueDate = new Date(command.dueDate)
+    if (command.segment !== undefined) inv.segment = command.segment
+    if (command.projectId !== undefined) inv.projectId = command.projectId
+    if (command.paymentTermDays !== undefined) inv.paymentTermDays = command.paymentTermDays
+    if (command.paymentTermLabel !== undefined) inv.paymentTermLabel = command.paymentTermLabel
+    if (command.additionalDiscount !== undefined) inv.additionalDiscount = command.additionalDiscount
 
-    if (dto.lines) {
+    if (command.lines) {
       const existingLines = await this.lineRepo.findByInvoiceId(id)
       for (const line of existingLines) {
         await this.dataSource.getRepository(ARInvoiceLineTypeOrmEntity).delete(line.id)
@@ -244,7 +199,7 @@ export class ARInvoiceService implements ARInvoiceServicePort {
       let taxTotal = 0
       const savedLines: ARInvoiceLineTypeOrmEntity[] = []
 
-      for (const line of dto.lines) {
+      for (const line of command.lines) {
         const lineAmount = line.quantity * line.unitPrice
         const lineTax = lineAmount * (line.taxPercent / 100)
         subtotal += lineAmount
@@ -285,21 +240,19 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     const saved = await this.invoiceRepo.save(inv)
     const lines = await this.lineRepo.findByInvoiceId(id)
 
-    // Create GL posting queue entry
     await this.enqueueGlPosting(saved, 'invoice_issued')
 
-    // TODO: Queue email job with PDF attachment
     return this.toInvoiceWithLines(saved, lines)
   }
 
-  async recordPayment(id: string, dto: RecordPaymentDto): Promise<InvoiceWithLines> {
+  async recordPayment(id: string, command: RecordPaymentCommand): Promise<InvoiceWithLines> {
     const inv = await this.invoiceRepo.findOne({ where: { id } })
     if (!inv) throw new BadRequestException('Invoice not found')
     if (inv.status === 'paid' || inv.status === 'cancelled') {
       throw new BadRequestException('Cannot record payment on this invoice')
     }
 
-    const newPaidAmount = Number(inv.paidAmount) + dto.amount
+    const newPaidAmount = Number(inv.paidAmount) + command.amount
     const balance = Number(inv.amount) - newPaidAmount
 
     if (newPaidAmount > Number(inv.amount)) {
@@ -315,12 +268,10 @@ export class ARInvoiceService implements ARInvoiceServicePort {
 
     const saved = await this.invoiceRepo.save(inv)
 
-    // Create GL posting queue entry for payment
-    await this.enqueueGlPosting(saved, 'payment_received', dto.amount)
+    await this.enqueueGlPosting(saved, 'payment_received', command.amount)
 
-    // Auto-create GL journal entry on full payment
     if (inv.status === 'paid') {
-      await this.createPaymentJournalEntry(inv, dto)
+      await this.createPaymentJournalEntry(inv, command)
     }
 
     const lines = await this.lineRepo.findByInvoiceId(id)
@@ -329,18 +280,18 @@ export class ARInvoiceService implements ARInvoiceServicePort {
 
   private async createPaymentJournalEntry(
     inv: ARInvoiceTypeOrmEntity,
-    dto: RecordPaymentDto,
+    command: RecordPaymentCommand,
   ): Promise<void> {
     const entryNumber = await this.journalEntryRepo.getNextEntryNumber()
 
     const arAccount = await this.accountRepo.findByCode('1200')
-    const arAccountId = arAccount?.id ?? dto.bankAccountId
+    const arAccountId = arAccount?.id ?? command.bankAccountId
 
     const entry = new JournalEntry({
       entryNumber,
-      date: new Date(dto.paymentDate),
+      date: new Date(command.paymentDate),
       description: `Payment received for invoice ${inv.invoiceNumber}`,
-      reference: dto.reference ?? `Sales Invoice ${inv.invoiceNumber}`,
+      reference: command.reference ?? `Sales Invoice ${inv.invoiceNumber}`,
       status: 'approved',
       createdBy: null as any,
       approvedBy: null as any,
@@ -353,8 +304,8 @@ export class ARInvoiceService implements ARInvoiceServicePort {
 
     const debitLine = new JournalEntryLine({
       journalEntryId: savedEntry.id,
-      accountId: dto.bankAccountId,
-      debit: new Decimal(dto.amount),
+      accountId: command.bankAccountId,
+      debit: new Decimal(command.amount),
       credit: new Decimal(0),
       description: `Payment from ${inv.clientName}`,
     })
@@ -363,7 +314,7 @@ export class ARInvoiceService implements ARInvoiceServicePort {
       journalEntryId: savedEntry.id,
       accountId: arAccountId,
       debit: new Decimal(0),
-      credit: new Decimal(dto.amount),
+      credit: new Decimal(command.amount),
       description: `AR cleared for ${inv.invoiceNumber}`,
     })
 

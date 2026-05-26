@@ -32,14 +32,28 @@ import { BANK_RECONCILIATION_SERVICE } from '../../../application/ports/bank-rec
 import type { BankReconciliationServicePort } from '../../../application/ports/bank-reconciliation-service.port'
 import { FINANCIAL_STATEMENTS_SERVICE } from '../../../application/ports/financial-statements-service.port'
 import type { FinancialStatementsServicePort } from '../../../application/ports/financial-statements-service.port'
-import type { CreateAccountDto, UpdateAccountDto } from '../../../application/services/account.service'
-import type { CreateJournalEntryDto } from '../../../application/services/journal-entry.service'
-import type { CreateInvoiceDto, UpdateInvoiceDto, RecordPaymentDto } from '../../../application/services/ar-invoice.service'
-import type { CreateAPInvoiceDto, SchedulePaymentDto, BulkPaymentDto } from '../../../application/services/ap-invoice.service'
-import type { ImportStatementDto, ManualMatchDto } from '../../../application/services/bank-reconciliation.service'
 import { GL_POSTING_QUEUE_SERVICE } from '../../../application/ports/gl-posting-queue-service.port'
 import type { GlPostingQueueServicePort } from '../../../application/ports/gl-posting-queue-service.port'
-import type { PostToJournalDto } from '../../../application/services/gl-posting-queue.service'
+
+import { CreateAccountCommand } from '../../../application/commands/create-account.command'
+import { UpdateAccountCommand } from '../../../application/commands/update-account.command'
+import { CreateJournalEntryCommand } from '../../../application/commands/create-journal-entry.command'
+import { CreateARInvoiceCommand } from '../../../application/commands/create-ar-invoice.command'
+import { UpdateARInvoiceCommand } from '../../../application/commands/update-ar-invoice.command'
+import { RecordPaymentCommand } from '../../../application/commands/record-payment.command'
+import { CreateAPInvoiceCommand } from '../../../application/commands/create-ap-invoice.command'
+import { SchedulePaymentCommand } from '../../../application/commands/schedule-payment.command'
+import { BulkPaymentCommand } from '../../../application/commands/bulk-payment.command'
+import { ImportBankStatementCommand } from '../../../application/commands/import-bank-statement.command'
+import { ManualReconciliationMatchCommand } from '../../../application/commands/manual-reconciliation-match.command'
+import { PostGlToJournalCommand } from '../../../application/commands/post-gl-to-journal.command'
+
+import { CreateAccountHttpDto, UpdateAccountHttpDto } from '../dtos/account.dto'
+import { CreateJournalEntryHttpDto } from '../dtos/journal-entry.dto'
+import { CreateARInvoiceHttpDto, UpdateARInvoiceHttpDto, RecordPaymentHttpDto } from '../dtos/ar-invoice.dto'
+import { CreateAPInvoiceHttpDto, SchedulePaymentHttpDto, BulkPaymentHttpDto } from '../dtos/ap-invoice.dto'
+import { ImportBankStatementHttpDto, ManualMatchHttpDto } from '../dtos/bank-reconciliation.dto'
+import { PostGlToJournalHttpDto } from '../dtos/gl-posting-queue.dto'
 
 @Controller('finance')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -77,14 +91,32 @@ export class FinanceManagementController {
 
   @Post('accounts')
   @RequirePermissions('chart-of-accounts:create')
-  async createAccount(@Body() dto: CreateAccountDto) {
-    return this.accountService.createAccount(dto)
+  async createAccount(@Body() dto: CreateAccountHttpDto) {
+    const command = new CreateAccountCommand(
+      dto.code,
+      dto.name,
+      dto.type as any,
+      dto.taxCategory,
+      dto.segment,
+      dto.costCenter,
+      dto.parentId,
+    )
+    return this.accountService.createAccount(command)
   }
 
   @Put('accounts/:id')
   @RequirePermissions('chart-of-accounts:update')
-  async updateAccount(@Param('id') id: string, @Body() dto: UpdateAccountDto) {
-    return this.accountService.updateAccount(id, dto)
+  async updateAccount(@Param('id') id: string, @Body() dto: UpdateAccountHttpDto) {
+    const command = new UpdateAccountCommand(
+      dto.code,
+      dto.name,
+      dto.type as any,
+      dto.taxCategory,
+      dto.segment,
+      dto.costCenter,
+      dto.parentId,
+    )
+    return this.accountService.updateAccount(id, command)
   }
 
   @Patch('accounts/:id/deactivate')
@@ -157,11 +189,20 @@ export class FinanceManagementController {
   @Post('journal-entries')
   @RequirePermissions('journal-entries:create')
   async createJournalEntry(
-    @Body() body: CreateJournalEntryDto & { submitForApproval?: boolean },
+    @Body() dto: CreateJournalEntryHttpDto,
     @Req() req: any,
   ) {
     const userId = req.user?.id ?? 'unknown'
-    return this.journalEntryService.create(body, userId, !body.submitForApproval)
+    const command = new CreateJournalEntryCommand(
+      dto.date,
+      dto.description,
+      dto.lines,
+      dto.reference,
+      dto.segment,
+      dto.projectId,
+      dto.costCenter,
+    )
+    return this.journalEntryService.create(command, userId, !dto.submitForApproval)
   }
 
   @Patch('journal-entries/:id/submit')
@@ -211,14 +252,42 @@ export class FinanceManagementController {
 
   @Post('invoices')
   @RequirePermissions('sales-invoices:create')
-  async createInvoice(@Body() body: CreateInvoiceDto & { asDraft?: boolean }) {
-    return this.arInvoiceService.create(body, body.asDraft !== false)
+  async createInvoice(@Body() dto: CreateARInvoiceHttpDto) {
+    const command = new CreateARInvoiceCommand(
+      dto.clientId,
+      dto.clientName,
+      dto.invoiceDate,
+      dto.dueDate,
+      dto.lines,
+      dto.customerId,
+      dto.segment,
+      dto.projectId,
+      dto.sendEmail,
+      dto.paymentTermDays,
+      dto.paymentTermLabel,
+      dto.additionalDiscount,
+      dto.asDraft,
+    )
+    return this.arInvoiceService.create(command, dto.asDraft !== false)
   }
 
   @Put('invoices/:id')
   @RequirePermissions('sales-invoices:update')
-  async updateInvoice(@Param('id') id: string, @Body() dto: UpdateInvoiceDto) {
-    return this.arInvoiceService.update(id, dto)
+  async updateInvoice(@Param('id') id: string, @Body() dto: UpdateARInvoiceHttpDto) {
+    const command = new UpdateARInvoiceCommand(
+      dto.clientId,
+      dto.clientName,
+      dto.customerId,
+      dto.invoiceDate,
+      dto.dueDate,
+      dto.segment,
+      dto.projectId,
+      dto.paymentTermDays,
+      dto.paymentTermLabel,
+      dto.additionalDiscount,
+      dto.lines,
+    )
+    return this.arInvoiceService.update(id, command)
   }
 
   @Post('invoices/:id/send')
@@ -229,8 +298,14 @@ export class FinanceManagementController {
 
   @Post('invoices/:id/record-payment')
   @RequirePermissions('sales-invoices:update')
-  async recordPayment(@Param('id') id: string, @Body() dto: RecordPaymentDto) {
-    return this.arInvoiceService.recordPayment(id, dto)
+  async recordPayment(@Param('id') id: string, @Body() dto: RecordPaymentHttpDto) {
+    const command = new RecordPaymentCommand(
+      dto.amount,
+      dto.paymentDate,
+      dto.bankAccountId,
+      dto.reference,
+    )
+    return this.arInvoiceService.recordPayment(id, command)
   }
 
   // ==================== AP Invoices ====================
@@ -263,20 +338,42 @@ export class FinanceManagementController {
 
   @Post('supplier-invoices')
   @RequirePermissions('supplier-invoices:create')
-  async createSupplierInvoice(@Body() dto: CreateAPInvoiceDto) {
-    return this.apInvoiceService.create(dto)
+  async createSupplierInvoice(@Body() dto: CreateAPInvoiceHttpDto) {
+    const command = new CreateAPInvoiceCommand(
+      dto.vendorId,
+      dto.vendorName,
+      dto.invoiceDate,
+      dto.dueDate,
+      dto.amount,
+      dto.supplierId,
+      dto.supplierInvoiceNumber,
+      dto.poReferenceId,
+      dto.grnReferenceId,
+      dto.paymentTermDays,
+      dto.paymentTermLabel,
+      dto.additionalDiscount,
+      dto.lines,
+    )
+    return this.apInvoiceService.create(command)
   }
 
   @Post('ap-invoices/:id/schedule-payment')
   @RequirePermissions('supplier-invoices:update')
-  async schedulePayment(@Param('id') id: string, @Body() dto: SchedulePaymentDto) {
-    return this.apInvoiceService.schedulePayment(id, dto)
+  async schedulePayment(@Param('id') id: string, @Body() dto: SchedulePaymentHttpDto) {
+    const command = new SchedulePaymentCommand(dto.dueDate, dto.bankAccountId)
+    return this.apInvoiceService.schedulePayment(id, command)
   }
 
   @Post('ap-payments/bulk')
   @RequirePermissions('supplier-invoices:update')
-  async bulkPayment(@Body() dto: BulkPaymentDto) {
-    return this.apInvoiceService.bulkPayment(dto)
+  async bulkPayment(@Body() dto: BulkPaymentHttpDto) {
+    const command = new BulkPaymentCommand(
+      dto.invoiceIds,
+      dto.bankAccountId,
+      dto.paymentDate,
+      dto.reference,
+    )
+    return this.apInvoiceService.bulkPayment(command)
   }
 
   // ==================== Tax / e-Faktur ====================
@@ -325,9 +422,15 @@ export class FinanceManagementController {
 
   @Post('reconciliation/import')
   @RequirePermissions('bank-reconciliation:create')
-  async importStatement(@Body() dto: ImportStatementDto, @Req() req: any) {
+  async importStatement(@Body() dto: ImportBankStatementHttpDto, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
-    return this.reconciliationService.importStatement(dto, userId)
+    const command = new ImportBankStatementCommand(
+      dto.bankAccountId,
+      dto.periodStart,
+      dto.periodEnd,
+      dto.lines,
+    )
+    return this.reconciliationService.importStatement(command, userId)
   }
 
   @Post('reconciliation/:id/auto-match')
@@ -338,8 +441,9 @@ export class FinanceManagementController {
 
   @Post('reconciliation/:id/manual-match')
   @RequirePermissions('bank-reconciliation:update')
-  async manualMatch(@Param('id') id: string, @Body() dto: ManualMatchDto) {
-    return this.reconciliationService.manualMatch(id, dto)
+  async manualMatch(@Param('id') id: string, @Body() dto: ManualMatchHttpDto) {
+    const command = new ManualReconciliationMatchCommand(dto.bankStatementLineId, dto.journalLineId)
+    return this.reconciliationService.manualMatch(id, command)
   }
 
   @Post('reconciliation/:id/finalize')
@@ -427,11 +531,12 @@ export class FinanceManagementController {
   @RequirePermissions('gl-posting-queue:create')
   async postGlQueueToJournal(
     @Param('id') id: string,
-    @Body() dto: PostToJournalDto,
+    @Body() dto: PostGlToJournalHttpDto,
     @Req() req: any,
   ) {
     const userId = req.user?.id ?? 'unknown'
-    return this.glPostingQueueService.postToJournal(id, dto, userId)
+    const command = new PostGlToJournalCommand(dto.date, dto.description, dto.lines)
+    return this.glPostingQueueService.postToJournal(id, command, userId)
   }
 
   @Patch('gl-posting-queue/:id/cancel')

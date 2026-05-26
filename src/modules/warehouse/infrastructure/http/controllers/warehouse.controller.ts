@@ -26,7 +26,31 @@ import type { StockOpnameServicePort } from '../../../application/ports/stock-op
 import { EQUIPMENT_SERVICE } from '../../../application/ports/equipment-service.port'
 import type { EquipmentServicePort } from '../../../application/ports/equipment-service.port'
 import { ITEM_SERVICE } from '../../../application/ports/item-service.port'
-import type { ItemServicePort, CreateItemDto, UpdateItemDto } from '../../../application/ports/item-service.port'
+import type { ItemServicePort } from '../../../application/ports/item-service.port'
+
+import { CreateItemCommand } from '../../../application/commands/create-item.command'
+import { UpdateItemCommand } from '../../../application/commands/update-item.command'
+import { CreateGoodsReceiptCommand } from '../../../application/commands/create-goods-receipt.command'
+import { CreateStockIssuanceCommand } from '../../../application/commands/create-stock-issuance.command'
+import { CreateStockOpnameSessionCommand } from '../../../application/commands/create-stock-opname-session.command'
+import { UpdateOpnameCountsCommand } from '../../../application/commands/update-opname-counts.command'
+import { CreateEquipmentCommand } from '../../../application/commands/create-equipment.command'
+import { UpdateEquipmentCommand } from '../../../application/commands/update-equipment.command'
+import { LogMaintenanceCommand } from '../../../application/commands/log-maintenance.command'
+
+import { CreateItemHttpDto, UpdateItemHttpDto } from '../dtos/item.dto'
+import {
+  CreateGoodsReceiptHttpDto,
+  CreateStockIssuanceHttpDto,
+  ReverseIssuanceHttpDto,
+  CreateStockOpnameHttpDto,
+  UpdateOpnameCountsHttpDto,
+} from '../dtos/stock.dto'
+import {
+  CreateEquipmentHttpDto,
+  UpdateEquipmentHttpDto,
+  LogMaintenanceHttpDto,
+} from '../dtos/equipment.dto'
 
 @Controller('warehouse')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -74,14 +98,29 @@ export class WarehouseController {
 
   @Post('items')
   @RequirePermissions('stock-items:create')
-  async createItem(@Body() dto: CreateItemDto) {
-    return this.itemService.create(dto)
+  async createItem(@Body() dto: CreateItemHttpDto) {
+    const command = new CreateItemCommand(
+      dto.code,
+      dto.name,
+      dto.category,
+      dto.uom,
+      dto.minStockLevel,
+    )
+    return this.itemService.create(command)
   }
 
   @Put('items/:id')
   @RequirePermissions('stock-items:update')
-  async updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
-    return this.itemService.update(id, dto)
+  async updateItem(@Param('id') id: string, @Body() dto: UpdateItemHttpDto) {
+    const command = new UpdateItemCommand(
+      dto.code,
+      dto.name,
+      dto.category,
+      dto.uom,
+      dto.minStockLevel,
+      dto.isActive,
+    )
+    return this.itemService.update(id, command)
   }
 
   @Delete('items/:id')
@@ -136,9 +175,14 @@ export class WarehouseController {
 
   @Post('goods-receipts')
   @RequirePermissions('goods-receipts:create')
-  async createGoodsReceipt(@Body() body: any, @Req() req: any) {
+  async createGoodsReceipt(@Body() dto: CreateGoodsReceiptHttpDto, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
-    return this.goodsReceiptService.create(body, userId)
+    const command = new CreateGoodsReceiptCommand(
+      dto.warehouseId,
+      dto.reference,
+      dto.lines,
+    )
+    return this.goodsReceiptService.create(command, userId)
   }
 
   // ==================== Stock Issuances ====================
@@ -167,20 +211,26 @@ export class WarehouseController {
 
   @Post('issuances')
   @RequirePermissions('issuances:create')
-  async createIssuance(@Body() body: any, @Req() req: any) {
+  async createIssuance(@Body() dto: CreateStockIssuanceHttpDto, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
-    return this.issuanceService.create(body, userId)
+    const command = new CreateStockIssuanceCommand(
+      dto.warehouseId,
+      dto.destinationType,
+      dto.destinationId,
+      dto.lines,
+    )
+    return this.issuanceService.create(command, userId)
   }
 
   @Post('issuances/:id/reverse')
   @RequirePermissions('issuances:update')
   async reverseIssuance(
     @Param('id') id: string,
-    @Body() body: { reason: string },
+    @Body() dto: ReverseIssuanceHttpDto,
     @Req() req: any,
   ) {
     const userId = req.user?.id ?? 'unknown'
-    return this.issuanceService.reverse(id, body.reason, userId)
+    return this.issuanceService.reverse(id, dto.reason, userId)
   }
 
   // ==================== Stock Opname ====================
@@ -202,18 +252,20 @@ export class WarehouseController {
 
   @Post('stock-opname')
   @RequirePermissions('stock-opname:create')
-  async createOpname(@Body() body: { warehouseId: string }, @Req() req: any) {
+  async createOpname(@Body() dto: CreateStockOpnameHttpDto, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
-    return this.opnameService.create(body.warehouseId, userId)
+    const command = new CreateStockOpnameSessionCommand(dto.warehouseId)
+    return this.opnameService.create(command.warehouseId, userId)
   }
 
   @Patch('stock-opname/:id/counts')
   @RequirePermissions('stock-opname:update')
   async updateOpnameCounts(
     @Param('id') id: string,
-    @Body() body: { lines: { itemId: string; actualQty: number }[] },
+    @Body() dto: UpdateOpnameCountsHttpDto,
   ) {
-    return this.opnameService.updateCounts(id, body.lines)
+    const command = new UpdateOpnameCountsCommand(dto.lines)
+    return this.opnameService.updateCounts(id, command.lines)
   }
 
   @Patch('stock-opname/:id/submit')
@@ -257,25 +309,47 @@ export class WarehouseController {
 
   @Post('equipment')
   @RequirePermissions('equipment:create')
-  async createEquipment(@Body() body: any) {
-    return this.equipmentService.create(body)
+  async createEquipment(@Body() dto: CreateEquipmentHttpDto) {
+    const command = new CreateEquipmentCommand(
+      dto.name,
+      dto.type,
+      dto.siteId,
+      dto.serialNumber,
+      dto.purchaseDate,
+    )
+    return this.equipmentService.create(command)
   }
 
   @Put('equipment/:id')
   @RequirePermissions('equipment:update')
-  async updateEquipment(@Param('id') id: string, @Body() body: any) {
-    return this.equipmentService.update(id, body)
+  async updateEquipment(@Param('id') id: string, @Body() dto: UpdateEquipmentHttpDto) {
+    const command = new UpdateEquipmentCommand(
+      dto.name,
+      dto.type,
+      dto.siteId,
+      dto.serialNumber,
+      dto.status,
+      dto.purchaseDate,
+    )
+    return this.equipmentService.update(id, command)
   }
 
   @Post('equipment/:id/log-maintenance')
   @RequirePermissions('equipment:update')
   async logMaintenance(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() dto: LogMaintenanceHttpDto,
     @Req() req: any,
   ) {
     const userId = req.user?.id ?? 'unknown'
-    return this.equipmentService.logMaintenance(id, body, userId)
+    const command = new LogMaintenanceCommand(
+      dto.type,
+      dto.description,
+      dto.cost,
+      dto.performedBy,
+      dto.nextMaintenanceDate,
+    )
+    return this.equipmentService.logMaintenance(id, command, userId)
   }
 
   @Get('equipment/:id/schedules')

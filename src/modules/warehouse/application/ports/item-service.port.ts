@@ -12,23 +12,6 @@ export interface ItemResponseDto {
   updatedAt: string
 }
 
-export interface CreateItemDto {
-  code: string
-  name: string
-  category: string
-  uom: string
-  minStockLevel?: number
-}
-
-export interface UpdateItemDto {
-  code?: string
-  name?: string
-  category?: string
-  uom?: string
-  minStockLevel?: number
-  isActive?: boolean
-}
-
 export interface ItemServicePort {
   findAll(filters?: {
     search?: string
@@ -38,7 +21,7 @@ export interface ItemServicePort {
     limit?: number
   }): Promise<{ data: ItemResponseDto[]; total: number }>
   findById(id: string): Promise<ItemResponseDto | null>
-  create(dto: CreateItemDto): Promise<ItemResponseDto>
-  update(id: string, dto: UpdateItemDto): Promise<ItemResponseDto>
+  create(command: import('../commands/create-item.command').CreateItemCommand): Promise<ItemResponseDto>
+  update(id: string, command: import('../commands/update-item.command').UpdateItemCommand): Promise<ItemResponseDto>
   delete(id: string): Promise<void>
 }

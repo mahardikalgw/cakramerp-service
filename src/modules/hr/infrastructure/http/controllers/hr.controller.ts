@@ -29,6 +29,17 @@ import type { BpjsServicePort } from '../../../application/ports/bpjs-service.po
 import { THR_SERVICE } from '../../../application/ports/thr-service.port'
 import type { ThrServicePort } from '../../../application/ports/thr-service.port'
 
+import { CreateEmployeeCommand } from '../../../application/commands/create-employee.command'
+import { UpdateEmployeeCommand } from '../../../application/commands/update-employee.command'
+import { RecordAttendanceCommand } from '../../../application/commands/record-attendance.command'
+import { ImportAttendanceCommand } from '../../../application/commands/import-attendance.command'
+import { RunPayrollCommand } from '../../../application/commands/run-payroll.command'
+import { CalculateThrCommand } from '../../../application/commands/calculate-thr.command'
+
+import { CreateEmployeeHttpDto, UpdateEmployeeHttpDto } from '../dtos/employee.dto'
+import { RecordAttendanceHttpDto, ImportAttendanceHttpDto } from '../dtos/attendance.dto'
+import { RunPayrollHttpDto } from '../dtos/payroll.dto'
+
 @Controller('hr')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class HrController {
@@ -79,14 +90,39 @@ export class HrController {
 
   @Post('employees')
   @RequirePermissions('employees:create')
-  async createEmployee(@Body() body: any) {
-    return this.employeeService.create(body)
+  async createEmployee(@Body() dto: CreateEmployeeHttpDto) {
+    const command = new CreateEmployeeCommand(
+      dto.firstName,
+      dto.lastName,
+      dto.email,
+      dto.phone,
+      dto.employmentType,
+      dto.siteId,
+      dto.departmentId,
+      dto.position,
+      dto.baseSalary,
+      dto.hireDate,
+    )
+    return this.employeeService.create(command)
   }
 
   @Put('employees/:id')
   @RequirePermissions('employees:update')
-  async updateEmployee(@Param('id') id: string, @Body() body: any) {
-    return this.employeeService.update(id, body)
+  async updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeHttpDto) {
+    const command = new UpdateEmployeeCommand(
+      dto.firstName,
+      dto.lastName,
+      dto.email,
+      dto.phone,
+      dto.employmentType,
+      dto.siteId,
+      dto.departmentId,
+      dto.position,
+      dto.baseSalary,
+      dto.hireDate,
+      dto.status,
+    )
+    return this.employeeService.update(id, command)
   }
 
   @Post('employees/:id/documents')
@@ -143,14 +179,23 @@ export class HrController {
 
   @Post('attendance')
   @RequirePermissions('attendance:create')
-  async recordAttendance(@Body() body: any) {
-    return this.attendanceService.recordAttendance(body)
+  async recordAttendance(@Body() dto: RecordAttendanceHttpDto) {
+    const command = new RecordAttendanceCommand(
+      dto.employeeId,
+      dto.date,
+      dto.clockIn,
+      dto.clockOut,
+      dto.status,
+      dto.notes,
+    )
+    return this.attendanceService.recordAttendance(command)
   }
 
   @Post('attendance/import')
   @RequirePermissions('attendance:create')
-  async importAttendance(@Body() body: { lines: any[] }) {
-    return this.attendanceService.importCsv(body.lines)
+  async importAttendance(@Body() dto: ImportAttendanceHttpDto) {
+    const command = new ImportAttendanceCommand(dto.lines)
+    return this.attendanceService.importCsv(command.lines)
   }
 
   @Get('attendance/report/export')
@@ -189,8 +234,9 @@ export class HrController {
 
   @Post('payroll/run')
   @RequirePermissions('payroll:create')
-  async runPayroll(@Body() body: { month: number; year: number }) {
-    return this.payrollService.runPayroll(body.month, body.year)
+  async runPayroll(@Body() dto: RunPayrollHttpDto) {
+    const command = new RunPayrollCommand(dto.month, dto.year)
+    return this.payrollService.runPayroll(command.month, command.year)
   }
 
   @Patch('payroll/:id/confirm')
@@ -279,7 +325,8 @@ export class HrController {
   @Post('thr/calculate')
   @RequirePermissions('thr:create')
   async calculateThr(@Query('year') year: string) {
-    return this.thrService.calculate(parseInt(year, 10))
+    const command = new CalculateThrCommand(parseInt(year, 10))
+    return this.thrService.calculate(command.year)
   }
 
   @Post('thr/:id/confirm')

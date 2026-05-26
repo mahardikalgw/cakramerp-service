@@ -13,21 +13,7 @@ import type {
 } from '../../domain/repositories/finance-repository.port'
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
 import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
-
-export interface CreateJournalEntryDto {
-  date: string
-  description: string
-  reference?: string
-  segment?: string
-  projectId?: string
-  costCenter?: string
-  lines: {
-    accountId: string
-    debit: number
-    credit: number
-    description?: string
-  }[]
-}
+import { CreateJournalEntryCommand } from '../commands/create-journal-entry.command'
 
 export interface JournalEntryWithLines {
   entry: JournalEntry
@@ -85,10 +71,9 @@ export class JournalEntryService implements JournalEntryServicePort {
     return { entry, lines: enrichedLines, totalDebit, totalCredit }
   }
 
-  async create(dto: CreateJournalEntryDto, userId: string, asDraft = true): Promise<JournalEntryWithLines> {
-    // Validate debit === credit
-    const totalDebit = dto.lines.reduce((sum, l) => sum + l.debit, 0)
-    const totalCredit = dto.lines.reduce((sum, l) => sum + l.credit, 0)
+  async create(command: CreateJournalEntryCommand, userId: string, asDraft = true): Promise<JournalEntryWithLines> {
+    const totalDebit = command.lines.reduce((sum, l) => sum + l.debit, 0)
+    const totalCredit = command.lines.reduce((sum, l) => sum + l.credit, 0)
 
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       throw new BadRequestException(
@@ -96,7 +81,7 @@ export class JournalEntryService implements JournalEntryServicePort {
       )
     }
 
-    if (dto.lines.length < 2) {
+    if (command.lines.length < 2) {
       throw new BadRequestException('Journal entry must have at least 2 lines')
     }
 
@@ -104,12 +89,12 @@ export class JournalEntryService implements JournalEntryServicePort {
 
     const entry = new JournalEntry({
       entryNumber,
-      date: new Date(dto.date),
-      description: dto.description,
-      reference: dto.reference,
-      segment: dto.segment,
-      projectId: dto.projectId,
-      costCenter: dto.costCenter,
+      date: new Date(command.date),
+      description: command.description,
+      reference: command.reference,
+      segment: command.segment,
+      projectId: command.projectId,
+      costCenter: command.costCenter,
       status: asDraft ? 'draft' : 'pending_approval',
       createdBy: userId,
     })
@@ -117,7 +102,7 @@ export class JournalEntryService implements JournalEntryServicePort {
     const savedEntry = await this.journalEntryRepo.save(entry)
 
     const lines: JournalEntryLine[] = []
-    for (const line of dto.lines) {
+    for (const line of command.lines) {
       const jeLine = new JournalEntryLine({
         journalEntryId: savedEntry.id,
         accountId: line.accountId,
@@ -167,7 +152,6 @@ export class JournalEntryService implements JournalEntryServicePort {
 
     const entryNumber = await this.journalEntryRepo.getNextEntryNumber()
 
-    // Create reversal entry with swapped debits/credits
     const reversalEntry = new JournalEntry({
       entryNumber,
       date: new Date(),
@@ -198,7 +182,6 @@ export class JournalEntryService implements JournalEntryServicePort {
       lines.push(savedLine)
     }
 
-    // Mark original as reversed
     original.entry.status = 'reversed'
     original.entry.updatedAt = new Date()
     await this.journalEntryRepo.save(original.entry)

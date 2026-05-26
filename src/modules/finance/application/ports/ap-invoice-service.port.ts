@@ -1,4 +1,7 @@
-import type { CreateAPInvoiceDto, SchedulePaymentDto, BulkPaymentDto, APInvoiceResponse } from '../services/ap-invoice.service'
+import type { APInvoiceResponse } from '../services/ap-invoice.service'
+import type { CreateAPInvoiceCommand } from '../commands/create-ap-invoice.command'
+import type { SchedulePaymentCommand } from '../commands/schedule-payment.command'
+import type { BulkPaymentCommand } from '../commands/bulk-payment.command'
 
 export const AP_INVOICE_SERVICE = Symbol('AP_INVOICE_SERVICE')
 
@@ -12,7 +15,7 @@ export interface APInvoiceServicePort {
     limit?: number
   }): Promise<{ data: APInvoiceResponse[]; total: number }>
   findById(id: string): Promise<APInvoiceResponse | null>
-  create(dto: CreateAPInvoiceDto): Promise<APInvoiceResponse>
-  schedulePayment(id: string, dto: SchedulePaymentDto): Promise<APInvoiceResponse>
-  bulkPayment(dto: BulkPaymentDto): Promise<{ paid: number; totalAmount: number }>
+  create(command: CreateAPInvoiceCommand): Promise<APInvoiceResponse>
+  schedulePayment(id: string, command: SchedulePaymentCommand): Promise<APInvoiceResponse>
+  bulkPayment(command: BulkPaymentCommand): Promise<{ paid: number; totalAmount: number }>
 }

@@ -4,9 +4,9 @@ import type { ItemRepositoryPort } from '../../domain/repositories/item-reposito
 import type {
   ItemServicePort,
   ItemResponseDto,
-  CreateItemDto,
-  UpdateItemDto,
 } from '../ports/item-service.port'
+import { CreateItemCommand } from '../commands/create-item.command'
+import { UpdateItemCommand } from '../commands/update-item.command'
 
 @Injectable()
 export class ItemService implements ItemServicePort {
@@ -31,18 +31,18 @@ export class ItemService implements ItemServicePort {
     return entity ? this.toResponse(entity) : null
   }
 
-  async create(dto: CreateItemDto): Promise<ItemResponseDto> {
-    const existing = await this.repo.findByCode(dto.code)
+  async create(command: CreateItemCommand): Promise<ItemResponseDto> {
+    const existing = await this.repo.findByCode(command.code)
     if (existing) {
       throw new ConflictException('Item with this code already exists')
     }
 
     const entity = this.repo.create({
-      code: dto.code,
-      name: dto.name,
-      category: dto.category,
-      uom: dto.uom,
-      minStockLevel: dto.minStockLevel ?? 0,
+      code: command.code,
+      name: command.name,
+      category: command.category,
+      uom: command.uom,
+      minStockLevel: command.minStockLevel ?? 0,
       isActive: true,
     })
 
@@ -50,22 +50,22 @@ export class ItemService implements ItemServicePort {
     return this.toResponse(saved)
   }
 
-  async update(id: string, dto: UpdateItemDto): Promise<ItemResponseDto> {
+  async update(id: string, command: UpdateItemCommand): Promise<ItemResponseDto> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new NotFoundException('Item not found')
 
-    if (dto.code !== undefined) {
-      const existing = await this.repo.findByCode(dto.code)
+    if (command.code !== undefined) {
+      const existing = await this.repo.findByCode(command.code)
       if (existing && existing.id !== id) {
         throw new ConflictException('Item with this code already exists')
       }
-      entity.code = dto.code
+      entity.code = command.code
     }
-    if (dto.name !== undefined) entity.name = dto.name
-    if (dto.category !== undefined) entity.category = dto.category
-    if (dto.uom !== undefined) entity.uom = dto.uom
-    if (dto.minStockLevel !== undefined) entity.minStockLevel = dto.minStockLevel
-    if (dto.isActive !== undefined) entity.isActive = dto.isActive
+    if (command.name !== undefined) entity.name = command.name
+    if (command.category !== undefined) entity.category = command.category
+    if (command.uom !== undefined) entity.uom = command.uom
+    if (command.minStockLevel !== undefined) entity.minStockLevel = command.minStockLevel
+    if (command.isActive !== undefined) entity.isActive = command.isActive
 
     const saved = await this.repo.save(entity)
     return this.toResponse(saved)

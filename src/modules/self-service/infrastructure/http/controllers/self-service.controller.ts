@@ -26,6 +26,16 @@ import { MY_OVERTIME_SERVICE } from '../../../application/ports/my-overtime-serv
 import type { MyOvertimeServicePort } from '../../../application/ports/my-overtime-service.port'
 import { MyProfileService } from '../../../application/services/my-profile.service'
 
+import { UpdateProfileCommand } from '../../../application/commands/update-profile.command'
+
+import {
+  ApplyLeaveHttpDto,
+  UpdateProfileHttpDto,
+  CreateChangeRequestHttpDto,
+  FlagDiscrepancyHttpDto,
+  CreateOvertimeRequestHttpDto,
+} from '../dtos/self-service.dto'
+
 @Controller('my')
 @UseGuards(JwtAuthGuard)
 export class SelfServiceController {
@@ -58,15 +68,22 @@ export class SelfServiceController {
   }
 
   @Put('profile')
-  async updateProfile(@Req() req: any, @Body() body: any) {
+  async updateProfile(@Req() req: any, @Body() dto: UpdateProfileHttpDto) {
     const employeeId = await this.getEmployeeId(req)
-    return this.profileService.updateProfile(employeeId, body)
+    const command = new UpdateProfileCommand(
+      dto.fullName,
+      dto.phone,
+      dto.address,
+      dto.bankAccountNumber,
+      dto.bankName,
+    )
+    return this.profileService.updateProfile(employeeId, command)
   }
 
   @Post('profile/change-requests')
-  async createChangeRequest(@Req() req: any, @Body() body: any) {
+  async createChangeRequest(@Req() req: any, @Body() dto: CreateChangeRequestHttpDto) {
     const employeeId = await this.getEmployeeId(req)
-    return this.profileService.createChangeRequest(employeeId, body)
+    return this.profileService.createChangeRequest(employeeId, dto)
   }
 
   @Get('documents')
@@ -96,9 +113,9 @@ export class SelfServiceController {
   }
 
   @Post('attendance/flag-discrepancy')
-  async flagDiscrepancy(@Req() req: any, @Body() body: any) {
+  async flagDiscrepancy(@Req() req: any, @Body() dto: FlagDiscrepancyHttpDto) {
     const employeeId = await this.getEmployeeId(req)
-    return this.attendanceService.flagDiscrepancy(employeeId, body)
+    return this.attendanceService.flagDiscrepancy(employeeId, { attendanceDate: dto.date, description: dto.reason })
   }
 
   // ─── Leave ─────────────────────────────────────────────────────────────────
@@ -124,9 +141,15 @@ export class SelfServiceController {
   }
 
   @Post('leave/apply')
-  async applyLeave(@Req() req: any, @Body() body: any) {
+  async applyLeave(@Req() req: any, @Body() dto: ApplyLeaveHttpDto) {
     const employeeId = await this.getEmployeeId(req)
-    return this.leaveService.applyLeave(employeeId, body)
+    return this.leaveService.applyLeave(employeeId, {
+      leaveTypeId: dto.leaveTypeId,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      reason: dto.reason ?? '',
+      attachmentPath: dto.attachmentPath,
+    })
   }
 
   @Patch('leave/:id/cancel')
@@ -183,8 +206,14 @@ export class SelfServiceController {
   }
 
   @Post('overtime-requests')
-  async createOvertimeRequest(@Req() req: any, @Body() body: any) {
+  async createOvertimeRequest(@Req() req: any, @Body() dto: CreateOvertimeRequestHttpDto) {
     const employeeId = await this.getEmployeeId(req)
-    return this.overtimeService.createRequest(employeeId, body)
+    return this.overtimeService.createRequest(employeeId, {
+      date: dto.date,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      reason: dto.reason ?? '',
+      projectReference: dto.projectReference,
+    })
   }
 }

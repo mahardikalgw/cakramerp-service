@@ -1,12 +1,10 @@
 import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common'
 import { SUPPLIER_REPOSITORY } from '../../domain/repositories/supplier-repository.port'
 import type { SupplierRepositoryPort } from '../../domain/repositories/supplier-repository.port'
-import type {
-  SupplierServicePort,
-  SupplierResponseDto,
-  CreateSupplierDto,
-  UpdateSupplierDto,
-} from '../ports/supplier-service.port'
+import { Supplier } from '../../domain/entities/supplier.entity'
+import { CreateSupplierCommand } from '../commands/create-supplier.command'
+import { UpdateSupplierCommand } from '../commands/update-supplier.command'
+import { SupplierServicePort } from '../ports/supplier-service.port'
 
 @Injectable()
 export class SupplierService implements SupplierServicePort {
@@ -20,82 +18,59 @@ export class SupplierService implements SupplierServicePort {
     status?: string
     page?: number
     limit?: number
-  }): Promise<{ data: SupplierResponseDto[]; total: number }> {
-    const { data, total } = await this.repo.findAll(filters)
-    return { data: data.map(this.toResponse), total }
+  }): Promise<{ data: Supplier[]; total: number }> {
+    return this.repo.findAll(filters)
   }
 
-  async findById(id: string): Promise<SupplierResponseDto | null> {
-    const entity = await this.repo.findById(id)
-    return entity ? this.toResponse(entity) : null
+  async findById(id: string): Promise<Supplier | null> {
+    return this.repo.findById(id)
   }
 
-  async create(dto: CreateSupplierDto): Promise<SupplierResponseDto> {
-    const existing = await this.repo.findByName(dto.name)
+  async create(command: CreateSupplierCommand): Promise<Supplier> {
+    const existing = await this.repo.findByName(command.name)
     if (existing) {
       throw new ConflictException('Supplier with this name already exists')
     }
 
     const entity = this.repo.create({
-      name: dto.name,
-      email: dto.email,
-      phone: dto.phone,
-      address: dto.address,
-      city: dto.city,
-      contactPerson: dto.contactPerson,
-      taxId: dto.taxId,
-      bankAccount: dto.bankAccount,
-      bankName: dto.bankName,
-      notes: dto.notes,
+      name: command.name,
+      email: command.email,
+      phone: command.phone,
+      address: command.address,
+      city: command.city,
+      contactPerson: command.contactPerson,
+      taxId: command.taxId,
+      bankAccount: command.bankAccount,
+      bankName: command.bankName,
+      notes: command.notes,
       status: 'active',
     })
 
-    const saved = await this.repo.save(entity)
-    return this.toResponse(saved)
+    return this.repo.save(entity)
   }
 
-  async update(id: string, dto: UpdateSupplierDto): Promise<SupplierResponseDto> {
+  async update(id: string, command: UpdateSupplierCommand): Promise<Supplier> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new NotFoundException('Supplier not found')
 
-    if (dto.name !== undefined) entity.name = dto.name
-    if (dto.email !== undefined) entity.email = dto.email
-    if (dto.phone !== undefined) entity.phone = dto.phone
-    if (dto.address !== undefined) entity.address = dto.address
-    if (dto.city !== undefined) entity.city = dto.city
-    if (dto.contactPerson !== undefined) entity.contactPerson = dto.contactPerson
-    if (dto.taxId !== undefined) entity.taxId = dto.taxId
-    if (dto.bankAccount !== undefined) entity.bankAccount = dto.bankAccount
-    if (dto.bankName !== undefined) entity.bankName = dto.bankName
-    if (dto.notes !== undefined) entity.notes = dto.notes
-    if (dto.status !== undefined) entity.status = dto.status
+    if (command.name !== undefined) entity.name = command.name
+    if (command.email !== undefined) entity.email = command.email
+    if (command.phone !== undefined) entity.phone = command.phone
+    if (command.address !== undefined) entity.address = command.address
+    if (command.city !== undefined) entity.city = command.city
+    if (command.contactPerson !== undefined) entity.contactPerson = command.contactPerson
+    if (command.taxId !== undefined) entity.taxId = command.taxId
+    if (command.bankAccount !== undefined) entity.bankAccount = command.bankAccount
+    if (command.bankName !== undefined) entity.bankName = command.bankName
+    if (command.notes !== undefined) entity.notes = command.notes
+    if (command.status !== undefined) entity.status = command.status as 'active' | 'inactive'
 
-    const saved = await this.repo.save(entity)
-    return this.toResponse(saved)
+    return this.repo.save(entity)
   }
 
   async delete(id: string): Promise<void> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new NotFoundException('Supplier not found')
     await this.repo.delete(id)
-  }
-
-  private toResponse(entity: any): SupplierResponseDto {
-    return {
-      id: entity.id,
-      name: entity.name,
-      email: entity.email ?? undefined,
-      phone: entity.phone ?? undefined,
-      address: entity.address ?? undefined,
-      city: entity.city ?? undefined,
-      contactPerson: entity.contactPerson ?? undefined,
-      taxId: entity.taxId ?? undefined,
-      bankAccount: entity.bankAccount ?? undefined,
-      bankName: entity.bankName ?? undefined,
-      notes: entity.notes ?? undefined,
-      status: entity.status,
-      createdAt: entity.createdAt?.toISOString?.() ?? String(entity.createdAt),
-      updatedAt: entity.updatedAt?.toISOString?.() ?? String(entity.updatedAt),
-    }
   }
 }

@@ -8,7 +8,10 @@ import type {
   AccountRepositoryPort,
   JournalEntryLineRepositoryPort,
 } from '../../domain/repositories/finance-repository.port'
-import { Account, AccountType } from '../../domain/entities/account.entity'
+import { Account } from '../../domain/entities/account.entity'
+import type { AccountType } from '../../domain/entities/account.entity'
+import { CreateAccountCommand } from '../commands/create-account.command'
+import { UpdateAccountCommand } from '../commands/update-account.command'
 
 export interface AccountTreeNode {
   id: string
@@ -21,26 +24,6 @@ export interface AccountTreeNode {
   parentId?: string
   isActive: boolean
   children: AccountTreeNode[]
-}
-
-export interface CreateAccountDto {
-  code: string
-  name: string
-  type: AccountType
-  taxCategory?: string
-  segment?: string
-  costCenter?: string
-  parentId?: string
-}
-
-export interface UpdateAccountDto {
-  code?: string
-  name?: string
-  type?: AccountType
-  taxCategory?: string
-  segment?: string
-  costCenter?: string
-  parentId?: string
 }
 
 @Injectable()
@@ -61,67 +44,63 @@ export class AccountService implements AccountServicePort {
     return this.accountRepo.findActive()
   }
 
-  async createAccount(dto: CreateAccountDto): Promise<Account> {
-    // Validate unique code
-    const existing = await this.accountRepo.findByCode(dto.code)
+  async createAccount(command: CreateAccountCommand): Promise<Account> {
+    const existing = await this.accountRepo.findByCode(command.code)
     if (existing) {
-      throw new BadRequestException(`Account code "${dto.code}" already exists`)
+      throw new BadRequestException(`Account code "${command.code}" already exists`)
     }
 
-    // Validate parent exists if provided
-    if (dto.parentId) {
-      const parent = await this.accountRepo.findById(dto.parentId)
+    if (command.parentId) {
+      const parent = await this.accountRepo.findById(command.parentId)
       if (!parent) {
         throw new BadRequestException('Parent account not found')
       }
     }
 
     const account = new Account({
-      code: dto.code,
-      name: dto.name,
-      type: dto.type,
-      taxCategory: dto.taxCategory,
-      segment: dto.segment,
-      costCenter: dto.costCenter,
-      parentId: dto.parentId,
+      code: command.code,
+      name: command.name,
+      type: command.type,
+      taxCategory: command.taxCategory,
+      segment: command.segment,
+      costCenter: command.costCenter,
+      parentId: command.parentId,
       isActive: true,
     })
 
     return this.accountRepo.save(account)
   }
 
-  async updateAccount(id: string, dto: UpdateAccountDto): Promise<Account> {
+  async updateAccount(id: string, command: UpdateAccountCommand): Promise<Account> {
     const account = await this.accountRepo.findById(id)
     if (!account) {
       throw new BadRequestException('Account not found')
     }
 
-    // Validate unique code if changing
-    if (dto.code && dto.code !== account.code) {
-      const existing = await this.accountRepo.findByCode(dto.code)
+    if (command.code && command.code !== account.code) {
+      const existing = await this.accountRepo.findByCode(command.code)
       if (existing) {
-        throw new BadRequestException(`Account code "${dto.code}" already exists`)
+        throw new BadRequestException(`Account code "${command.code}" already exists`)
       }
     }
 
-    // Validate parent if changing
-    if (dto.parentId && dto.parentId !== account.parentId) {
-      if (dto.parentId === id) {
+    if (command.parentId && command.parentId !== account.parentId) {
+      if (command.parentId === id) {
         throw new BadRequestException('Account cannot be its own parent')
       }
-      const parent = await this.accountRepo.findById(dto.parentId)
+      const parent = await this.accountRepo.findById(command.parentId)
       if (!parent) {
         throw new BadRequestException('Parent account not found')
       }
     }
 
-    if (dto.code) account.code = dto.code
-    if (dto.name) account.name = dto.name
-    if (dto.type) account.type = dto.type
-    if (dto.taxCategory !== undefined) account.taxCategory = dto.taxCategory
-    if (dto.segment !== undefined) account.segment = dto.segment
-    if (dto.costCenter !== undefined) account.costCenter = dto.costCenter
-    if (dto.parentId !== undefined) account.parentId = dto.parentId
+    if (command.code) account.code = command.code
+    if (command.name) account.name = command.name
+    if (command.type) account.type = command.type
+    if (command.taxCategory !== undefined) account.taxCategory = command.taxCategory
+    if (command.segment !== undefined) account.segment = command.segment
+    if (command.costCenter !== undefined) account.costCenter = command.costCenter
+    if (command.parentId !== undefined) account.parentId = command.parentId
     account.updatedAt = new Date()
 
     return this.accountRepo.save(account)
@@ -133,7 +112,6 @@ export class AccountService implements AccountServicePort {
       throw new BadRequestException('Account not found')
     }
 
-    // Block deactivation if account has transactions in current open period
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const lines = await this.journalLineRepo.findByAccountIdsAndDateRange(
@@ -158,7 +136,6 @@ export class AccountService implements AccountServicePort {
       throw new BadRequestException('Account not found')
     }
 
-    // Block deletion if account has any journal entry lines
     const lines = await this.journalLineRepo.findByAccountIdsAndDateRange(
       [id],
       new Date('2000-01-01'),
@@ -177,7 +154,6 @@ export class AccountService implements AccountServicePort {
     const map = new Map<string, AccountTreeNode>()
     const roots: AccountTreeNode[] = []
 
-    // Create nodes
     for (const acc of accounts) {
       map.set(acc.id, {
         id: acc.id,
@@ -193,7 +169,6 @@ export class AccountService implements AccountServicePort {
       })
     }
 
-    // Build hierarchy
     for (const acc of accounts) {
       const node = map.get(acc.id)!
       if (acc.parentId && map.has(acc.parentId)) {
@@ -203,7 +178,6 @@ export class AccountService implements AccountServicePort {
       }
     }
 
-    // Sort by type order then code
     const typeOrder: Record<string, number> = {
       asset: 1,
       liability: 2,

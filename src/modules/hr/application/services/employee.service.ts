@@ -2,51 +2,8 @@ import { Injectable, BadRequestException, NotFoundException, Inject } from '@nes
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
 import type { EmployeeServicePort } from '../ports/employee-service.port'
-
-export interface CreateEmployeeDto {
-  fullName: string
-  email?: string
-  phone?: string
-  dateOfBirth?: string
-  address?: string
-  employmentType: string
-  positionId?: string
-  positionName?: string
-  departmentId?: string
-  departmentName?: string
-  siteId?: string
-  siteName?: string
-  joinDate: string
-  basicSalary: number
-  bankAccountNumber?: string
-  bankName?: string
-  npwp?: string
-  bpjsKesehatanNumber?: string
-  bpjsKetenagakerjaanNumber?: string
-}
-
-export interface UpdateEmployeeDto {
-  fullName?: string
-  email?: string
-  phone?: string
-  dateOfBirth?: string
-  address?: string
-  employmentType?: string
-  positionId?: string
-  positionName?: string
-  departmentId?: string
-  departmentName?: string
-  siteId?: string
-  siteName?: string
-  endDate?: string
-  status?: string
-  basicSalary?: number
-  bankAccountNumber?: string
-  bankName?: string
-  npwp?: string
-  bpjsKesehatanNumber?: string
-  bpjsKetenagakerjaanNumber?: string
-}
+import { CreateEmployeeCommand } from '../commands/create-employee.command'
+import { UpdateEmployeeCommand } from '../commands/update-employee.command'
 
 export interface UploadDocumentDto {
   type: string
@@ -96,43 +53,46 @@ export class EmployeeService implements EmployeeServicePort {
     return { employee, documents, history }
   }
 
-  async create(dto: CreateEmployeeDto): Promise<any> {
+  async create(command: CreateEmployeeCommand): Promise<any> {
     const employeeNumber = await this.generateEmployeeNumber()
+
+    const fullName = `${command.firstName} ${command.lastName}`.trim()
 
     return this.employeeRepo.create({
       employeeNumber,
-      fullName: dto.fullName,
-      email: dto.email,
-      phone: dto.phone,
-      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-      address: dto.address,
-      employmentType: dto.employmentType,
-      positionId: dto.positionId,
-      positionName: dto.positionName,
-      departmentId: dto.departmentId,
-      departmentName: dto.departmentName,
-      siteId: dto.siteId,
-      siteName: dto.siteName,
-      joinDate: new Date(dto.joinDate),
-      basicSalary: dto.basicSalary,
-      bankAccountNumber: dto.bankAccountNumber,
-      bankName: dto.bankName,
-      npwp: dto.npwp,
-      bpjsKesehatanNumber: dto.bpjsKesehatanNumber,
-      bpjsKetenagakerjaanNumber: dto.bpjsKetenagakerjaanNumber,
+      fullName,
+      email: command.email,
+      phone: command.phone,
+      employmentType: command.employmentType,
+      departmentId: command.departmentId,
+      siteId: command.siteId,
+      positionName: command.position,
+      joinDate: command.hireDate ? new Date(command.hireDate) : new Date(),
+      basicSalary: command.baseSalary ?? 0,
       status: 'active',
     })
   }
 
-  async update(id: string, dto: UpdateEmployeeDto): Promise<any> {
+  async update(id: string, command: UpdateEmployeeCommand): Promise<any> {
     const employee = await this.employeeRepo.findById(id)
     if (!employee) throw new NotFoundException('Employee not found')
 
-    const updateData = {
-      ...dto,
-      dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : employee.dateOfBirth,
-      endDate: dto.endDate ? new Date(dto.endDate) : employee.endDate,
+    const updateData: any = {}
+
+    if (command.firstName !== undefined || command.lastName !== undefined) {
+      const firstName = command.firstName ?? employee.firstName ?? ''
+      const lastName = command.lastName ?? employee.lastName ?? ''
+      updateData.fullName = `${firstName} ${lastName}`.trim()
     }
+    if (command.email !== undefined) updateData.email = command.email
+    if (command.phone !== undefined) updateData.phone = command.phone
+    if (command.employmentType !== undefined) updateData.employmentType = command.employmentType
+    if (command.siteId !== undefined) updateData.siteId = command.siteId
+    if (command.departmentId !== undefined) updateData.departmentId = command.departmentId
+    if (command.position !== undefined) updateData.positionName = command.position
+    if (command.baseSalary !== undefined) updateData.basicSalary = command.baseSalary
+    if (command.hireDate !== undefined) updateData.joinDate = new Date(command.hireDate)
+    if (command.status !== undefined) updateData.status = command.status
 
     return this.employeeRepo.update(id, updateData)
   }

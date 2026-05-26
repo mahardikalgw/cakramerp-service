@@ -18,34 +18,9 @@ import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-po
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
 import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
 import { Repository, DataSource } from 'typeorm'
-
-export interface CreateAPInvoiceDto {
-  vendorId: string
-  vendorName: string
-  supplierId?: string
-  supplierInvoiceNumber?: string
-  poReferenceId?: string
-  grnReferenceId?: string
-  invoiceDate: string
-  dueDate: string
-  amount: number
-  paymentTermDays?: number
-  paymentTermLabel?: string
-  additionalDiscount?: number
-  lines?: { description: string; amount: number }[]
-}
-
-export interface SchedulePaymentDto {
-  dueDate: string
-  bankAccountId: string
-}
-
-export interface BulkPaymentDto {
-  invoiceIds: string[]
-  bankAccountId: string
-  paymentDate: string
-  reference?: string
-}
+import { CreateAPInvoiceCommand } from '../commands/create-ap-invoice.command'
+import { SchedulePaymentCommand } from '../commands/schedule-payment.command'
+import { BulkPaymentCommand } from '../commands/bulk-payment.command'
 
 export interface APInvoiceResponse {
   id: string
@@ -111,36 +86,36 @@ export class APInvoiceService implements APInvoiceServicePort {
     return entity ? await this.toResponse(entity) : null
   }
 
-  async create(dto: CreateAPInvoiceDto): Promise<APInvoiceResponse> {
+  async create(command: CreateAPInvoiceCommand): Promise<APInvoiceResponse> {
     const invoiceNumber = await this.repo.getNextInvoiceNumber()
 
     let threeWayMatchStatus = 'pending'
-    if (dto.poReferenceId && dto.grnReferenceId) {
+    if (command.poReferenceId && command.grnReferenceId) {
       threeWayMatchStatus = 'matched'
-    } else if (dto.poReferenceId || dto.grnReferenceId) {
+    } else if (command.poReferenceId || command.grnReferenceId) {
       threeWayMatchStatus = 'partial'
     }
 
-    const additionalDiscount = dto.additionalDiscount ?? 0
-    const finalAmount = dto.amount - additionalDiscount
+    const additionalDiscount = command.additionalDiscount ?? 0
+    const finalAmount = command.amount - additionalDiscount
 
     const entity = await this.repo.save(
       this.repo.create({
         invoiceNumber,
-        vendorId: dto.vendorId,
-        vendorName: dto.vendorName,
-        supplierId: dto.supplierId,
-        supplierInvoiceNumber: dto.supplierInvoiceNumber,
-        poReferenceId: dto.poReferenceId,
-        grnReferenceId: dto.grnReferenceId,
+        vendorId: command.vendorId,
+        vendorName: command.vendorName,
+        supplierId: command.supplierId,
+        supplierInvoiceNumber: command.supplierInvoiceNumber,
+        poReferenceId: command.poReferenceId,
+        grnReferenceId: command.grnReferenceId,
         amount: finalAmount,
         paidAmount: 0,
-        invoiceDate: new Date(dto.invoiceDate),
-        dueDate: new Date(dto.dueDate),
+        invoiceDate: new Date(command.invoiceDate),
+        dueDate: new Date(command.dueDate),
         status: 'pending',
         threeWayMatchStatus,
-        paymentTermDays: dto.paymentTermDays,
-        paymentTermLabel: dto.paymentTermLabel,
+        paymentTermDays: command.paymentTermDays,
+        paymentTermLabel: command.paymentTermLabel,
         additionalDiscount,
       }),
     )
@@ -150,18 +125,18 @@ export class APInvoiceService implements APInvoiceServicePort {
     return await this.toResponse(entity)
   }
 
-  async schedulePayment(id: string, dto: SchedulePaymentDto): Promise<APInvoiceResponse> {
+  async schedulePayment(id: string, command: SchedulePaymentCommand): Promise<APInvoiceResponse> {
     const entity = await this.repo.findById(id)
     if (!entity) throw new BadRequestException('AP Invoice not found')
 
-    entity.scheduledPaymentDate = new Date(dto.dueDate)
-    entity.bankAccountId = dto.bankAccountId
+    entity.scheduledPaymentDate = new Date(command.dueDate)
+    entity.bankAccountId = command.bankAccountId
     const saved = await this.repo.save(entity)
     return await this.toResponse(saved)
   }
 
-  async bulkPayment(dto: BulkPaymentDto): Promise<{ paid: number; totalAmount: number }> {
-    const invoices = await this.repo.findByIds(dto.invoiceIds)
+  async bulkPayment(command: BulkPaymentCommand): Promise<{ paid: number; totalAmount: number }> {
+    const invoices = await this.repo.findByIds(command.invoiceIds)
 
     if (invoices.length === 0) {
       throw new BadRequestException('No invoices found')
@@ -188,9 +163,9 @@ export class APInvoiceService implements APInvoiceServicePort {
     const invoiceNumbers = invoices.map((i: APInvoiceTypeOrmEntity) => i.invoiceNumber).join(', ')
     const entry = new JournalEntry({
       entryNumber,
-      date: new Date(dto.paymentDate),
+      date: new Date(command.paymentDate),
       description: `Bulk payment to ${invoices[0].vendorName} (${invoices.length} invoices)`,
-      reference: dto.reference ?? `Supplier Invoice ${invoiceNumbers}`,
+      reference: command.reference ?? `Supplier Invoice ${invoiceNumbers}`,
       status: 'approved',
       createdBy: null as any,
       approvedBy: null as any,
@@ -202,7 +177,7 @@ export class APInvoiceService implements APInvoiceServicePort {
     const savedEntry = await this.journalEntryRepo.save(entry)
 
     const apAccount = await this.accountRepo.findByCode('2100')
-    const apAccountId = apAccount?.id ?? dto.bankAccountId
+    const apAccountId = apAccount?.id ?? command.bankAccountId
 
     await this.journalLineRepo.save(
       new JournalEntryLine({
@@ -217,7 +192,7 @@ export class APInvoiceService implements APInvoiceServicePort {
     await this.journalLineRepo.save(
       new JournalEntryLine({
         journalEntryId: savedEntry.id,
-        accountId: dto.bankAccountId,
+        accountId: command.bankAccountId,
         debit: new Decimal(0),
         credit: new Decimal(totalAmount),
         description: `Payment to ${invoices[0].vendorName}`,

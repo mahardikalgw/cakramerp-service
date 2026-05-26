@@ -4,15 +4,8 @@ import type { AttendanceRepositoryPort } from '../../domain/repositories/attenda
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
 import type { AttendanceServicePort } from '../ports/attendance-service.port'
-
-export interface RecordAttendanceDto {
-  employeeId: string
-  date: string
-  clockIn?: string
-  clockOut?: string
-  status: string
-  absenceReason?: string
-}
+import { RecordAttendanceCommand } from '../commands/record-attendance.command'
+import { ImportAttendanceCommand } from '../commands/import-attendance.command'
 
 export interface ImportCsvLineDto {
   employeeId: string
@@ -129,36 +122,34 @@ export class AttendanceService implements AttendanceServicePort {
     })
   }
 
-  async recordAttendance(dto: RecordAttendanceDto): Promise<any> {
+  async recordAttendance(command: RecordAttendanceCommand): Promise<any> {
     const existing = await this.attendanceRepo.findByEmployeeAndDate(
-      dto.employeeId,
-      new Date(dto.date),
+      command.employeeId,
+      new Date(command.date),
     )
 
     const parseClockTime = (time: string | undefined): Date | undefined => {
       if (!time) return undefined
-      // If already a full ISO string, use directly
       if (time.includes('T') || time.includes('-')) return new Date(time)
-      // Otherwise combine date + time (e.g. "08:00" → "2026-05-23T08:00:00")
-      return new Date(`${dto.date}T${time}:00`)
+      return new Date(`${command.date}T${time}:00`)
     }
 
     if (existing) {
       return this.attendanceRepo.update(existing.id, {
-        clockIn: parseClockTime(dto.clockIn) ?? existing.clockIn,
-        clockOut: parseClockTime(dto.clockOut) ?? existing.clockOut,
-        status: dto.status,
-        absenceReason: dto.absenceReason ?? existing.absenceReason,
+        clockIn: parseClockTime(command.clockIn) ?? existing.clockIn,
+        clockOut: parseClockTime(command.clockOut) ?? existing.clockOut,
+        status: command.status,
+        absenceReason: command.notes ?? existing.absenceReason,
       })
     }
 
     return this.attendanceRepo.create({
-      employeeId: dto.employeeId,
-      date: new Date(dto.date),
-      clockIn: parseClockTime(dto.clockIn),
-      clockOut: parseClockTime(dto.clockOut),
-      status: dto.status,
-      absenceReason: dto.absenceReason,
+      employeeId: command.employeeId,
+      date: new Date(command.date),
+      clockIn: parseClockTime(command.clockIn),
+      clockOut: parseClockTime(command.clockOut),
+      status: command.status ?? 'present',
+      absenceReason: command.notes,
       isImported: false,
       overtimeHours: 0,
     })
