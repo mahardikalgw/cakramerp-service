@@ -38,4 +38,10 @@ export class JournalEntryTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   reversalOfId: string
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  sourceType: string
+
+  @Column({ type: 'uuid', nullable: true })
+  sourceId: string
 }

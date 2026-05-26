@@ -5,6 +5,7 @@ export class GoodsReceipt {
       grnNumber: string
       poId?: string
       warehouseId: string
+      supplierId?: string
       vendorName: string
       receivedDate: Date
       notes?: string
@@ -24,6 +25,9 @@ export class GoodsReceipt {
   }
   get warehouseId() {
     return this.props.warehouseId
+  }
+  get supplierId() {
+    return this.props.supplierId
   }
   get vendorName() {
     return this.props.vendorName

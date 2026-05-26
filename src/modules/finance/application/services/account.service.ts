@@ -1,3 +1,4 @@
+import { AccountServicePort } from '../ports/account-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import {
   ACCOUNT_REPOSITORY,
@@ -43,7 +44,7 @@ export interface UpdateAccountDto {
 }
 
 @Injectable()
-export class AccountService {
+export class AccountService implements AccountServicePort {
   constructor(
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepo: AccountRepositoryPort,

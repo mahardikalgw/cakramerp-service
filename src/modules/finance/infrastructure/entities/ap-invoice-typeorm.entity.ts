@@ -44,4 +44,19 @@ export class APInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'date', nullable: true })
   scheduledPaymentDate: Date
+
+  @Column({ type: 'uuid', nullable: true })
+  supplierId: string
+
+  @Column({ type: 'int', nullable: true })
+  paymentTermDays: number
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentTermLabel: string
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  additionalDiscount: number
+
+  @Column({ type: 'uuid', nullable: true })
+  journalEntryId: string
 }

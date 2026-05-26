@@ -13,6 +13,8 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { HrModule } from './modules/hr/hr.module';
 import { WarehouseModule } from './modules/warehouse/warehouse.module';
 import { SelfServiceModule } from './modules/self-service/self-service.module';
+import { CustomerModule } from './modules/customer';
+import { SupplierModule } from './modules/supplier';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { SelfServiceModule } from './modules/self-service/self-service.module';
     HrModule,
     WarehouseModule,
     SelfServiceModule,
+    CustomerModule,
+    SupplierModule,
   ],
   controllers: [AppController],
   providers: [AppService],

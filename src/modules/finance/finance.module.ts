@@ -12,6 +12,7 @@ import { APInvoiceService } from './application/services/ap-invoice.service'
 import { TaxService } from './application/services/tax.service'
 import { BankReconciliationService } from './application/services/bank-reconciliation.service'
 import { FinancialStatementsService } from './application/services/financial-statements.service'
+import { GlPostingQueueService } from './application/services/gl-posting-queue.service'
 import { KpiAlertCheckJob } from './application/jobs/kpi-alert-check.job'
 import { AccountTypeOrmEntity } from './infrastructure/entities/account-typeorm.entity'
 import { JournalEntryTypeOrmEntity } from './infrastructure/entities/journal-entry-typeorm.entity'
@@ -27,6 +28,7 @@ import { BankAccountTypeOrmEntity } from './infrastructure/entities/bank-account
 import { BankStatementLineTypeOrmEntity } from './infrastructure/entities/bank-statement-line-typeorm.entity'
 import { ReconciliationSessionTypeOrmEntity } from './infrastructure/entities/reconciliation-session-typeorm.entity'
 import { TaxInvoiceTypeOrmEntity } from './infrastructure/entities/tax-invoice-typeorm.entity'
+import { GlPostingQueueTypeOrmEntity } from './infrastructure/entities/gl-posting-queue-typeorm.entity'
 import { AccountTypeOrmRepository } from './infrastructure/repositories/account-typeorm.repository'
 import { ARInvoiceTypeOrmRepository } from './infrastructure/repositories/ar-invoice-typeorm.repository'
 import { ARInvoiceLineTypeOrmRepository } from './infrastructure/repositories/ar-invoice-line-typeorm.repository'
@@ -41,6 +43,7 @@ import { BankAccountTypeOrmRepository } from './infrastructure/repositories/bank
 import { BankStatementLineTypeOrmRepository } from './infrastructure/repositories/bank-statement-line-typeorm.repository'
 import { ReconciliationSessionTypeOrmRepository } from './infrastructure/repositories/reconciliation-session-typeorm.repository'
 import { TaxInvoiceTypeOrmRepository } from './infrastructure/repositories/tax-invoice-typeorm.repository'
+import { GlPostingQueueTypeOrmRepository } from './infrastructure/repositories/gl-posting-queue-typeorm.repository'
 import {
   ACCOUNT_REPOSITORY,
   AR_INVOICE_REPOSITORY,
@@ -56,6 +59,7 @@ import {
   BANK_STATEMENT_LINE_REPOSITORY,
   RECONCILIATION_SESSION_REPOSITORY,
   TAX_INVOICE_REPOSITORY,
+  GL_POSTING_QUEUE_REPOSITORY,
 } from './domain/repositories/finance-repository.port'
 import { FINANCE_SERVICE } from './application/ports/finance-service.port'
 import { ACCOUNT_SERVICE } from './application/ports/account-service.port'
@@ -65,6 +69,7 @@ import { AP_INVOICE_SERVICE } from './application/ports/ap-invoice-service.port'
 import { TAX_SERVICE } from './application/ports/tax-service.port'
 import { BANK_RECONCILIATION_SERVICE } from './application/ports/bank-reconciliation-service.port'
 import { FINANCIAL_STATEMENTS_SERVICE } from './application/ports/financial-statements-service.port'
+import { GL_POSTING_QUEUE_SERVICE } from './application/ports/gl-posting-queue-service.port'
 
 @Module({
   imports: [
@@ -84,6 +89,7 @@ import { FINANCIAL_STATEMENTS_SERVICE } from './application/ports/financial-stat
       BankStatementLineTypeOrmEntity,
       ReconciliationSessionTypeOrmEntity,
       TaxInvoiceTypeOrmEntity,
+      GlPostingQueueTypeOrmEntity,
     ]),
   ],
   controllers: [FinanceController, FinanceManagementController],
@@ -147,6 +153,10 @@ import { FINANCIAL_STATEMENTS_SERVICE } from './application/ports/financial-stat
       provide: TAX_INVOICE_REPOSITORY,
       useClass: TaxInvoiceTypeOrmRepository,
     },
+    {
+      provide: GL_POSTING_QUEUE_REPOSITORY,
+      useClass: GlPostingQueueTypeOrmRepository,
+    },
     // Service bindings
     {
       provide: FINANCE_SERVICE,
@@ -180,7 +190,11 @@ import { FINANCIAL_STATEMENTS_SERVICE } from './application/ports/financial-stat
       provide: FINANCIAL_STATEMENTS_SERVICE,
       useClass: FinancialStatementsService,
     },
+    {
+      provide: GL_POSTING_QUEUE_SERVICE,
+      useClass: GlPostingQueueService,
+    },
   ],
-  exports: [FINANCE_SERVICE, ACCOUNT_SERVICE, JOURNAL_ENTRY_SERVICE],
+  exports: [FINANCE_SERVICE, ACCOUNT_SERVICE, JOURNAL_ENTRY_SERVICE, ACCOUNT_REPOSITORY],
 })
 export class FinanceModule {}

@@ -205,13 +205,13 @@ export class FinanceController {
   }
 
   @Get('alert-settings')
-  @RequirePermissions('finance:read')
+  @RequirePermissions('settings:read')
   async getAlertSettings() {
     return this.financeService.getAlertSettings()
   }
 
   @Put('alert-settings')
-  @RequirePermissions('finance:write')
+  @RequirePermissions('settings:update')
   async updateAlertSettings(
     @Body() body: { settings: { alertType: string; value: number }[] },
   ) {
@@ -220,7 +220,7 @@ export class FinanceController {
   }
 
   @Post('check-thresholds')
-  @RequirePermissions('finance:write')
+  @RequirePermissions('settings:update')
   async checkThresholds() {
     await this.financeService.checkThresholdsAndCreateAlerts()
     return { message: 'Threshold check completed' }

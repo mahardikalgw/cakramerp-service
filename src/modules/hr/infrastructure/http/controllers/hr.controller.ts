@@ -78,19 +78,19 @@ export class HrController {
   }
 
   @Post('employees')
-  @RequirePermissions('employees:create', 'employees:write')
+  @RequirePermissions('employees:create')
   async createEmployee(@Body() body: any) {
     return this.employeeService.create(body)
   }
 
   @Put('employees/:id')
-  @RequirePermissions('employees:update', 'employees:write')
+  @RequirePermissions('employees:update')
   async updateEmployee(@Param('id') id: string, @Body() body: any) {
     return this.employeeService.update(id, body)
   }
 
   @Post('employees/:id/documents')
-  @RequirePermissions('employees:update', 'employees:write')
+  @RequirePermissions('employees:update')
   async uploadDocument(@Param('id') id: string, @Body() body: any) {
     return this.employeeService.uploadDocument(id, body)
   }
@@ -142,13 +142,13 @@ export class HrController {
   }
 
   @Post('attendance')
-  @RequirePermissions('attendance:create', 'attendance:write')
+  @RequirePermissions('attendance:create')
   async recordAttendance(@Body() body: any) {
     return this.attendanceService.recordAttendance(body)
   }
 
   @Post('attendance/import')
-  @RequirePermissions('attendance:create', 'attendance:write')
+  @RequirePermissions('attendance:create')
   async importAttendance(@Body() body: { lines: any[] }) {
     return this.attendanceService.importCsv(body.lines)
   }
@@ -188,20 +188,20 @@ export class HrController {
   }
 
   @Post('payroll/run')
-  @RequirePermissions('payroll:create', 'payroll:write')
+  @RequirePermissions('payroll:create')
   async runPayroll(@Body() body: { month: number; year: number }) {
     return this.payrollService.runPayroll(body.month, body.year)
   }
 
   @Patch('payroll/:id/confirm')
-  @RequirePermissions('payroll:update', 'payroll:write')
+  @RequirePermissions('payroll:approve')
   async confirmPayroll(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.payrollService.confirmPayroll(id, userId)
   }
 
   @Post('payroll/:id/post-to-gl')
-  @RequirePermissions('payroll:update', 'payroll:write')
+  @RequirePermissions('payroll:update')
   async postPayrollToGL(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.payrollService.postToGL(id, userId)
@@ -210,7 +210,7 @@ export class HrController {
   // ==================== Pay Slips ====================
 
   @Post('payroll/:id/generate-payslips')
-  @RequirePermissions('payroll:create', 'payroll:write')
+  @RequirePermissions('payroll:create')
   async generatePaySlips(@Param('id') id: string) {
     return this.paySlipService.generatePaySlips(id)
   }
@@ -246,7 +246,7 @@ export class HrController {
   // ==================== BPJS Report ====================
 
   @Get('bpjs-report')
-  @RequirePermissions('payroll:read')
+  @RequirePermissions('bpjs-report:read')
   async getBpjsReport(
     @Query('month') month: string,
     @Query('year') year: string,
@@ -255,7 +255,7 @@ export class HrController {
   }
 
   @Get('bpjs-report/export')
-  @RequirePermissions('payroll:read')
+  @RequirePermissions('bpjs-report:read')
   async exportBpjsReport(
     @Query('month') month: string,
     @Query('year') year: string,
@@ -271,19 +271,19 @@ export class HrController {
   // ==================== THR ====================
 
   @Get('thr')
-  @RequirePermissions('payroll:read')
+  @RequirePermissions('thr:read')
   async getThrRecords(@Query('year') year: string) {
     return this.thrService.getRecords(parseInt(year, 10))
   }
 
   @Post('thr/calculate')
-  @RequirePermissions('payroll:create', 'payroll:write')
+  @RequirePermissions('thr:create')
   async calculateThr(@Query('year') year: string) {
     return this.thrService.calculate(parseInt(year, 10))
   }
 
   @Post('thr/:id/confirm')
-  @RequirePermissions('payroll:update', 'payroll:write')
+  @RequirePermissions('thr:update')
   async confirmThr(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.thrService.confirm(id, userId)

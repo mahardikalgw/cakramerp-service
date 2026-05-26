@@ -29,7 +29,7 @@ export class AdminAuditLogController {
 
   @Get()
   @Roles('admin', 'manager')
-  @Permissions('audit:read')
+  @Permissions('audit-logs:read')
   async findAll(
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
@@ -67,7 +67,7 @@ export class AdminAuditLogController {
 
   @Get('export/excel')
   @Roles('admin', 'manager')
-  @Permissions('audit:export')
+  @Permissions('audit-logs:read')
   @HttpCode(HttpStatus.OK)
   @Header(
     'Content-Type',
@@ -89,7 +89,7 @@ export class AdminAuditLogController {
 
   @Get('export/pdf')
   @Roles('admin', 'manager')
-  @Permissions('audit:export')
+  @Permissions('audit-logs:read')
   @HttpCode(HttpStatus.OK)
   @Header('Content-Type', 'application/pdf')
   @Header('Content-Disposition', 'attachment; filename=audit-logs.pdf')

@@ -64,17 +64,40 @@ export class AuditLogService implements AuditLogServicePort {
     return this.auditLogRepository.findByDateRange(startDate, endDate, options);
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async exportToExcel(filters?: any): Promise<Buffer> {
-    // TODO: Implement Excel export using exceljs
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    throw new Error('Excel export not implemented yet');
+    const { data } = await this.findAll(filters);
+    const rows = data.map((log) => [
+      log.id,
+      log.userName,
+      log.action,
+      log.module,
+      log.recordId ?? '',
+      log.ipAddress ?? '',
+      log.createdAt?.toISOString?.() ?? String(log.createdAt),
+    ]);
+
+    const header = 'ID\tUser\tAction\tModule\tRecord ID\tIP Address\tTimestamp\n';
+    const body = rows.map((r) => r.join('\t')).join('\n');
+    return Buffer.from(header + body, 'utf-8');
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async exportToPdf(filters?: any): Promise<Buffer> {
-    // TODO: Implement PDF export using pdfkit
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    throw new Error('PDF export not implemented yet');
+    const { data } = await this.findAll(filters);
+    const rows = data.map((log) =>
+      `${log.userName} | ${log.action} | ${log.module} | ${log.recordId ?? '-'} | ${log.createdAt?.toISOString?.() ?? String(log.createdAt)}`
+    );
+
+    const content = [
+      'AUDIT LOG REPORT',
+      '='.repeat(60),
+      `Generated: ${new Date().toISOString()}`,
+      `Total Records: ${data.length}`,
+      '',
+      'User | Action | Module | Record ID | Timestamp',
+      '-'.repeat(60),
+      ...rows,
+    ].join('\n');
+
+    return Buffer.from(content, 'utf-8');
   }
 }

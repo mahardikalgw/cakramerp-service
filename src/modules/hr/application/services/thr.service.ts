@@ -3,6 +3,10 @@ import { THR_REPOSITORY } from '../../domain/repositories/thr-repository.port'
 import type { ThrRepositoryPort } from '../../domain/repositories/thr-repository.port'
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
+import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port'
+import type { JournalEntryServicePort } from '../../../finance/application/ports/journal-entry-service.port'
+import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port'
+import type { AccountRepositoryPort } from '../../../finance/domain/repositories/finance-repository.port'
 import type { ThrServicePort } from '../ports/thr-service.port'
 
 @Injectable()
@@ -12,6 +16,10 @@ export class ThrService implements ThrServicePort {
     private readonly thrRepo: ThrRepositoryPort,
     @Inject(EMPLOYEE_REPOSITORY)
     private readonly employeeRepo: EmployeeRepositoryPort,
+    @Inject(JOURNAL_ENTRY_SERVICE)
+    private readonly journalEntryService: JournalEntryServicePort,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accountRepo: AccountRepositoryPort,
   ) {}
 
   async calculate(year: number): Promise<{ calculated: number; excluded: number }> {
@@ -98,10 +106,37 @@ export class ThrService implements ThrServicePort {
     record: any,
     userId: string,
   ): Promise<void> {
-    // Integration point with finance module
-    // Creates journal entries for:
-    // - Debit: THR Expense account
-    // - Credit: THR Payable / Cash account
-    // This should be wired to the finance module's JournalEntryService
+    const thrExpenseAcc = await this.accountRepo.findByCode('5200')
+    const thrPayableAcc = await this.accountRepo.findByCode('2320')
+    const cashAcc = await this.accountRepo.findByCode('1100')
+
+    const expenseAccountId = thrExpenseAcc?.id ?? cashAcc?.id
+    const creditAccountId = thrPayableAcc?.id ?? cashAcc?.id
+
+    if (!expenseAccountId || !creditAccountId) return
+
+    await this.journalEntryService.create(
+      {
+        date: new Date().toISOString().split('T')[0],
+        description: `THR payment - ${record.employeeName} (${record.year})`,
+        reference: `THR-${record.year}-${record.employeeId}`,
+        lines: [
+          {
+            accountId: expenseAccountId,
+            debit: Number(record.thrAmount),
+            credit: 0,
+            description: 'THR expense',
+          },
+          {
+            accountId: creditAccountId,
+            debit: 0,
+            credit: Number(record.thrAmount),
+            description: 'THR payable',
+          },
+        ],
+      },
+      userId || 'system',
+      false,
+    )
   }
 }

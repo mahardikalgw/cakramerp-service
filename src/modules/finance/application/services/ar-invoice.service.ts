@@ -1,3 +1,4 @@
+import { ARInvoiceServicePort } from '../ports/ar-invoice-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import { Decimal } from 'decimal.js'
 import {
@@ -5,12 +6,15 @@ import {
   AR_INVOICE_LINE_REPOSITORY,
   JOURNAL_ENTRY_REPOSITORY,
   JOURNAL_ENTRY_LINE_REPOSITORY,
+  ACCOUNT_REPOSITORY,
 } from '../../domain/repositories/finance-repository.port'
 import type {
   ARInvoiceLineRepositoryPort,
   JournalEntryRepositoryPort,
   JournalEntryLineRepositoryPort,
+  AccountRepositoryPort,
 } from '../../domain/repositories/finance-repository.port'
+import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-posting-queue-typeorm.entity'
 import { ARInvoiceTypeOrmEntity } from '../../infrastructure/entities/ar-invoice-typeorm.entity'
 import { ARInvoiceLineTypeOrmEntity } from '../../infrastructure/entities/ar-invoice-line-typeorm.entity'
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
@@ -20,11 +24,15 @@ import { Repository, DataSource } from 'typeorm'
 export interface CreateInvoiceDto {
   clientId: string
   clientName: string
+  customerId?: string
   invoiceDate: string
   dueDate: string
   segment?: string
   projectId?: string
   sendEmail?: boolean
+  paymentTermDays?: number
+  paymentTermLabel?: string
+  additionalDiscount?: number
   lines: {
     description: string
     quantity: number
@@ -40,21 +48,49 @@ export interface RecordPaymentDto {
   reference?: string
 }
 
+export interface UpdateInvoiceDto {
+  clientId?: string
+  clientName?: string
+  customerId?: string
+  invoiceDate?: string
+  dueDate?: string
+  segment?: string
+  projectId?: string
+  paymentTermDays?: number
+  paymentTermLabel?: string
+  additionalDiscount?: number
+  lines?: {
+    description: string
+    quantity: number
+    unitPrice: number
+    taxPercent: number
+  }[]
+}
+
 export interface InvoiceWithLines {
   id: string
   invoiceNumber: string
   clientId: string
   clientName: string
+  customerId?: string
   invoiceDate: string
   dueDate: string
   status: string
   subtotal: number
   taxTotal: number
+  additionalDiscount: number
   grandTotal: number
   paidAmount: number
   balance: number
   segment?: string
   projectId?: string
+  paymentTermDays?: number
+  paymentTermLabel?: string
+  glPostingQueueId: string | null
+  glPostingQueueStatus: string | null
+  journalEntryId: string | null
+  journalEntryNumber: string | null
+  journalEntryStatus: string | null
   lines: {
     id: string
     description: string
@@ -66,8 +102,9 @@ export interface InvoiceWithLines {
 }
 
 @Injectable()
-export class ARInvoiceService {
+export class ARInvoiceService implements ARInvoiceServicePort {
   private readonly invoiceRepo: Repository<ARInvoiceTypeOrmEntity>
+  private readonly queueRepo: Repository<GlPostingQueueTypeOrmEntity>
 
   constructor(
     private readonly dataSource: DataSource,
@@ -77,8 +114,11 @@ export class ARInvoiceService {
     private readonly journalEntryRepo: JournalEntryRepositoryPort,
     @Inject(JOURNAL_ENTRY_LINE_REPOSITORY)
     private readonly journalLineRepo: JournalEntryLineRepositoryPort,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accountRepo: AccountRepositoryPort,
   ) {
     this.invoiceRepo = dataSource.getRepository(ARInvoiceTypeOrmEntity)
+    this.queueRepo = dataSource.getRepository(GlPostingQueueTypeOrmEntity)
   }
 
   async findAll(filters?: {
@@ -106,7 +146,7 @@ export class ARInvoiceService {
     const data: InvoiceWithLines[] = []
     for (const inv of entities) {
       const lines = await this.lineRepo.findByInvoiceId(inv.id)
-      data.push(this.toInvoiceWithLines(inv, lines))
+      data.push(await this.toInvoiceWithLines(inv, lines))
     }
 
     return { data, total }
@@ -116,7 +156,7 @@ export class ARInvoiceService {
     const inv = await this.invoiceRepo.findOne({ where: { id } })
     if (!inv) return null
     const lines = await this.lineRepo.findByInvoiceId(id)
-    return this.toInvoiceWithLines(inv, lines)
+    return await this.toInvoiceWithLines(inv, lines)
   }
 
   async create(dto: CreateInvoiceDto, asDraft = true): Promise<InvoiceWithLines> {
@@ -143,18 +183,25 @@ export class ARInvoiceService {
 
     const grandTotal = subtotal + taxTotal
 
+    const additionalDiscount = dto.additionalDiscount ?? 0
+    const finalTotal = grandTotal - additionalDiscount
+
     const invoice = await this.invoiceRepo.save(
       this.invoiceRepo.create({
         invoiceNumber,
         clientId: dto.clientId,
         clientName: dto.clientName,
+        customerId: dto.customerId,
         projectId: dto.projectId,
         segment: dto.segment,
-        amount: grandTotal,
+        amount: finalTotal,
         paidAmount: 0,
         dueDate: new Date(dto.dueDate),
         issueDate: new Date(dto.invoiceDate),
         status: asDraft ? 'draft' : 'sent',
+        paymentTermDays: dto.paymentTermDays,
+        paymentTermLabel: dto.paymentTermLabel,
+        additionalDiscount,
       }),
     )
 
@@ -166,7 +213,65 @@ export class ARInvoiceService {
       savedLines.push(saved)
     }
 
-    return this.toInvoiceWithLines(invoice, savedLines)
+    return await this.toInvoiceWithLines(invoice, savedLines)
+  }
+
+  async update(id: string, dto: UpdateInvoiceDto): Promise<InvoiceWithLines> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } })
+    if (!inv) throw new BadRequestException('Invoice not found')
+    if (inv.status !== 'draft') {
+      throw new BadRequestException('Only draft invoices can be edited')
+    }
+
+    if (dto.clientId !== undefined) inv.clientId = dto.clientId
+    if (dto.clientName !== undefined) inv.clientName = dto.clientName
+    if (dto.customerId !== undefined) (inv as any).customerId = dto.customerId
+    if (dto.invoiceDate !== undefined) inv.issueDate = new Date(dto.invoiceDate)
+    if (dto.dueDate !== undefined) inv.dueDate = new Date(dto.dueDate)
+    if (dto.segment !== undefined) inv.segment = dto.segment
+    if (dto.projectId !== undefined) inv.projectId = dto.projectId
+    if (dto.paymentTermDays !== undefined) inv.paymentTermDays = dto.paymentTermDays
+    if (dto.paymentTermLabel !== undefined) inv.paymentTermLabel = dto.paymentTermLabel
+    if (dto.additionalDiscount !== undefined) inv.additionalDiscount = dto.additionalDiscount
+
+    if (dto.lines) {
+      const existingLines = await this.lineRepo.findByInvoiceId(id)
+      for (const line of existingLines) {
+        await this.dataSource.getRepository(ARInvoiceLineTypeOrmEntity).delete(line.id)
+      }
+
+      let subtotal = 0
+      let taxTotal = 0
+      const savedLines: ARInvoiceLineTypeOrmEntity[] = []
+
+      for (const line of dto.lines) {
+        const lineAmount = line.quantity * line.unitPrice
+        const lineTax = lineAmount * (line.taxPercent / 100)
+        subtotal += lineAmount
+        taxTotal += lineTax
+
+        const saved = await this.lineRepo.save(
+          this.lineRepo.create({
+            invoiceId: id,
+            description: line.description,
+            quantity: line.quantity,
+            unitPrice: line.unitPrice,
+            taxPercent: line.taxPercent,
+            amount: lineAmount + lineTax,
+          }),
+        )
+        savedLines.push(saved)
+      }
+
+      const discount = Number(inv.additionalDiscount ?? 0)
+      inv.amount = subtotal + taxTotal - discount
+      const saved = await this.invoiceRepo.save(inv)
+      return this.toInvoiceWithLines(saved, savedLines)
+    }
+
+    const saved = await this.invoiceRepo.save(inv)
+    const lines = await this.lineRepo.findByInvoiceId(id)
+    return this.toInvoiceWithLines(saved, lines)
   }
 
   async send(id: string): Promise<InvoiceWithLines> {
@@ -179,6 +284,9 @@ export class ARInvoiceService {
     inv.status = 'sent'
     const saved = await this.invoiceRepo.save(inv)
     const lines = await this.lineRepo.findByInvoiceId(id)
+
+    // Create GL posting queue entry
+    await this.enqueueGlPosting(saved, 'invoice_issued')
 
     // TODO: Queue email job with PDF attachment
     return this.toInvoiceWithLines(saved, lines)
@@ -207,6 +315,9 @@ export class ARInvoiceService {
 
     const saved = await this.invoiceRepo.save(inv)
 
+    // Create GL posting queue entry for payment
+    await this.enqueueGlPosting(saved, 'payment_received', dto.amount)
+
     // Auto-create GL journal entry on full payment
     if (inv.status === 'paid') {
       await this.createPaymentJournalEntry(inv, dto)
@@ -222,20 +333,24 @@ export class ARInvoiceService {
   ): Promise<void> {
     const entryNumber = await this.journalEntryRepo.getNextEntryNumber()
 
+    const arAccount = await this.accountRepo.findByCode('1200')
+    const arAccountId = arAccount?.id ?? dto.bankAccountId
+
     const entry = new JournalEntry({
       entryNumber,
       date: new Date(dto.paymentDate),
       description: `Payment received for invoice ${inv.invoiceNumber}`,
-      reference: dto.reference ?? inv.invoiceNumber,
+      reference: dto.reference ?? `Sales Invoice ${inv.invoiceNumber}`,
       status: 'approved',
-      createdBy: 'system',
-      approvedBy: 'system',
+      createdBy: null as any,
+      approvedBy: null as any,
       approvedAt: new Date(),
+      sourceType: 'sales_invoice',
+      sourceId: inv.id,
     })
 
     const savedEntry = await this.journalEntryRepo.save(entry)
 
-    // Debit: Cash/Bank, Credit: AR
     const debitLine = new JournalEntryLine({
       journalEntryId: savedEntry.id,
       accountId: dto.bankAccountId,
@@ -244,10 +359,9 @@ export class ARInvoiceService {
       description: `Payment from ${inv.clientName}`,
     })
 
-    // For AR credit, we'd need the AR account ID - use a convention
     const creditLine = new JournalEntryLine({
       journalEntryId: savedEntry.id,
-      accountId: dto.bankAccountId, // TODO: Replace with AR account lookup
+      accountId: arAccountId,
       debit: new Decimal(0),
       credit: new Decimal(dto.amount),
       description: `AR cleared for ${inv.invoiceNumber}`,
@@ -255,6 +369,11 @@ export class ARInvoiceService {
 
     await this.journalLineRepo.save(debitLine)
     await this.journalLineRepo.save(creditLine)
+
+    await this.dataSource.query(
+      `UPDATE "ar_invoices" SET "journal_entry_id" = $1 WHERE "id" = $2`,
+      [savedEntry.id, inv.id],
+    )
   }
 
   private async getNextInvoiceNumber(): Promise<string> {
@@ -271,31 +390,110 @@ export class ARInvoiceService {
     return `${prefix}${seq.toString().padStart(4, '0')}`
   }
 
-  private toInvoiceWithLines(
+  async enqueueGlPosting(
+    inv: ARInvoiceTypeOrmEntity,
+    eventType: 'invoice_issued' | 'payment_received',
+    paymentAmount?: number,
+  ): Promise<void> {
+    const amount = paymentAmount ?? Number(inv.amount)
+
+    let suggestedLines: Record<string, unknown>[]
+    if (eventType === 'payment_received') {
+      suggestedLines = [
+        { accountId: '', accountCode: '1100', accountName: 'Bank / Cash', debit: amount, credit: 0, description: `Payment from ${inv.clientName}` },
+        { accountId: '', accountCode: '1200', accountName: 'Accounts Receivable', debit: 0, credit: amount, description: `Settle ${inv.invoiceNumber}` },
+      ]
+    } else {
+      suggestedLines = [
+        { accountId: '', accountCode: '1200', accountName: 'Accounts Receivable', debit: amount, credit: 0, description: `Revenue - ${inv.invoiceNumber}` },
+        { accountId: '', accountCode: '4100', accountName: 'Sales Revenue', debit: 0, credit: amount, description: `Revenue on ${inv.invoiceNumber}` },
+      ]
+    }
+
+    const existing = await this.queueRepo.findOne({
+      where: { sourceType: 'sales_invoice', sourceId: inv.id, eventType },
+    })
+    if (existing) return
+
+    await this.queueRepo.save(
+      this.queueRepo.create({
+        sourceType: 'sales_invoice',
+        sourceId: inv.id,
+        sourceNumber: inv.invoiceNumber,
+        eventType,
+        amount,
+        description: `${inv.invoiceNumber} - ${inv.clientName}`,
+        suggestedLines,
+        status: 'pending',
+      }),
+    )
+  }
+
+  private async toInvoiceWithLines(
     inv: ARInvoiceTypeOrmEntity,
     lines: ARInvoiceLineTypeOrmEntity[],
-  ): InvoiceWithLines {
+  ): Promise<InvoiceWithLines> {
     const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
     const taxTotal = lines.reduce(
       (sum, l) => sum + l.quantity * l.unitPrice * (l.taxPercent / 100),
       0,
     )
+    const additionalDiscount = Number(inv.additionalDiscount ?? 0)
+
+    let glPostingQueueId: string | null = null
+    let glPostingQueueStatus: string | null = null
+    let journalEntryId: string | null = (inv as any).journalEntryId ?? null
+    let journalEntryNumber: string | null = null
+    let journalEntryStatus: string | null = null
+
+    try {
+      const pq = await this.queueRepo.findOne({
+        where: { sourceType: 'sales_invoice', sourceId: inv.id, status: 'pending' },
+        order: { createdAt: 'DESC' },
+      })
+      if (pq) {
+        glPostingQueueId = pq.id
+        glPostingQueueStatus = pq.status
+      }
+    } catch {}
+
+    if (journalEntryId) {
+      try {
+        const rows = await this.dataSource.query(
+          `SELECT entry_number, status FROM journal_entries WHERE id = $1 LIMIT 1`,
+          [journalEntryId],
+        )
+        if (rows.length > 0) {
+          journalEntryNumber = rows[0].entry_number
+          journalEntryStatus = rows[0].status
+        }
+      } catch {}
+    }
 
     return {
       id: inv.id,
       invoiceNumber: inv.invoiceNumber,
       clientId: inv.clientId,
       clientName: inv.clientName,
+      customerId: inv.customerId ?? undefined,
       invoiceDate: inv.issueDate?.toISOString?.() ?? String(inv.issueDate),
       dueDate: inv.dueDate?.toISOString?.() ?? String(inv.dueDate),
       status: inv.status,
       subtotal,
       taxTotal,
+      additionalDiscount,
       grandTotal: Number(inv.amount),
       paidAmount: Number(inv.paidAmount),
       balance: Number(inv.amount) - Number(inv.paidAmount),
       segment: inv.segment ?? undefined,
       projectId: inv.projectId ?? undefined,
+      paymentTermDays: inv.paymentTermDays ?? undefined,
+      paymentTermLabel: inv.paymentTermLabel ?? undefined,
+      glPostingQueueId,
+      glPostingQueueStatus,
+      journalEntryId,
+      journalEntryNumber,
+      journalEntryStatus,
       lines: lines.map((l) => ({
         id: l.id,
         description: l.description,

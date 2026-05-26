@@ -32,7 +32,7 @@ export class AdminSettingsController {
 
   @Put()
   @Roles('admin')
-  @Permissions('settings:write')
+  @Permissions('settings:update')
   async updateSettings(@Body() dto: UpdateSettingsHttpDto) {
     const settings: Record<string, { value: string; category: string }> = {};
 

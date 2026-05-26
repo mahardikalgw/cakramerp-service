@@ -91,6 +91,8 @@ export class JournalEntryTypeOrmRepository implements JournalEntryRepositoryPort
       approvedBy: entity.approvedBy ?? undefined,
       approvedAt: entity.approvedAt ?? undefined,
       reversalOfId: entity.reversalOfId ?? undefined,
+      sourceType: entity.sourceType ?? undefined,
+      sourceId: entity.sourceId ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     })
@@ -111,6 +113,8 @@ export class JournalEntryTypeOrmRepository implements JournalEntryRepositoryPort
       approvedBy: domain.approvedBy,
       approvedAt: domain.approvedAt,
       reversalOfId: domain.reversalOfId,
+      sourceType: domain.sourceType,
+      sourceId: domain.sourceId,
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
     })

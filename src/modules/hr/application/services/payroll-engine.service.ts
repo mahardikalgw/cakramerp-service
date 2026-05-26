@@ -5,6 +5,10 @@ import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-reposito
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port'
 import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port'
+import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port'
+import type { JournalEntryServicePort } from '../../../finance/application/ports/journal-entry-service.port'
+import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port'
+import type { AccountRepositoryPort } from '../../../finance/domain/repositories/finance-repository.port'
 import type { PayrollServicePort } from '../ports/payroll-service.port'
 
 @Injectable()
@@ -33,6 +37,10 @@ export class PayrollEngineService implements PayrollServicePort {
     private readonly employeeRepo: EmployeeRepositoryPort,
     @Inject(ATTENDANCE_REPOSITORY)
     private readonly attendanceRepo: AttendanceRepositoryPort,
+    @Inject(JOURNAL_ENTRY_SERVICE)
+    private readonly journalEntryService: JournalEntryServicePort,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accountRepo: AccountRepositoryPort,
   ) {}
 
   async runPayroll(month: number, year: number): Promise<any> {
@@ -243,13 +251,72 @@ export class PayrollEngineService implements PayrollServicePort {
   }
 
   private async createPayrollJournalEntries(run: any): Promise<void> {
-    // Integration point with finance module
-    // Creates journal entries for:
-    // - Debit: Salary Expense (gross pay)
-    // - Credit: BPJS Payable (employee + employer portions)
-    // - Credit: PPh 21 Payable
-    // - Credit: Cash/Bank (net pay)
-    // This should be wired to the finance module's JournalEntryService
-    // For now, this is a placeholder for the GL posting logic
+    const details = await this.payrollRepo.findDetailsByRunId(run.id)
+
+    const totalGross = details.reduce((s: number, d: any) => s + Number(d.grossPay), 0)
+    const totalBpjsEmployee = details.reduce(
+      (s: number, d: any) =>
+        s + Number(d.bpjsKesehatanEmployee) + Number(d.bpjsJht) + Number(d.bpjsJp),
+      0,
+    )
+    const totalBpjsEmployer = details.reduce(
+      (s: number, d: any) =>
+        s + Number(d.bpjsKesehatanEmployer) + Number(d.bpjsJkk) + Number(d.bpjsJkm),
+      0,
+    )
+    const totalPph21 = details.reduce((s: number, d: any) => s + Number(d.pph21), 0)
+    const totalNet = details.reduce((s: number, d: any) => s + Number(d.netPay), 0)
+
+    const salaryExpenseAcc = await this.accountRepo.findByCode('5100')
+    const bpjsPayableAcc = await this.accountRepo.findByCode('2300')
+    const pph21PayableAcc = await this.accountRepo.findByCode('2310')
+    const cashAcc = await this.accountRepo.findByCode('1100')
+
+    if (!salaryExpenseAcc || !cashAcc) return
+
+    const lines: { accountId: string; debit: number; credit: number; description?: string }[] = []
+
+    lines.push({
+      accountId: salaryExpenseAcc.id,
+      debit: totalGross + totalBpjsEmployer,
+      credit: 0,
+      description: 'Salary expense + employer BPJS',
+    })
+
+    if (bpjsPayableAcc && (totalBpjsEmployee + totalBpjsEmployer) > 0) {
+      lines.push({
+        accountId: bpjsPayableAcc.id,
+        debit: 0,
+        credit: totalBpjsEmployee + totalBpjsEmployer,
+        description: 'BPJS payable (employee + employer)',
+      })
+    }
+
+    if (pph21PayableAcc && totalPph21 > 0) {
+      lines.push({
+        accountId: pph21PayableAcc.id,
+        debit: 0,
+        credit: totalPph21,
+        description: 'PPh 21 payable',
+      })
+    }
+
+    lines.push({
+      accountId: cashAcc.id,
+      debit: 0,
+      credit: totalNet,
+      description: 'Net salary payment',
+    })
+
+    await this.journalEntryService.create(
+      {
+        date: new Date().toISOString().split('T')[0],
+        description: `Payroll ${run.month}/${run.year}`,
+        reference: `PAYROLL-${run.year}-${String(run.month).padStart(2, '0')}`,
+        lines,
+      },
+      'system',
+      false,
+    )
   }
 }

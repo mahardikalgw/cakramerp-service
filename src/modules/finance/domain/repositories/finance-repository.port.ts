@@ -7,6 +7,7 @@ import { APPayment } from '../entities/ap-payment.entity'
 import { Project } from '../entities/project.entity'
 import { KpiThreshold } from '../entities/kpi-threshold.entity'
 import { KpiAlert } from '../entities/kpi-alert.entity'
+import { GlPostingQueue } from '../entities/gl-posting-queue.entity'
 
 export const ACCOUNT_REPOSITORY = Symbol('ACCOUNT_REPOSITORY')
 export const JOURNAL_ENTRY_REPOSITORY = Symbol('JOURNAL_ENTRY_REPOSITORY')
@@ -22,6 +23,7 @@ export const BANK_ACCOUNT_REPOSITORY = Symbol('BANK_ACCOUNT_REPOSITORY')
 export const BANK_STATEMENT_LINE_REPOSITORY = Symbol('BANK_STATEMENT_LINE_REPOSITORY')
 export const RECONCILIATION_SESSION_REPOSITORY = Symbol('RECONCILIATION_SESSION_REPOSITORY')
 export const TAX_INVOICE_REPOSITORY = Symbol('TAX_INVOICE_REPOSITORY')
+export const GL_POSTING_QUEUE_REPOSITORY = Symbol('GL_POSTING_QUEUE_REPOSITORY')
 
 export interface AccountRepositoryPort extends RepositoryPort<Account> {
   findByType(type: string): Promise<Account[]>
@@ -126,4 +128,17 @@ export interface ReconciliationSessionRepositoryPort {
 
 export interface TaxInvoiceRepositoryPort {
   findByMonthAndYear(month: number, year: number): Promise<any[]>
+}
+
+export interface GlPostingQueueRepositoryPort {
+  findAll(filters?: {
+    status?: string
+    sourceType?: string
+    page?: number
+    limit?: number
+  }): Promise<{ data: GlPostingQueue[]; total: number }>
+  findById(id: string): Promise<GlPostingQueue | null>
+  findBySource(sourceType: string, sourceId: string): Promise<GlPostingQueue | null>
+  save(entity: GlPostingQueue): Promise<GlPostingQueue>
+  update(id: string, data: Partial<GlPostingQueue>): Promise<void>
 }

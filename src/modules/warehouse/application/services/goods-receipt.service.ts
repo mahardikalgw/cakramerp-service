@@ -8,6 +8,7 @@ import type { GoodsReceiptServicePort } from '../ports/goods-receipt-service.por
 export interface CreateGoodsReceiptDto {
   poId?: string
   warehouseId: string
+  supplierId?: string
   vendorName: string
   receivedDate: string
   notes?: string
@@ -41,6 +42,7 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
       grnNumber,
       poId: dto.poId,
       warehouseId: dto.warehouseId,
+      supplierId: dto.supplierId,
       vendorName: dto.vendorName,
       receivedDate: new Date(dto.receivedDate),
       notes: dto.notes,

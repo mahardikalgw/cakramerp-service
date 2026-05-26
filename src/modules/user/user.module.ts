@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserService } from './application/services/user.service';
 import { UserController } from './infrastructure/http/controllers/user.controller';
@@ -10,9 +10,10 @@ import { USER_REPOSITORY } from './domain/repositories/user-repository.port';
 import { USER_SERVICE } from './application/ports/user-service.port';
 import { USER_IDENTITY_PORT } from '../../shared/kernel/domain/ports/user-identity.port';
 import { USER_ROLE_ASSIGNER_PORT } from '../../shared/kernel/domain/ports/user-role-assigner.port';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserTypeOrmEntity])],
+  imports: [TypeOrmModule.forFeature([UserTypeOrmEntity]), forwardRef(() => AuditModule)],
   controllers: [UserController],
   providers: [
     {

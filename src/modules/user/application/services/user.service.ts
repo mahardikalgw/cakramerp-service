@@ -11,6 +11,8 @@ import type { UserRepositoryPort } from '../../domain/repositories/user-reposito
 import { USER_REPOSITORY } from '../../domain/repositories/user-repository.port';
 import type { UserRoleAssignerPort } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
 import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { AUDIT_LOG_SERVICE } from '../../../audit/application/ports/audit-log-service.port';
+import type { AuditLogServicePort } from '../../../audit/application/ports/audit-log-service.port';
 import { CreateUserCommand } from '../commands/create-user.command';
 import { UpdateUserCommand } from '../commands/update-user.command';
 import { ChangePasswordCommand } from '../commands/change-password.command';
@@ -23,6 +25,8 @@ export class UserService implements UserServicePort {
     private readonly userRepository: UserRepositoryPort,
     @Inject(USER_ROLE_ASSIGNER_PORT)
     private readonly userRoleAssigner: UserRoleAssignerPort,
+    @Inject(AUDIT_LOG_SERVICE)
+    private readonly auditLogService: AuditLogServicePort,
   ) {}
 
   async create(command: CreateUserCommand): Promise<User> {
@@ -120,7 +124,6 @@ export class UserService implements UserServicePort {
     // This would require deleting refresh tokens from the database
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async logAuditAction(data: {
     userId: string;
     action: string;
@@ -128,8 +131,14 @@ export class UserService implements UserServicePort {
     recordId: string;
     payload: any;
   }): Promise<void> {
-    // TODO: Implement audit logging
-    // This would require creating an audit_logs table and a service to log actions
-    console.log('Audit log:', data);
+    await this.auditLogService.create({
+      userId: data.userId,
+      userName: '',
+      action: data.action,
+      module: data.module,
+      recordId: data.recordId,
+      ipAddress: '',
+      payload: data.payload,
+    });
   }
 }

@@ -1,3 +1,4 @@
+import { FinancialStatementsServicePort } from '../ports/financial-statements-service.port'
 import { Injectable, Inject } from '@nestjs/common'
 import { Decimal } from 'decimal.js'
 import {
@@ -60,7 +61,7 @@ export interface CashFlowStatement {
 }
 
 @Injectable()
-export class FinancialStatementsService {
+export class FinancialStatementsService implements FinancialStatementsServicePort {
   constructor(
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepo: AccountRepositoryPort,

@@ -15,12 +15,14 @@ import { ROLE_SERVICE } from './application/ports/role-service.port';
 import { PERMISSION_SERVICE } from './application/ports/permission-service.port';
 import { UserModule } from '../user/user.module';
 import { AuthModule } from '../auth/auth.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RoleTypeOrmEntity, PermissionTypeOrmEntity]),
     UserModule,
     AuthModule,
+    AuditModule,
   ],
   controllers: [IAMController],
   providers: [

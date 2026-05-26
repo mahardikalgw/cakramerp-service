@@ -1,3 +1,4 @@
+import { BankReconciliationServicePort } from '../ports/bank-reconciliation-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import {
   BANK_ACCOUNT_REPOSITORY,
@@ -48,7 +49,7 @@ export interface ReconciliationReport {
 }
 
 @Injectable()
-export class BankReconciliationService {
+export class BankReconciliationService implements BankReconciliationServicePort {
   constructor(
     @Inject(BANK_ACCOUNT_REPOSITORY)
     private readonly bankAccountRepo: BankAccountRepositoryPort,

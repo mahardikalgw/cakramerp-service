@@ -40,7 +40,7 @@ export class IAMController {
   ) {}
 
   @Post('roles')
-  @RequirePermissions('roles:create', 'roles:write')
+  @RequirePermissions('roles:create')
   async createRole(@Body() dto: CreateRoleHttpDto): Promise<RoleResponseDto> {
     const command = new CreateRoleCommand(
       dto.name,
@@ -78,7 +78,7 @@ export class IAMController {
   }
 
   @Post('permissions')
-  @RequirePermissions('permissions:create', 'permissions:write')
+  @RequirePermissions('permissions:read')
   async createPermission(
     @Body() dto: CreatePermissionHttpDto,
   ): Promise<PermissionResponseDto> {
@@ -105,7 +105,7 @@ export class IAMController {
   }
 
   @Post('assign-roles')
-  @RequirePermissions('roles:update', 'roles:write')
+  @RequirePermissions('roles:update')
   async assignRoles(@Body() dto: AssignRoleHttpDto): Promise<void> {
     const command = new AssignRoleCommand(dto.userId, dto.roleIds);
     return this.roleService.assignRolesToUser(command);
@@ -119,7 +119,7 @@ export class IAMController {
   }
 
   @Put('roles/:id/permissions')
-  @RequirePermissions('roles:update', 'roles:write')
+  @RequirePermissions('roles:update')
   async updateRolePermissions(
     @Param('id') id: string,
     @Body() dto: UpdateRolePermissionsHttpDto,
@@ -129,7 +129,7 @@ export class IAMController {
     // Log audit action with diff
     await this.roleService.logAuditAction({
       userId: 'system',
-      action: 'update_permissions',
+      action: 'update',
       module: 'Roles',
       recordId: id,
       payload: { permissionIds: dto.permissionIds },

@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Query,
   Body,
   Param,
@@ -24,6 +25,8 @@ import { STOCK_OPNAME_SERVICE } from '../../../application/ports/stock-opname-se
 import type { StockOpnameServicePort } from '../../../application/ports/stock-opname-service.port'
 import { EQUIPMENT_SERVICE } from '../../../application/ports/equipment-service.port'
 import type { EquipmentServicePort } from '../../../application/ports/equipment-service.port'
+import { ITEM_SERVICE } from '../../../application/ports/item-service.port'
+import type { ItemServicePort, CreateItemDto, UpdateItemDto } from '../../../application/ports/item-service.port'
 
 @Controller('warehouse')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -39,12 +42,58 @@ export class WarehouseController {
     private readonly opnameService: StockOpnameServicePort,
     @Inject(EQUIPMENT_SERVICE)
     private readonly equipmentService: EquipmentServicePort,
+    @Inject(ITEM_SERVICE)
+    private readonly itemService: ItemServicePort,
   ) {}
+
+  // ==================== Items (Stock Items) ====================
+
+  @Get('items')
+  @RequirePermissions('stock-items:read')
+  async getItems(
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('is_active') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.itemService.findAll({
+      search,
+      category,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('items/:id')
+  @RequirePermissions('stock-items:read')
+  async getItem(@Param('id') id: string) {
+    return this.itemService.findById(id)
+  }
+
+  @Post('items')
+  @RequirePermissions('stock-items:create')
+  async createItem(@Body() dto: CreateItemDto) {
+    return this.itemService.create(dto)
+  }
+
+  @Put('items/:id')
+  @RequirePermissions('stock-items:update')
+  async updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
+    return this.itemService.update(id, dto)
+  }
+
+  @Delete('items/:id')
+  @RequirePermissions('stock-items:delete')
+  async deleteItem(@Param('id') id: string) {
+    return this.itemService.delete(id)
+  }
 
   // ==================== Stock Dashboard ====================
 
   @Get('stock')
-  @RequirePermissions('inventory:read')
+  @RequirePermissions('stock:read')
   async getStock(
     @Query('warehouse_id') warehouseId?: string,
     @Query('category') category?: string,
@@ -58,7 +107,7 @@ export class WarehouseController {
   }
 
   @Get('stock/:itemId/card')
-  @RequirePermissions('inventory:read')
+  @RequirePermissions('stock:read')
   async getStockCard(@Param('itemId') itemId: string) {
     return this.stockService.getStockCard(itemId)
   }
@@ -66,7 +115,7 @@ export class WarehouseController {
   // ==================== Goods Receipts ====================
 
   @Get('goods-receipts')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('goods-receipts:read')
   async getGoodsReceipts(
     @Query('warehouse_id') warehouseId?: string,
     @Query('page') page?: string,
@@ -80,13 +129,13 @@ export class WarehouseController {
   }
 
   @Get('goods-receipts/:id')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('goods-receipts:read')
   async getGoodsReceipt(@Param('id') id: string) {
     return this.goodsReceiptService.findById(id)
   }
 
   @Post('goods-receipts')
-  @RequirePermissions('inventory:create', 'inventory:write')
+  @RequirePermissions('goods-receipts:create')
   async createGoodsReceipt(@Body() body: any, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.goodsReceiptService.create(body, userId)
@@ -95,7 +144,7 @@ export class WarehouseController {
   // ==================== Stock Issuances ====================
 
   @Get('issuances')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('issuances:read')
   async getIssuances(
     @Query('warehouse_id') warehouseId?: string,
     @Query('destination_type') destinationType?: string,
@@ -111,20 +160,20 @@ export class WarehouseController {
   }
 
   @Get('issuances/:id')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('issuances:read')
   async getIssuance(@Param('id') id: string) {
     return this.issuanceService.findById(id)
   }
 
   @Post('issuances')
-  @RequirePermissions('inventory:create', 'inventory:write')
+  @RequirePermissions('issuances:create')
   async createIssuance(@Body() body: any, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.issuanceService.create(body, userId)
   }
 
   @Post('issuances/:id/reverse')
-  @RequirePermissions('inventory:update', 'inventory:write')
+  @RequirePermissions('issuances:update')
   async reverseIssuance(
     @Param('id') id: string,
     @Body() body: { reason: string },
@@ -137,7 +186,7 @@ export class WarehouseController {
   // ==================== Stock Opname ====================
 
   @Get('stock-opname')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('stock-opname:read')
   async getOpnameSessions(
     @Query('warehouse_id') warehouseId?: string,
     @Query('status') status?: string,
@@ -146,20 +195,20 @@ export class WarehouseController {
   }
 
   @Get('stock-opname/:id')
-  @RequirePermissions('warehouse:read')
+  @RequirePermissions('stock-opname:read')
   async getOpnameSession(@Param('id') id: string) {
     return this.opnameService.findById(id)
   }
 
   @Post('stock-opname')
-  @RequirePermissions('inventory:create', 'inventory:write')
+  @RequirePermissions('stock-opname:create')
   async createOpname(@Body() body: { warehouseId: string }, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.opnameService.create(body.warehouseId, userId)
   }
 
   @Patch('stock-opname/:id/counts')
-  @RequirePermissions('inventory:update', 'inventory:write')
+  @RequirePermissions('stock-opname:update')
   async updateOpnameCounts(
     @Param('id') id: string,
     @Body() body: { lines: { itemId: string; actualQty: number }[] },
@@ -168,13 +217,13 @@ export class WarehouseController {
   }
 
   @Patch('stock-opname/:id/submit')
-  @RequirePermissions('inventory:update', 'inventory:write')
+  @RequirePermissions('stock-opname:update')
   async submitOpname(@Param('id') id: string) {
     return this.opnameService.submit(id)
   }
 
   @Patch('stock-opname/:id/approve')
-  @RequirePermissions('warehouse:update', 'warehouse:write')
+  @RequirePermissions('stock-opname:approve')
   async approveOpname(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown'
     return this.opnameService.approve(id, userId)
@@ -207,19 +256,19 @@ export class WarehouseController {
   }
 
   @Post('equipment')
-  @RequirePermissions('equipment:create', 'equipment:write')
+  @RequirePermissions('equipment:create')
   async createEquipment(@Body() body: any) {
     return this.equipmentService.create(body)
   }
 
   @Put('equipment/:id')
-  @RequirePermissions('equipment:update', 'equipment:write')
+  @RequirePermissions('equipment:update')
   async updateEquipment(@Param('id') id: string, @Body() body: any) {
     return this.equipmentService.update(id, body)
   }
 
   @Post('equipment/:id/log-maintenance')
-  @RequirePermissions('equipment:update', 'equipment:write')
+  @RequirePermissions('equipment:update')
   async logMaintenance(
     @Param('id') id: string,
     @Body() body: any,

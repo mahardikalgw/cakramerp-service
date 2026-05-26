@@ -1,3 +1,4 @@
+import { TaxServicePort } from '../ports/tax-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import {
   TAX_INVOICE_REPOSITORY,
@@ -31,7 +32,7 @@ export interface TaxReportSummary {
 }
 
 @Injectable()
-export class TaxService {
+export class TaxService implements TaxServicePort {
   constructor(
     @Inject(TAX_INVOICE_REPOSITORY)
     private readonly repo: TaxInvoiceRepositoryPort,

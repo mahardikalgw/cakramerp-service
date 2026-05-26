@@ -8,6 +8,7 @@ import { GoodsReceiptService } from './application/services/goods-receipt.servic
 import { StockIssuanceService } from './application/services/stock-issuance.service'
 import { StockOpnameService } from './application/services/stock-opname.service'
 import { EquipmentService } from './application/services/equipment.service'
+import { ItemService } from './application/services/item.service'
 import { EquipmentMaintenanceAlertJob } from './application/jobs/equipment-alert.job'
 
 // Repository implementations
@@ -16,6 +17,7 @@ import { GoodsReceiptTypeOrmRepository } from './infrastructure/repositories/goo
 import { StockIssuanceTypeOrmRepository } from './infrastructure/repositories/stock-issuance-typeorm.repository'
 import { StockOpnameTypeOrmRepository } from './infrastructure/repositories/stock-opname-typeorm.repository'
 import { EquipmentTypeOrmRepository } from './infrastructure/repositories/equipment-typeorm.repository'
+import { ItemTypeOrmRepository } from './infrastructure/repositories/item-typeorm.repository'
 
 // Port symbols
 import { STOCK_MOVEMENT_REPOSITORY } from './domain/repositories/stock-movement-repository.port'
@@ -23,11 +25,13 @@ import { GOODS_RECEIPT_REPOSITORY } from './domain/repositories/goods-receipt-re
 import { STOCK_ISSUANCE_REPOSITORY } from './domain/repositories/stock-issuance-repository.port'
 import { STOCK_OPNAME_REPOSITORY } from './domain/repositories/stock-opname-repository.port'
 import { EQUIPMENT_REPOSITORY } from './domain/repositories/equipment-repository.port'
+import { ITEM_REPOSITORY } from './domain/repositories/item-repository.port'
 import { STOCK_MOVEMENT_SERVICE } from './application/ports/stock-movement-service.port'
 import { GOODS_RECEIPT_SERVICE } from './application/ports/goods-receipt-service.port'
 import { STOCK_ISSUANCE_SERVICE } from './application/ports/stock-issuance-service.port'
 import { STOCK_OPNAME_SERVICE } from './application/ports/stock-opname-service.port'
 import { EQUIPMENT_SERVICE } from './application/ports/equipment-service.port'
+import { ITEM_SERVICE } from './application/ports/item-service.port'
 
 // TypeORM entities
 import { ItemTypeOrmEntity } from './infrastructure/entities/item-typeorm.entity'
@@ -70,12 +74,14 @@ import { MaintenanceLogTypeOrmEntity } from './infrastructure/entities/maintenan
     { provide: STOCK_ISSUANCE_REPOSITORY, useClass: StockIssuanceTypeOrmRepository },
     { provide: STOCK_OPNAME_REPOSITORY, useClass: StockOpnameTypeOrmRepository },
     { provide: EQUIPMENT_REPOSITORY, useClass: EquipmentTypeOrmRepository },
+    { provide: ITEM_REPOSITORY, useClass: ItemTypeOrmRepository },
     // Service bindings
     { provide: STOCK_MOVEMENT_SERVICE, useClass: StockMovementService },
     { provide: GOODS_RECEIPT_SERVICE, useClass: GoodsReceiptService },
     { provide: STOCK_ISSUANCE_SERVICE, useClass: StockIssuanceService },
     { provide: STOCK_OPNAME_SERVICE, useClass: StockOpnameService },
     { provide: EQUIPMENT_SERVICE, useClass: EquipmentService },
+    { provide: ITEM_SERVICE, useClass: ItemService },
     // Jobs
     EquipmentMaintenanceAlertJob,
   ],

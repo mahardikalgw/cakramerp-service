@@ -1,12 +1,15 @@
+import { JournalEntryServicePort } from '../ports/journal-entry-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
 import { Decimal } from 'decimal.js'
 import {
   JOURNAL_ENTRY_REPOSITORY,
   JOURNAL_ENTRY_LINE_REPOSITORY,
+  ACCOUNT_REPOSITORY,
 } from '../../domain/repositories/finance-repository.port'
 import type {
   JournalEntryRepositoryPort,
   JournalEntryLineRepositoryPort,
+  AccountRepositoryPort,
 } from '../../domain/repositories/finance-repository.port'
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
 import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
@@ -28,18 +31,20 @@ export interface CreateJournalEntryDto {
 
 export interface JournalEntryWithLines {
   entry: JournalEntry
-  lines: JournalEntryLine[]
+  lines: any[]
   totalDebit: number
   totalCredit: number
 }
 
 @Injectable()
-export class JournalEntryService {
+export class JournalEntryService implements JournalEntryServicePort {
   constructor(
     @Inject(JOURNAL_ENTRY_REPOSITORY)
     private readonly journalEntryRepo: JournalEntryRepositoryPort,
     @Inject(JOURNAL_ENTRY_LINE_REPOSITORY)
     private readonly journalLineRepo: JournalEntryLineRepositoryPort,
+    @Inject(ACCOUNT_REPOSITORY)
+    private readonly accountRepo: AccountRepositoryPort,
   ) {}
 
   async findAll(filters?: {
@@ -73,10 +78,11 @@ export class JournalEntryService {
     if (!entry) return null
 
     const lines = await this.journalLineRepo.findByJournalEntryId(id)
+    const enrichedLines = await this.enrichLinesWithAccounts(lines)
     const totalDebit = lines.reduce((sum, l) => sum + l.debit.toNumber(), 0)
     const totalCredit = lines.reduce((sum, l) => sum + l.credit.toNumber(), 0)
 
-    return { entry, lines, totalDebit, totalCredit }
+    return { entry, lines: enrichedLines, totalDebit, totalCredit }
   }
 
   async create(dto: CreateJournalEntryDto, userId: string, asDraft = true): Promise<JournalEntryWithLines> {
@@ -184,8 +190,8 @@ export class JournalEntryService {
       const reversalLine = new JournalEntryLine({
         journalEntryId: savedReversal.id,
         accountId: line.accountId,
-        debit: line.credit, // Swap
-        credit: line.debit, // Swap
+        debit: new Decimal(line.credit),
+        credit: new Decimal(line.debit),
         description: `Reversal: ${line.description ?? ''}`,
       })
       const savedLine = await this.journalLineRepo.save(reversalLine)
@@ -201,5 +207,32 @@ export class JournalEntryService {
     const totalCredit = lines.reduce((sum, l) => sum + l.credit.toNumber(), 0)
 
     return { entry: savedReversal, lines, totalDebit, totalCredit }
+  }
+
+  private async enrichLinesWithAccounts(lines: JournalEntryLine[]): Promise<any[]> {
+    const accountIds = [...new Set(lines.map((l) => l.accountId))]
+    const accountMap = new Map<string, { code: string; name: string }>()
+
+    for (const accountId of accountIds) {
+      const account = await this.accountRepo.findById(accountId)
+      if (account) {
+        accountMap.set(accountId, { code: account.code, name: account.name })
+      }
+    }
+
+    return lines.map((line) => {
+      const account = accountMap.get(line.accountId)
+      return {
+        id: line.id,
+        journalEntryId: line.journalEntryId,
+        accountId: line.accountId,
+        accountCode: account?.code ?? '',
+        accountName: account?.name ?? '',
+        debit: line.debit.toNumber(),
+        credit: line.credit.toNumber(),
+        description: line.description ?? '',
+        createdAt: line.createdAt,
+      }
+    })
   }
 }

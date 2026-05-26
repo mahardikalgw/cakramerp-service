@@ -17,6 +17,8 @@ export class JournalEntry extends BaseEntity {
   approvedBy?: string
   approvedAt?: Date
   reversalOfId?: string
+  sourceType?: string
+  sourceId?: string
   createdAt: Date
   updatedAt: Date
 

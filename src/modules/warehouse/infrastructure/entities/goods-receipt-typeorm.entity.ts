@@ -12,6 +12,9 @@ export class GoodsReceiptTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
   warehouseId: string
 
+  @Column({ type: 'uuid', nullable: true })
+  supplierId: string
+
   @Column({ type: 'varchar', length: 255 })
   vendorName: string
 

@@ -32,4 +32,19 @@ export class ARInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
   status: string
+
+  @Column({ type: 'uuid', nullable: true })
+  customerId: string
+
+  @Column({ type: 'int', nullable: true })
+  paymentTermDays: number
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentTermLabel: string
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  additionalDiscount: number
+
+  @Column({ type: 'uuid', nullable: true })
+  journalEntryId: string
 }

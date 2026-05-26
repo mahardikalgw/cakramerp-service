@@ -48,7 +48,7 @@ export class AdminBackupController {
 
   @Post()
   @Roles('admin')
-  @Permissions('backups:write')
+  @Permissions('backups:create')
   async createBackupJob(@Body() dto: CreateBackupHttpDto) {
     const command = {
       name: dto.name,
@@ -61,7 +61,7 @@ export class AdminBackupController {
 
   @Put(':id')
   @Roles('admin')
-  @Permissions('backups:write')
+  @Permissions('backups:create')
   async updateBackupJob(
     @Param('id') id: string,
     @Body() dto: UpdateBackupHttpDto,
@@ -79,7 +79,7 @@ export class AdminBackupController {
 
   @Post(':id/trigger')
   @Roles('admin')
-  @Permissions('backups:write')
+  @Permissions('backups:create')
   async triggerBackup(@Param('id') id: string) {
     const backupHistory = await this.backupService.triggerBackup(id);
     return { message: 'Backup triggered', backupId: backupHistory.id };
@@ -95,7 +95,7 @@ export class AdminBackupController {
 
   @Post('history/:id/restore')
   @Roles('admin')
-  @Permissions('backups:write')
+  @Permissions('backups:create')
   async restoreBackup(@Param('id') id: string) {
     await this.backupService.restoreBackup(id);
     return { message: 'Backup restored successfully' };

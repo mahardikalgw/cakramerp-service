@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { HrController } from './infrastructure/http/controllers/hr.controller'
+import { FinanceModule } from '../finance/finance.module'
 
 // Infrastructure entities
 import { EmployeeTypeOrmEntity } from './infrastructure/entities/employee-typeorm.entity'
@@ -44,6 +45,7 @@ import { ThrService } from './application/services/thr.service'
 
 @Module({
   imports: [
+    FinanceModule,
     TypeOrmModule.forFeature([
       EmployeeTypeOrmEntity,
       EmployeeDocumentTypeOrmEntity,

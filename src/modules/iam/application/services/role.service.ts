@@ -6,6 +6,8 @@ import type { PermissionRepositoryPort } from '../../domain/repositories/permiss
 import { PERMISSION_REPOSITORY } from '../../domain/repositories/permission-repository.port';
 import type { UserRoleAssignerPort } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
 import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { AUDIT_LOG_SERVICE } from '../../../audit/application/ports/audit-log-service.port';
+import type { AuditLogServicePort } from '../../../audit/application/ports/audit-log-service.port';
 import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
 import { CreateRoleCommand } from '../commands/create-role.command';
 import { AssignRoleCommand } from '../commands/assign-role.command';
@@ -21,6 +23,8 @@ export class RoleService implements RoleServicePort {
     private readonly permissionRepository: PermissionRepositoryPort,
     @Inject(USER_ROLE_ASSIGNER_PORT)
     private readonly userRoleAssigner: UserRoleAssignerPort,
+    @Inject(AUDIT_LOG_SERVICE)
+    private readonly auditLogService: AuditLogServicePort,
   ) {}
 
   async create(command: CreateRoleCommand): Promise<Role> {
@@ -92,7 +96,6 @@ export class RoleService implements RoleServicePort {
     return this.roleRepository.save(role);
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async logAuditAction(data: {
     userId: string;
     action: string;
@@ -100,8 +103,14 @@ export class RoleService implements RoleServicePort {
     recordId: string;
     payload: any;
   }): Promise<void> {
-    // TODO: Implement audit logging
-    // This would require creating an audit_logs table and a service to log actions
-    console.log('Audit log:', data);
+    await this.auditLogService.create({
+      userId: data.userId,
+      userName: '',
+      action: data.action,
+      module: data.module,
+      recordId: data.recordId,
+      ipAddress: '',
+      payload: data.payload,
+    });
   }
 }
