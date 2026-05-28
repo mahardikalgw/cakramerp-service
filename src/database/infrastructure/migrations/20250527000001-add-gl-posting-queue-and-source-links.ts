@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddGlPostingQueueAndSourceLinks1748304000000
+export class AddGlPostingQueueAndSourceLinks20250527000001
   implements MigrationInterface
 {
-  name = 'AddGlPostingQueueAndSourceLinks1748304000000'
+  name = 'AddGlPostingQueueAndSourceLinks20250527000001'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create gl_posting_queue table

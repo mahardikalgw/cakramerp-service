@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Query,
   Body,
   Param,
@@ -28,6 +29,10 @@ import { BPJS_SERVICE } from '../../../application/ports/bpjs-service.port'
 import type { BpjsServicePort } from '../../../application/ports/bpjs-service.port'
 import { THR_SERVICE } from '../../../application/ports/thr-service.port'
 import type { ThrServicePort } from '../../../application/ports/thr-service.port'
+import { DEPARTMENT_SERVICE } from '../../../application/ports/department-service.port'
+import type { DepartmentServicePort } from '../../../application/ports/department-service.port'
+import { POSITION_SERVICE } from '../../../application/ports/position-service.port'
+import type { PositionServicePort } from '../../../application/ports/position-service.port'
 
 import { CreateEmployeeCommand } from '../../../application/commands/create-employee.command'
 import { UpdateEmployeeCommand } from '../../../application/commands/update-employee.command'
@@ -35,10 +40,16 @@ import { RecordAttendanceCommand } from '../../../application/commands/record-at
 import { ImportAttendanceCommand } from '../../../application/commands/import-attendance.command'
 import { RunPayrollCommand } from '../../../application/commands/run-payroll.command'
 import { CalculateThrCommand } from '../../../application/commands/calculate-thr.command'
+import { CreateDepartmentCommand } from '../../../application/commands/create-department.command'
+import { UpdateDepartmentCommand } from '../../../application/commands/update-department.command'
+import { CreatePositionCommand } from '../../../application/commands/create-position.command'
+import { UpdatePositionCommand } from '../../../application/commands/update-position.command'
 
 import { CreateEmployeeHttpDto, UpdateEmployeeHttpDto } from '../dtos/employee.dto'
 import { RecordAttendanceHttpDto, ImportAttendanceHttpDto } from '../dtos/attendance.dto'
 import { RunPayrollHttpDto } from '../dtos/payroll.dto'
+import { CreateDepartmentHttpDto, UpdateDepartmentHttpDto } from '../dtos/department.dto'
+import { CreatePositionHttpDto, UpdatePositionHttpDto } from '../dtos/position.dto'
 
 @Controller('hr')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -56,7 +67,101 @@ export class HrController {
     private readonly bpjsService: BpjsServicePort,
     @Inject(THR_SERVICE)
     private readonly thrService: ThrServicePort,
+    @Inject(DEPARTMENT_SERVICE)
+    private readonly departmentService: DepartmentServicePort,
+    @Inject(POSITION_SERVICE)
+    private readonly positionService: PositionServicePort,
   ) {}
+
+  // ==================== Departments ====================
+
+  @Get('departments')
+  @RequirePermissions('departments:read')
+  async getDepartments(
+    @Query('search') search?: string,
+    @Query('is_active') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.departmentService.findAll({
+      search,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('departments/:id')
+  @RequirePermissions('departments:read')
+  async getDepartment(@Param('id') id: string) {
+    return this.departmentService.findById(id)
+  }
+
+  @Post('departments')
+  @RequirePermissions('departments:create')
+  async createDepartment(@Body() dto: CreateDepartmentHttpDto) {
+    const command = new CreateDepartmentCommand(dto.name, dto.description)
+    return this.departmentService.create(command)
+  }
+
+  @Put('departments/:id')
+  @RequirePermissions('departments:update')
+  async updateDepartment(@Param('id') id: string, @Body() dto: UpdateDepartmentHttpDto) {
+    const command = new UpdateDepartmentCommand(dto.name, dto.description, dto.isActive)
+    return this.departmentService.update(id, command)
+  }
+
+  @Delete('departments/:id')
+  @RequirePermissions('departments:delete')
+  async deleteDepartment(@Param('id') id: string) {
+    return this.departmentService.delete(id)
+  }
+
+  // ==================== Positions ====================
+
+  @Get('positions')
+  @RequirePermissions('positions:read')
+  async getPositions(
+    @Query('search') search?: string,
+    @Query('department_id') departmentId?: string,
+    @Query('is_active') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.positionService.findAll({
+      search,
+      departmentId,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('positions/:id')
+  @RequirePermissions('positions:read')
+  async getPosition(@Param('id') id: string) {
+    return this.positionService.findById(id)
+  }
+
+  @Post('positions')
+  @RequirePermissions('positions:create')
+  async createPosition(@Body() dto: CreatePositionHttpDto) {
+    const command = new CreatePositionCommand(dto.name, dto.departmentId, dto.description)
+    return this.positionService.create(command)
+  }
+
+  @Put('positions/:id')
+  @RequirePermissions('positions:update')
+  async updatePosition(@Param('id') id: string, @Body() dto: UpdatePositionHttpDto) {
+    const command = new UpdatePositionCommand(dto.name, dto.departmentId, dto.description, dto.isActive)
+    return this.positionService.update(id, command)
+  }
+
+  @Delete('positions/:id')
+  @RequirePermissions('positions:delete')
+  async deletePosition(@Param('id') id: string) {
+    return this.positionService.delete(id)
+  }
 
   // ==================== Employees ====================
 
@@ -65,7 +170,6 @@ export class HrController {
   async getEmployees(
     @Query('search') search?: string,
     @Query('employment_type') employmentType?: string,
-    @Query('site_id') siteId?: string,
     @Query('department_id') departmentId?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
@@ -74,7 +178,6 @@ export class HrController {
     return this.employeeService.findAll({
       search,
       employmentType: employmentType as any,
-      siteId,
       departmentId,
       status: status as any,
       page: page ? parseInt(page, 10) : undefined,
@@ -97,11 +200,13 @@ export class HrController {
       dto.email,
       dto.phone,
       dto.employmentType,
-      dto.siteId,
       dto.departmentId,
-      dto.position,
+      dto.positionId,
       dto.baseSalary,
       dto.hireDate,
+      dto.workStartTime,
+      dto.workEndTime,
+      dto.breakDurationMinutes,
     )
     return this.employeeService.create(command)
   }
@@ -115,12 +220,14 @@ export class HrController {
       dto.email,
       dto.phone,
       dto.employmentType,
-      dto.siteId,
       dto.departmentId,
-      dto.position,
+      dto.positionId,
       dto.baseSalary,
       dto.hireDate,
       dto.status,
+      dto.workStartTime,
+      dto.workEndTime,
+      dto.breakDurationMinutes,
     )
     return this.employeeService.update(id, command)
   }

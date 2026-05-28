@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Query,
   Body,
   Param,
@@ -34,6 +35,9 @@ import { FINANCIAL_STATEMENTS_SERVICE } from '../../../application/ports/financi
 import type { FinancialStatementsServicePort } from '../../../application/ports/financial-statements-service.port'
 import { GL_POSTING_QUEUE_SERVICE } from '../../../application/ports/gl-posting-queue-service.port'
 import type { GlPostingQueueServicePort } from '../../../application/ports/gl-posting-queue-service.port'
+import { SUBSIDIARY_LEDGER_SERVICE } from '../../../application/ports/subsidiary-ledger-service.port'
+import type { SubsidiaryLedgerServicePort } from '../../../application/ports/subsidiary-ledger-service.port'
+import { BillingLetterService } from '../../../application/services/billing-letter.service'
 
 import { CreateAccountCommand } from '../../../application/commands/create-account.command'
 import { UpdateAccountCommand } from '../../../application/commands/update-account.command'
@@ -76,6 +80,9 @@ export class FinanceManagementController {
     private readonly financialStatementsService: FinancialStatementsServicePort,
     @Inject(GL_POSTING_QUEUE_SERVICE)
     private readonly glPostingQueueService: GlPostingQueueServicePort,
+    @Inject(SUBSIDIARY_LEDGER_SERVICE)
+    private readonly subsidiaryLedgerService: SubsidiaryLedgerServicePort,
+    private readonly billingLetterService: BillingLetterService,
   ) {}
 
   // ==================== Chart of Accounts ====================
@@ -202,7 +209,24 @@ export class FinanceManagementController {
       dto.projectId,
       dto.costCenter,
     )
-    return this.journalEntryService.create(command, userId, !dto.submitForApproval)
+    const result = await this.journalEntryService.create(command, userId, !dto.submitForApproval)
+
+    // Store journal type and party on the journal entry for subsidiary ledger recording on approval
+    if (dto.journalType && dto.journalType !== 'cash') {
+      if (dto.journalType === 'payment_payable' && dto.supplierId) {
+        await this.dataSource.query(
+          `UPDATE journal_entries SET journal_type = $1, supplier_id = $2, party_name = $3 WHERE id = $4`,
+          [dto.journalType, dto.supplierId, dto.supplierName || '', result.entry.id],
+        )
+      } else if (dto.journalType === 'payment_receivable' && dto.customerId) {
+        await this.dataSource.query(
+          `UPDATE journal_entries SET journal_type = $1, customer_id = $2, party_name = $3 WHERE id = $4`,
+          [dto.journalType, dto.customerId, dto.customerName || '', result.entry.id],
+        )
+      }
+    }
+
+    return result
   }
 
   @Patch('journal-entries/:id/submit')
@@ -233,12 +257,14 @@ export class FinanceManagementController {
   async getInvoices(
     @Query('status') status?: string,
     @Query('client_id') clientId?: string,
+    @Query('customer_id') customerId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.arInvoiceService.findAll({
       status,
       clientId,
+      customerId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     })
@@ -536,7 +562,45 @@ export class FinanceManagementController {
   ) {
     const userId = req.user?.id ?? 'unknown'
     const command = new PostGlToJournalCommand(dto.date, dto.description, dto.lines)
-    return this.glPostingQueueService.postToJournal(id, command, userId)
+    const result = await this.glPostingQueueService.postToJournal(id, command, userId)
+
+    // Store journal type and party on the journal entry for subsidiary ledger recording on approval
+    const queueItem = await this.glPostingQueueService.findById(id)
+    if (queueItem) {
+      if (queueItem.sourceType === 'sales_invoice' && (queueItem.customerId || (dto as any).customerId)) {
+        const custId = queueItem.customerId || (dto as any).customerId
+        const custName = (dto as any).customerName || queueItem.description
+        const invoiceId = queueItem.invoiceId || queueItem.sourceId
+        await this.dataSource.query(
+          `UPDATE journal_entries SET journal_type = 'invoice_receivable', customer_id = $1, party_name = $2, invoice_id = $3 WHERE id = $4`,
+          [custId, custName, invoiceId, result.journalEntryId],
+        )
+      } else if (queueItem.sourceType === 'supplier_invoice' && (queueItem.supplierId || (dto as any).supplierId)) {
+        const supId = queueItem.supplierId || (dto as any).supplierId
+        const supName = (dto as any).supplierName || queueItem.description
+        const invoiceId = queueItem.invoiceId || queueItem.sourceId
+        await this.dataSource.query(
+          `UPDATE journal_entries SET journal_type = 'invoice_payable', supplier_id = $1, party_name = $2, invoice_id = $3 WHERE id = $4`,
+          [supId, supName, invoiceId, result.journalEntryId],
+        )
+      } else if (queueItem.sourceType === 'billing_letter' && queueItem.billingLetterId) {
+        const billingLetterId = queueItem.billingLetterId
+        const invoiceId = queueItem.invoiceId || null
+        if (queueItem.supplierId) {
+          await this.dataSource.query(
+            `UPDATE journal_entries SET journal_type = 'payment_payable', supplier_id = $1, party_name = $2, invoice_id = $3, billing_letter_id = $4 WHERE id = $5`,
+            [queueItem.supplierId, queueItem.description, invoiceId, billingLetterId, result.journalEntryId],
+          )
+        } else if (queueItem.customerId) {
+          await this.dataSource.query(
+            `UPDATE journal_entries SET journal_type = 'payment_receivable', customer_id = $1, party_name = $2, invoice_id = $3, billing_letter_id = $4 WHERE id = $5`,
+            [queueItem.customerId, queueItem.description, invoiceId, billingLetterId, result.journalEntryId],
+          )
+        }
+      }
+    }
+
+    return result
   }
 
   @Patch('gl-posting-queue/:id/cancel')
@@ -544,5 +608,131 @@ export class FinanceManagementController {
   async cancelGlPostingQueueItem(@Param('id') id: string) {
     await this.glPostingQueueService.cancel(id)
     return { success: true }
+  }
+
+  // ==================== AR Subsidiary Ledger ====================
+
+  @Get('ar-subsidiary-ledger')
+  @RequirePermissions('ar-subsidiary-ledger:read')
+  async getArSubsidiaryLedger(
+    @Query('customer_id') customerId?: string,
+    @Query('invoice_id') invoiceId?: string,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.subsidiaryLedgerService.getArLedger({
+      customerId,
+      invoiceId,
+      startDate,
+      endDate,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('ar-subsidiary-ledger/summary')
+  @RequirePermissions('ar-subsidiary-ledger:read')
+  async getArCustomerSummary() {
+    return this.subsidiaryLedgerService.getArCustomerSummary()
+  }
+
+  // ==================== AP Subsidiary Ledger ====================
+
+  @Get('ap-subsidiary-ledger')
+  @RequirePermissions('ap-subsidiary-ledger:read')
+  async getApSubsidiaryLedger(
+    @Query('supplier_id') supplierId?: string,
+    @Query('invoice_id') invoiceId?: string,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.subsidiaryLedgerService.getApLedger({
+      supplierId,
+      invoiceId,
+      startDate,
+      endDate,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('ap-subsidiary-ledger/summary')
+  @RequirePermissions('ap-subsidiary-ledger:read')
+  async getApSupplierSummary() {
+    return this.subsidiaryLedgerService.getApSupplierSummary()
+  }
+
+  // ==================== Billing Letters ====================
+
+  @Get('billing-letters')
+  @RequirePermissions('billing-letters:read')
+  async getBillingLetters(
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('customer_id') customerId?: string,
+    @Query('supplier_id') supplierId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.billingLetterService.findAll({
+      type, status, customerId, supplierId,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('billing-letters/:id')
+  @RequirePermissions('billing-letters:read')
+  async getBillingLetter(@Param('id') id: string) {
+    return this.billingLetterService.findById(id)
+  }
+
+  @Post('billing-letters')
+  @RequirePermissions('billing-letters:create')
+  async generateBillingLetter(@Body() dto: any) {
+    return this.billingLetterService.generate({
+      type: dto.type,
+      customerId: dto.customerId,
+      supplierId: dto.supplierId,
+      invoiceIds: dto.invoiceIds,
+      notes: dto.notes,
+      dueDate: dto.dueDate,
+      paymentAmount: dto.paymentAmount,
+    })
+  }
+
+  @Patch('billing-letters/:id/update-status')
+  @RequirePermissions('billing-letters:update')
+  async updateBillingLetterStatus(@Param('id') id: string) {
+    return this.billingLetterService.updateStatus(id)
+  }
+
+  @Delete('billing-letters/:id')
+  @RequirePermissions('billing-letters:update')
+  async deleteBillingLetter(@Param('id') id: string) {
+    await this.billingLetterService.delete(id)
+    return { success: true }
+  }
+
+  // ==================== Invoice Payment History ====================
+
+  @Get('ar-invoices/:id/payment-history')
+  @RequirePermissions('ar-subsidiary-ledger:read')
+  async getArInvoicePaymentHistory(@Param('id') id: string) {
+    const balance = await this.subsidiaryLedgerService.getArInvoiceBalance(id)
+    const ledger = await this.subsidiaryLedgerService.getArLedger({ invoiceId: id, limit: 100 })
+    return { balance, entries: ledger.data }
+  }
+
+  @Get('ap-invoices/:id/payment-history')
+  @RequirePermissions('ap-subsidiary-ledger:read')
+  async getApInvoicePaymentHistory(@Param('id') id: string) {
+    const balance = await this.subsidiaryLedgerService.getApInvoiceBalance(id)
+    const ledger = await this.subsidiaryLedgerService.getApLedger({ invoiceId: id, limit: 100 })
+    return { balance, entries: ledger.data }
   }
 }

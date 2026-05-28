@@ -27,20 +27,8 @@ export class EmployeeTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', nullable: true })
   positionId: string
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  positionName: string
-
   @Column({ type: 'uuid', nullable: true })
   departmentId: string
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  departmentName: string
-
-  @Column({ type: 'uuid', nullable: true })
-  siteId: string
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  siteName: string
 
   @Column({ type: 'date' })
   joinDate: Date
@@ -68,4 +56,13 @@ export class EmployeeTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   bpjsKetenagakerjaanNumber: string
+
+  @Column({ type: 'varchar', length: 5, default: '08:00' })
+  workStartTime: string
+
+  @Column({ type: 'varchar', length: 5, default: '17:00' })
+  workEndTime: string
+
+  @Column({ type: 'int', default: 60 })
+  breakDurationMinutes: number
 }

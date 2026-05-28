@@ -243,6 +243,8 @@ export class APInvoiceService implements APInvoiceServicePort {
         description: `${inv.invoiceNumber} - ${inv.vendorName}`,
         suggestedLines,
         status: 'pending',
+        supplierId: inv.supplierId || inv.vendorId,
+        invoiceId: inv.id,
       }),
     )
   }

@@ -76,6 +76,10 @@ export class GlPostingQueueTypeOrmRepository implements GlPostingQueueRepository
       journalEntryId: entity.journalEntryId ?? undefined,
       postedBy: entity.postedBy ?? undefined,
       postedAt: entity.postedAt ?? undefined,
+      customerId: entity.customerId ?? undefined,
+      supplierId: entity.supplierId ?? undefined,
+      invoiceId: entity.invoiceId ?? undefined,
+      billingLetterId: entity.billingLetterId ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     })

@@ -44,4 +44,19 @@ export class JournalEntryTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   sourceId: string
+
+  @Column({ type: 'varchar', length: 20, default: 'cash' })
+  journalType: string
+
+  @Column({ type: 'uuid', nullable: true })
+  customerId: string
+
+  @Column({ type: 'uuid', nullable: true })
+  supplierId: string
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  partyName: string
+
+  @Column({ type: 'boolean', default: false })
+  subsidiaryLedgerRecorded: boolean
 }

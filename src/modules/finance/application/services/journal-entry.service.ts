@@ -1,5 +1,6 @@
 import { JournalEntryServicePort } from '../ports/journal-entry-service.port'
 import { Injectable, Inject, BadRequestException } from '@nestjs/common'
+import { DataSource } from 'typeorm'
 import { Decimal } from 'decimal.js'
 import {
   JOURNAL_ENTRY_REPOSITORY,
@@ -11,6 +12,9 @@ import type {
   JournalEntryLineRepositoryPort,
   AccountRepositoryPort,
 } from '../../domain/repositories/finance-repository.port'
+import { SUBSIDIARY_LEDGER_SERVICE } from '../ports/subsidiary-ledger-service.port'
+import type { SubsidiaryLedgerServicePort } from '../ports/subsidiary-ledger-service.port'
+import { BillingLetterService } from './billing-letter.service'
 import { JournalEntry } from '../../domain/entities/journal-entry.entity'
 import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
 import { CreateJournalEntryCommand } from '../commands/create-journal-entry.command'
@@ -31,6 +35,10 @@ export class JournalEntryService implements JournalEntryServicePort {
     private readonly journalLineRepo: JournalEntryLineRepositoryPort,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepo: AccountRepositoryPort,
+    @Inject(SUBSIDIARY_LEDGER_SERVICE)
+    private readonly subsidiaryLedgerService: SubsidiaryLedgerServicePort,
+    private readonly billingLetterService: BillingLetterService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(filters?: {
@@ -140,7 +148,107 @@ export class JournalEntryService implements JournalEntryServicePort {
     entry.approvedBy = userId
     entry.approvedAt = new Date()
     entry.updatedAt = new Date()
-    return this.journalEntryRepo.save(entry)
+    const savedEntry = await this.journalEntryRepo.save(entry)
+
+    // Auto-record in subsidiary ledger on approval
+    await this.recordSubsidiaryLedger(savedEntry)
+
+    return savedEntry
+  }
+
+  private async recordSubsidiaryLedger(entry: JournalEntry): Promise<void> {
+    // Read journal_type, customer_id, supplier_id, party_name from DB
+    const rows = await this.dataSource.query(
+      `SELECT journal_type, customer_id, supplier_id, party_name, invoice_id, billing_letter_id, subsidiary_ledger_recorded FROM journal_entries WHERE id = $1`,
+      [entry.id],
+    )
+    if (!rows.length) return
+
+    const { journal_type, customer_id, supplier_id, party_name, invoice_id, billing_letter_id, subsidiary_ledger_recorded } = rows[0]
+    if (subsidiary_ledger_recorded) return // already recorded
+
+    const lines = await this.journalLineRepo.findByJournalEntryId(entry.id)
+    const totalDebit = lines.reduce((sum, l) => sum + l.debit.toNumber(), 0)
+
+    if (journal_type === 'payment_payable' && supplier_id) {
+      // For billing letter payments, applyPayment will record per-invoice ledger entries
+      if (billing_letter_id) {
+        await this.billingLetterService.applyPayment(billing_letter_id, entry.id)
+      } else {
+        // Direct payment (not via billing letter) → single combined entry
+        await this.subsidiaryLedgerService.recordApEntry({
+          supplierId: supplier_id,
+          supplierName: party_name || '',
+          journalEntryId: entry.id,
+          invoiceId: invoice_id || undefined,
+          invoiceNumber: entry.reference || '',
+          date: entry.date instanceof Date ? entry.date.toISOString().split('T')[0] : String(entry.date),
+          description: entry.description || '',
+          debit: totalDebit,
+          credit: 0,
+        })
+      }
+      await this.dataSource.query(
+        `UPDATE journal_entries SET subsidiary_ledger_recorded = true WHERE id = $1`,
+        [entry.id],
+      )
+    } else if (journal_type === 'payment_receivable' && customer_id) {
+      // For billing letter payments, applyPayment will record per-invoice ledger entries
+      if (billing_letter_id) {
+        await this.billingLetterService.applyPayment(billing_letter_id, entry.id)
+      } else {
+        // Direct payment (not via billing letter) → single combined entry
+        await this.subsidiaryLedgerService.recordArEntry({
+          customerId: customer_id,
+          customerName: party_name || '',
+          journalEntryId: entry.id,
+          invoiceId: invoice_id || undefined,
+          invoiceNumber: entry.reference || '',
+          date: entry.date instanceof Date ? entry.date.toISOString().split('T')[0] : String(entry.date),
+          description: entry.description || '',
+          debit: 0,
+          credit: totalDebit,
+        })
+      }
+      await this.dataSource.query(
+        `UPDATE journal_entries SET subsidiary_ledger_recorded = true WHERE id = $1`,
+        [entry.id],
+      )
+    } else if (journal_type === 'invoice_payable' && supplier_id) {
+      // Supplier invoice recorded → CREDIT in AP Subsidiary Ledger (utang bertambah)
+      await this.subsidiaryLedgerService.recordApEntry({
+        supplierId: supplier_id,
+        supplierName: party_name || '',
+        journalEntryId: entry.id,
+        invoiceId: invoice_id || undefined,
+        invoiceNumber: entry.reference || '',
+        date: entry.date instanceof Date ? entry.date.toISOString().split('T')[0] : String(entry.date),
+        description: entry.description || '',
+        debit: 0,
+        credit: totalDebit,
+      })
+      await this.dataSource.query(
+        `UPDATE journal_entries SET subsidiary_ledger_recorded = true WHERE id = $1`,
+        [entry.id],
+      )
+    } else if (journal_type === 'invoice_receivable' && customer_id) {
+      // Customer invoice issued → DEBIT in AR Subsidiary Ledger (piutang bertambah)
+      await this.subsidiaryLedgerService.recordArEntry({
+        customerId: customer_id,
+        customerName: party_name || '',
+        journalEntryId: entry.id,
+        invoiceId: invoice_id || undefined,
+        invoiceNumber: entry.reference || '',
+        date: entry.date instanceof Date ? entry.date.toISOString().split('T')[0] : String(entry.date),
+        description: entry.description || '',
+        debit: totalDebit,
+        credit: 0,
+      })
+      await this.dataSource.query(
+        `UPDATE journal_entries SET subsidiary_ledger_recorded = true WHERE id = $1`,
+        [entry.id],
+      )
+    }
   }
 
   async reverse(id: string, userId: string): Promise<JournalEntryWithLines> {

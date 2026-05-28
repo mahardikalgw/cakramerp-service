@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddSupplierIdToGoodsReceipts1748164800000
+export class AddSupplierIdToGoodsReceipts20250525000003
   implements MigrationInterface
 {
-  name = 'AddSupplierIdToGoodsReceipts1748164800000'
+  name = 'AddSupplierIdToGoodsReceipts20250525000003'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

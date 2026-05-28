@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddCustomerSupplierAndInvoiceUpgrades1748163600000
+export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
   implements MigrationInterface
 {
-  name = 'AddCustomerSupplierAndInvoiceUpgrades1748163600000'
+  name = 'AddCustomerSupplierAndInvoiceUpgrades20250525000002'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create customers table

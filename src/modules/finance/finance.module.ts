@@ -13,6 +13,8 @@ import { TaxService } from './application/services/tax.service'
 import { BankReconciliationService } from './application/services/bank-reconciliation.service'
 import { FinancialStatementsService } from './application/services/financial-statements.service'
 import { GlPostingQueueService } from './application/services/gl-posting-queue.service'
+import { SubsidiaryLedgerService } from './application/services/subsidiary-ledger.service'
+import { BillingLetterService } from './application/services/billing-letter.service'
 import { KpiAlertCheckJob } from './application/jobs/kpi-alert-check.job'
 import { AccountTypeOrmEntity } from './infrastructure/entities/account-typeorm.entity'
 import { JournalEntryTypeOrmEntity } from './infrastructure/entities/journal-entry-typeorm.entity'
@@ -29,6 +31,8 @@ import { BankStatementLineTypeOrmEntity } from './infrastructure/entities/bank-s
 import { ReconciliationSessionTypeOrmEntity } from './infrastructure/entities/reconciliation-session-typeorm.entity'
 import { TaxInvoiceTypeOrmEntity } from './infrastructure/entities/tax-invoice-typeorm.entity'
 import { GlPostingQueueTypeOrmEntity } from './infrastructure/entities/gl-posting-queue-typeorm.entity'
+import { ArSubsidiaryLedgerTypeOrmEntity } from './infrastructure/entities/ar-subsidiary-ledger-typeorm.entity'
+import { ApSubsidiaryLedgerTypeOrmEntity } from './infrastructure/entities/ap-subsidiary-ledger-typeorm.entity'
 import { AccountTypeOrmRepository } from './infrastructure/repositories/account-typeorm.repository'
 import { ARInvoiceTypeOrmRepository } from './infrastructure/repositories/ar-invoice-typeorm.repository'
 import { ARInvoiceLineTypeOrmRepository } from './infrastructure/repositories/ar-invoice-line-typeorm.repository'
@@ -70,6 +74,7 @@ import { TAX_SERVICE } from './application/ports/tax-service.port'
 import { BANK_RECONCILIATION_SERVICE } from './application/ports/bank-reconciliation-service.port'
 import { FINANCIAL_STATEMENTS_SERVICE } from './application/ports/financial-statements-service.port'
 import { GL_POSTING_QUEUE_SERVICE } from './application/ports/gl-posting-queue-service.port'
+import { SUBSIDIARY_LEDGER_SERVICE } from './application/ports/subsidiary-ledger-service.port'
 
 @Module({
   imports: [
@@ -90,6 +95,8 @@ import { GL_POSTING_QUEUE_SERVICE } from './application/ports/gl-posting-queue-s
       ReconciliationSessionTypeOrmEntity,
       TaxInvoiceTypeOrmEntity,
       GlPostingQueueTypeOrmEntity,
+      ArSubsidiaryLedgerTypeOrmEntity,
+      ApSubsidiaryLedgerTypeOrmEntity,
     ]),
   ],
   controllers: [FinanceController, FinanceManagementController],
@@ -194,7 +201,12 @@ import { GL_POSTING_QUEUE_SERVICE } from './application/ports/gl-posting-queue-s
       provide: GL_POSTING_QUEUE_SERVICE,
       useClass: GlPostingQueueService,
     },
+    {
+      provide: SUBSIDIARY_LEDGER_SERVICE,
+      useClass: SubsidiaryLedgerService,
+    },
+    BillingLetterService,
   ],
-  exports: [FINANCE_SERVICE, ACCOUNT_SERVICE, JOURNAL_ENTRY_SERVICE, ACCOUNT_REPOSITORY],
+  exports: [FINANCE_SERVICE, ACCOUNT_SERVICE, JOURNAL_ENTRY_SERVICE, ACCOUNT_REPOSITORY, GL_POSTING_QUEUE_SERVICE, SUBSIDIARY_LEDGER_SERVICE],
 })
 export class FinanceModule {}

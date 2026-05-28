@@ -1,6 +1,6 @@
 export type GlPostingQueueStatus = 'pending' | 'posted' | 'cancelled'
-export type GlPostingSourceType = 'sales_invoice' | 'supplier_invoice'
-export type GlPostingEventType = 'invoice_issued' | 'payment_received' | 'payment_made' | 'invoice_recorded'
+export type GlPostingSourceType = 'sales_invoice' | 'supplier_invoice' | 'asset_depreciation'
+export type GlPostingEventType = 'invoice_issued' | 'payment_received' | 'payment_made' | 'invoice_recorded' | 'depreciation'
 
 export interface SuggestedLine {
   accountId: string
@@ -24,6 +24,10 @@ export class GlPostingQueue {
   journalEntryId?: string
   postedBy?: string
   postedAt?: Date
+  customerId?: string
+  supplierId?: string
+  invoiceId?: string
+  billingLetterId?: string
   createdAt: Date
   updatedAt: Date
 

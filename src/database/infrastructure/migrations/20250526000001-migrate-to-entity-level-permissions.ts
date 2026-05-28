@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class MigrateToEntityLevelPermissions1748185200000
+export class MigrateToEntityLevelPermissions20250526000001
   implements MigrationInterface
 {
-  name = 'MigrateToEntityLevelPermissions1748185200000'
+  name = 'MigrateToEntityLevelPermissions20250526000001'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ─── Step 1: Insert all new entity-level permissions ───────────────

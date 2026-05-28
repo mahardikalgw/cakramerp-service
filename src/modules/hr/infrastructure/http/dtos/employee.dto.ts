@@ -1,89 +1,105 @@
-import { IsString, IsOptional, IsEmail, IsNumber, IsIn, Min } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsNumber, IsIn, IsUUID, Min } from 'class-validator'
 
 export class CreateEmployeeHttpDto {
   @IsString()
-  firstName: string;
+  firstName: string
 
   @IsString()
-  lastName: string;
+  lastName: string
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string
 
   @IsOptional()
   @IsString()
-  employmentType?: string;
+  employmentType?: string
 
   @IsOptional()
-  @IsString()
-  siteId?: string;
+  @IsUUID()
+  departmentId?: string
 
   @IsOptional()
-  @IsString()
-  departmentId?: string;
-
-  @IsOptional()
-  @IsString()
-  position?: string;
+  @IsUUID()
+  positionId?: string
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  baseSalary?: number;
+  baseSalary?: number
 
   @IsOptional()
   @IsString()
-  hireDate?: string;
+  hireDate?: string
+
+  @IsOptional()
+  @IsString()
+  workStartTime?: string
+
+  @IsOptional()
+  @IsString()
+  workEndTime?: string
+
+  @IsOptional()
+  @IsNumber()
+  breakDurationMinutes?: number
 }
 
 export class UpdateEmployeeHttpDto {
   @IsOptional()
   @IsString()
-  firstName?: string;
+  firstName?: string
 
   @IsOptional()
   @IsString()
-  lastName?: string;
+  lastName?: string
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  phone?: string
 
   @IsOptional()
   @IsString()
-  employmentType?: string;
+  employmentType?: string
 
   @IsOptional()
-  @IsString()
-  siteId?: string;
+  @IsUUID()
+  departmentId?: string
 
   @IsOptional()
-  @IsString()
-  departmentId?: string;
-
-  @IsOptional()
-  @IsString()
-  position?: string;
+  @IsUUID()
+  positionId?: string
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  baseSalary?: number;
+  baseSalary?: number
 
   @IsOptional()
   @IsString()
-  hireDate?: string;
+  hireDate?: string
 
   @IsOptional()
   @IsIn(['active', 'inactive', 'terminated'])
-  status?: string;
+  status?: string
+
+  @IsOptional()
+  @IsString()
+  workStartTime?: string
+
+  @IsOptional()
+  @IsString()
+  workEndTime?: string
+
+  @IsOptional()
+  @IsNumber()
+  breakDurationMinutes?: number
 }

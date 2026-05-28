@@ -9,6 +9,7 @@ export interface ARInvoiceServicePort {
   findAll(filters?: {
     status?: string
     clientId?: string
+    customerId?: string
     page?: number
     limit?: number
   }): Promise<{ data: InvoiceWithLines[]; total: number }>

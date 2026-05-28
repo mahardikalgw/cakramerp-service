@@ -35,4 +35,16 @@ export class GlPostingQueueTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   postedAt: Date
+
+  @Column({ type: 'uuid', nullable: true })
+  customerId: string
+
+  @Column({ type: 'uuid', nullable: true })
+  supplierId: string
+
+  @Column({ type: 'uuid', nullable: true })
+  invoiceId: string
+
+  @Column({ type: 'uuid', nullable: true })
+  billingLetterId: string
 }

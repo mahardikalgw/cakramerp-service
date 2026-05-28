@@ -81,6 +81,7 @@ export class ARInvoiceService implements ARInvoiceServicePort {
   async findAll(filters?: {
     status?: string
     clientId?: string
+    customerId?: string
     page?: number
     limit?: number
   }): Promise<{ data: InvoiceWithLines[]; total: number }> {
@@ -92,6 +93,9 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     if (filters?.clientId) {
       qb.andWhere('inv.clientId = :clientId', { clientId: filters.clientId })
     }
+    if (filters?.customerId) {
+      qb.andWhere('inv.customerId = :customerId', { customerId: filters.customerId })
+    }
 
     const page = filters?.page ?? 1
     const limit = filters?.limit ?? 20
@@ -100,11 +104,13 @@ export class ARInvoiceService implements ARInvoiceServicePort {
 
     const [entities, total] = await qb.getManyAndCount()
 
-    const data: InvoiceWithLines[] = []
-    for (const inv of entities) {
-      const lines = await this.lineRepo.findByInvoiceId(inv.id)
-      data.push(await this.toInvoiceWithLines(inv, lines))
-    }
+    // Parallelize: fetch all lines + enrichment in parallel instead of sequentially
+    const data = await Promise.all(
+      entities.map(async (inv) => {
+        const lines = await this.lineRepo.findByInvoiceId(inv.id)
+        return this.toInvoiceWithLines(inv, lines)
+      }),
+    )
 
     return { data, total }
   }
@@ -376,6 +382,8 @@ export class ARInvoiceService implements ARInvoiceServicePort {
         description: `${inv.invoiceNumber} - ${inv.clientName}`,
         suggestedLines,
         status: 'pending',
+        customerId: inv.customerId || inv.clientId,
+        invoiceId: inv.id,
       }),
     )
   }

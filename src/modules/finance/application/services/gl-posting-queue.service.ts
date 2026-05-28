@@ -33,6 +33,10 @@ export interface GlPostingQueueResponse {
   postedBy: string | null
   postedByName: string | null
   postedAt: string | null
+  customerId: string | null
+  supplierId: string | null
+  invoiceId: string | null
+  billingLetterId: string | null
 }
 
 @Injectable()
@@ -202,6 +206,10 @@ export class GlPostingQueueService implements GlPostingQueueServicePort {
       postedBy: item.postedBy ?? null,
       postedByName,
       postedAt: item.postedAt?.toISOString() ?? null,
+      customerId: item.customerId ?? null,
+      supplierId: item.supplierId ?? null,
+      invoiceId: item.invoiceId ?? null,
+      billingLetterId: item.billingLetterId ?? null,
     }
   }
 }

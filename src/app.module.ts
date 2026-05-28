@@ -15,6 +15,7 @@ import { WarehouseModule } from './modules/warehouse/warehouse.module';
 import { SelfServiceModule } from './modules/self-service/self-service.module';
 import { CustomerModule } from './modules/customer';
 import { SupplierModule } from './modules/supplier';
+import { AssetModule } from './modules/asset/asset.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { SupplierModule } from './modules/supplier';
     SelfServiceModule,
     CustomerModule,
     SupplierModule,
+    AssetModule,
   ],
   controllers: [AppController],
   providers: [AppService],

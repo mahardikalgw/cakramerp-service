@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, ArrayMinSize } from 'class-validator';
+import { IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, ArrayMinSize, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class JournalEntryLineDto {
@@ -47,4 +47,24 @@ export class CreateJournalEntryHttpDto {
 
   @IsOptional()
   submitForApproval?: boolean;
+
+  @IsOptional()
+  @IsIn(['cash', 'payment_payable', 'payment_receivable'])
+  journalType?: string;
+
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  supplierId?: string;
+
+  @IsOptional()
+  @IsString()
+  supplierName?: string;
 }

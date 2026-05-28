@@ -112,6 +112,24 @@ export class SelfServiceController {
     return this.attendanceService.getMonthlyAttendance(employeeId, m, y)
   }
 
+  @Get('attendance/today')
+  async getTodayAttendance(@Req() req: any) {
+    const employeeId = await this.getEmployeeId(req)
+    return this.attendanceService.getTodayAttendance(employeeId)
+  }
+
+  @Post('attendance/clock-in')
+  async clockIn(@Req() req: any) {
+    const employeeId = await this.getEmployeeId(req)
+    return this.attendanceService.clockIn(employeeId)
+  }
+
+  @Post('attendance/clock-out')
+  async clockOut(@Req() req: any) {
+    const employeeId = await this.getEmployeeId(req)
+    return this.attendanceService.clockOut(employeeId)
+  }
+
   @Post('attendance/flag-discrepancy')
   async flagDiscrepancy(@Req() req: any, @Body() dto: FlagDiscrepancyHttpDto) {
     const employeeId = await this.getEmployeeId(req)

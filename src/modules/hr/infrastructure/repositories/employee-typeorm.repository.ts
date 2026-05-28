@@ -4,29 +4,34 @@ import { EmployeeRepositoryPort } from '../../domain/repositories/employee-repos
 import { EmployeeTypeOrmEntity } from '../entities/employee-typeorm.entity'
 import { EmployeeDocumentTypeOrmEntity } from '../entities/employee-document-typeorm.entity'
 import { EmployeeHistoryTypeOrmEntity } from '../entities/employee-history-typeorm.entity'
+import { DepartmentTypeOrmEntity } from '../entities/department-typeorm.entity'
+import { PositionTypeOrmEntity } from '../entities/position-typeorm.entity'
 
 @Injectable()
 export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
   private readonly employeeRepo: Repository<EmployeeTypeOrmEntity>
   private readonly documentRepo: Repository<EmployeeDocumentTypeOrmEntity>
   private readonly historyRepo: Repository<EmployeeHistoryTypeOrmEntity>
+  private readonly departmentRepo: Repository<DepartmentTypeOrmEntity>
+  private readonly positionRepo: Repository<PositionTypeOrmEntity>
 
   constructor(private readonly dataSource: DataSource) {
     this.employeeRepo = dataSource.getRepository(EmployeeTypeOrmEntity)
     this.documentRepo = dataSource.getRepository(EmployeeDocumentTypeOrmEntity)
     this.historyRepo = dataSource.getRepository(EmployeeHistoryTypeOrmEntity)
+    this.departmentRepo = dataSource.getRepository(DepartmentTypeOrmEntity)
+    this.positionRepo = dataSource.getRepository(PositionTypeOrmEntity)
   }
 
   async findAll(filters?: {
-    search?: string
-    employmentType?: string
-    siteId?: string
-    departmentId?: string
-    status?: string
-    page?: number
-    limit?: number
+    search?: string; employmentType?: string; siteId?: string;
+    departmentId?: string; status?: string; page?: number; limit?: number;
   }): Promise<{ data: any[]; total: number }> {
     const qb = this.employeeRepo.createQueryBuilder('emp')
+      .leftJoin(DepartmentTypeOrmEntity, 'dept', 'dept.id = emp.departmentId')
+      .leftJoin(PositionTypeOrmEntity, 'pos', 'pos.id = emp.positionId')
+      .addSelect('dept.name', 'departmentName')
+      .addSelect('pos.name', 'positionName')
 
     if (filters?.search) {
       qb.andWhere(
@@ -35,17 +40,10 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
       )
     }
     if (filters?.employmentType) {
-      qb.andWhere('emp.employmentType = :employmentType', {
-        employmentType: filters.employmentType,
-      })
-    }
-    if (filters?.siteId) {
-      qb.andWhere('emp.siteId = :siteId', { siteId: filters.siteId })
+      qb.andWhere('emp.employmentType = :employmentType', { employmentType: filters.employmentType })
     }
     if (filters?.departmentId) {
-      qb.andWhere('emp.departmentId = :departmentId', {
-        departmentId: filters.departmentId,
-      })
+      qb.andWhere('emp.departmentId = :departmentId', { departmentId: filters.departmentId })
     }
     if (filters?.status) {
       qb.andWhere('emp.status = :status', { status: filters.status })
@@ -56,26 +54,71 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
     qb.orderBy('emp.fullName', 'ASC')
     qb.skip((page - 1) * limit).take(limit)
 
-    const [data, total] = await qb.getManyAndCount()
+    const [rawData, total] = await qb.getManyAndCount()
+
+    // Fetch department and position names for the results
+    const data = await Promise.all(
+      rawData.map(async (emp) => {
+        const department = emp.departmentId
+          ? await this.departmentRepo.findOne({ where: { id: emp.departmentId } })
+          : null
+        const position = emp.positionId
+          ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
+          : null
+        return {
+          ...emp,
+          departmentName: department?.name ?? null,
+          positionName: position?.name ?? null,
+        }
+      }),
+    )
+
     return { data, total }
   }
 
   async findById(id: string): Promise<any | null> {
-    return this.employeeRepo.findOne({ where: { id } })
+    const emp = await this.employeeRepo.findOne({ where: { id } })
+    if (!emp) return null
+
+    const department = emp.departmentId
+      ? await this.departmentRepo.findOne({ where: { id: emp.departmentId } })
+      : null
+    const position = emp.positionId
+      ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
+      : null
+
+    return {
+      ...emp,
+      departmentName: department?.name ?? null,
+      positionName: position?.name ?? null,
+    }
   }
 
   async findActiveEmployees(siteId?: string, departmentId?: string): Promise<any[]> {
     const qb = this.employeeRepo.createQueryBuilder('emp')
     qb.where('emp.status = :status', { status: 'active' })
 
-    if (siteId) {
-      qb.andWhere('emp.siteId = :siteId', { siteId })
-    }
     if (departmentId) {
       qb.andWhere('emp.departmentId = :departmentId', { departmentId })
     }
 
-    return qb.orderBy('emp.fullName', 'ASC').getMany()
+    const employees = await qb.orderBy('emp.fullName', 'ASC').getMany()
+
+    return Promise.all(
+      employees.map(async (emp) => {
+        const department = emp.departmentId
+          ? await this.departmentRepo.findOne({ where: { id: emp.departmentId } })
+          : null
+        const position = emp.positionId
+          ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
+          : null
+        return {
+          ...emp,
+          departmentName: department?.name ?? null,
+          positionName: position?.name ?? null,
+        }
+      }),
+    )
   }
 
   async create(data: any): Promise<any> {
@@ -106,10 +149,7 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
   }
 
   async getDocuments(employeeId: string): Promise<any[]> {
-    return this.documentRepo.find({
-      where: { employeeId },
-      order: { uploadedAt: 'DESC' },
-    })
+    return this.documentRepo.find({ where: { employeeId }, order: { uploadedAt: 'DESC' } })
   }
 
   async createHistoryEvent(data: any): Promise<any> {
@@ -118,9 +158,6 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
   }
 
   async getHistory(employeeId: string): Promise<any[]> {
-    return this.historyRepo.find({
-      where: { employeeId },
-      order: { effectiveDate: 'DESC' },
-    })
+    return this.historyRepo.find({ where: { employeeId }, order: { effectiveDate: 'DESC' } })
   }
 }
