@@ -267,46 +267,75 @@ export class PayrollEngineService implements PayrollServicePort {
     const totalPph21 = details.reduce((s: number, d: any) => s + Number(d.pph21), 0)
     const totalNet = details.reduce((s: number, d: any) => s + Number(d.netPay), 0)
 
-    const salaryExpenseAcc = await this.accountRepo.findByCode('5100')
+    // Use 5101 (salary expense) if available, fallback to 5100
+    const salaryExpenseAcc = await this.accountRepo.findByCode('5101') ?? await this.accountRepo.findByCode('5100')
+    // Use 5102 (BPJS employer expense) if available, fallback to salary expense
+    const bpjsExpenseAcc = await this.accountRepo.findByCode('5102') ?? salaryExpenseAcc
     const bpjsPayableAcc = await this.accountRepo.findByCode('2300')
     const pph21PayableAcc = await this.accountRepo.findByCode('2310')
     const cashAcc = await this.accountRepo.findByCode('1100')
 
     if (!salaryExpenseAcc || !cashAcc) return
+    if (!bpjsPayableAcc && (totalBpjsEmployee + totalBpjsEmployer) > 0) return
+    if (!pph21PayableAcc && totalPph21 > 0) return
 
     const lines: { accountId: string; debit: number; credit: number; description?: string }[] = []
 
+    // Debit: Salary expense (gross amount)
     lines.push({
       accountId: salaryExpenseAcc.id,
-      debit: totalGross + totalBpjsEmployer,
+      debit: totalGross,
       credit: 0,
-      description: 'Salary expense + employer BPJS',
+      description: `Gaji karyawan periode ${run.month}/${run.year}`,
     })
 
+    // Debit: Employer BPJS expense (if separate account)
+    if (bpjsExpenseAcc && bpjsExpenseAcc.id !== salaryExpenseAcc.id && totalBpjsEmployer > 0) {
+      lines.push({
+        accountId: bpjsExpenseAcc.id,
+        debit: totalBpjsEmployer,
+        credit: 0,
+        description: 'Biaya BPJS perusahaan',
+      })
+    }
+
+    // Credit: BPJS Payable (employee + employer contributions)
     if (bpjsPayableAcc && (totalBpjsEmployee + totalBpjsEmployer) > 0) {
       lines.push({
         accountId: bpjsPayableAcc.id,
         debit: 0,
         credit: totalBpjsEmployee + totalBpjsEmployer,
-        description: 'BPJS payable (employee + employer)',
+        description: 'Hutang BPJS (karyawan + perusahaan)',
       })
     }
 
+    // Credit: PPh 21 Payable (tax withheld from employees)
     if (pph21PayableAcc && totalPph21 > 0) {
       lines.push({
         accountId: pph21PayableAcc.id,
         debit: 0,
         credit: totalPph21,
-        description: 'PPh 21 payable',
+        description: 'Hutang PPh 21',
       })
     }
 
+    // Credit: Cash/Bank (net pay to employees)
     lines.push({
       accountId: cashAcc.id,
       debit: 0,
       credit: totalNet,
-      description: 'Net salary payment',
+      description: 'Pembayaran bersih gaji karyawan',
     })
+
+    // Verify balance before creating
+    const totalDebit = lines.reduce((s, l) => s + l.debit, 0)
+    const totalCredit = lines.reduce((s, l) => s + l.credit, 0)
+
+    if (Math.abs(totalDebit - totalCredit) > 0.01) {
+      throw new Error(
+        `Payroll journal entry is unbalanced. Debit: ${totalDebit}, Credit: ${totalCredit}`,
+      )
+    }
 
     await this.journalEntryService.create(
       {
