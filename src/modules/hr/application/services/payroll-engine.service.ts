@@ -1,14 +1,12 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common'
+import { DataSource } from 'typeorm'
 import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port'
 import type { PayrollRepositoryPort } from '../../domain/repositories/payroll-repository.port'
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port'
 import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port'
-import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port'
-import type { JournalEntryServicePort } from '../../../finance/application/ports/journal-entry-service.port'
-import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port'
-import type { AccountRepositoryPort } from '../../../finance/domain/repositories/finance-repository.port'
+import { GlPostingQueueTypeOrmEntity } from '../../../finance/infrastructure/entities/gl-posting-queue-typeorm.entity'
 import type { PayrollServicePort } from '../ports/payroll-service.port'
 
 @Injectable()
@@ -37,10 +35,7 @@ export class PayrollEngineService implements PayrollServicePort {
     private readonly employeeRepo: EmployeeRepositoryPort,
     @Inject(ATTENDANCE_REPOSITORY)
     private readonly attendanceRepo: AttendanceRepositoryPort,
-    @Inject(JOURNAL_ENTRY_SERVICE)
-    private readonly journalEntryService: JournalEntryServicePort,
-    @Inject(ACCOUNT_REPOSITORY)
-    private readonly accountRepo: AccountRepositoryPort,
+    private readonly dataSource: DataSource,
   ) {}
 
   async runPayroll(month: number, year: number): Promise<any> {
@@ -123,9 +118,8 @@ export class PayrollEngineService implements PayrollServicePort {
       throw new BadRequestException('Only confirmed payroll runs can be posted to GL')
     }
 
-    // Create journal entries in finance module
-    // This would typically call the finance module's journal entry service
-    await this.createPayrollJournalEntries(run)
+    // Create GL Posting Queue entry instead of direct journal entry
+    await this.createPayrollQueueEntry(run)
 
     return this.payrollRepo.updateRun(id, {
       status: 'posted',
@@ -250,7 +244,7 @@ export class PayrollEngineService implements PayrollServicePort {
     return tax
   }
 
-  private async createPayrollJournalEntries(run: any): Promise<void> {
+  private async createPayrollQueueEntry(run: any): Promise<void> {
     const details = await this.payrollRepo.findDetailsByRunId(run.id)
 
     const totalGross = details.reduce((s: number, d: any) => s + Number(d.grossPay), 0)
@@ -267,85 +261,58 @@ export class PayrollEngineService implements PayrollServicePort {
     const totalPph21 = details.reduce((s: number, d: any) => s + Number(d.pph21), 0)
     const totalNet = details.reduce((s: number, d: any) => s + Number(d.netPay), 0)
 
-    // Use 5101 (salary expense) if available, fallback to 5100
-    const salaryExpenseAcc = await this.accountRepo.findByCode('5101') ?? await this.accountRepo.findByCode('5100')
-    // Use 5102 (BPJS employer expense) if available, fallback to salary expense
-    const bpjsExpenseAcc = await this.accountRepo.findByCode('5102') ?? salaryExpenseAcc
-    const bpjsPayableAcc = await this.accountRepo.findByCode('2300')
-    const pph21PayableAcc = await this.accountRepo.findByCode('2310')
-    const cashAcc = await this.accountRepo.findByCode('1100')
+    const queueRepo = this.dataSource.getRepository(GlPostingQueueTypeOrmEntity)
 
-    if (!salaryExpenseAcc || !cashAcc) return
-    if (!bpjsPayableAcc && (totalBpjsEmployee + totalBpjsEmployer) > 0) return
-    if (!pph21PayableAcc && totalPph21 > 0) return
-
-    const lines: { accountId: string; debit: number; credit: number; description?: string }[] = []
-
-    // Debit: Salary expense (gross amount)
-    lines.push({
-      accountId: salaryExpenseAcc.id,
-      debit: totalGross,
-      credit: 0,
-      description: `Gaji karyawan periode ${run.month}/${run.year}`,
-    })
-
-    // Debit: Employer BPJS expense (if separate account)
-    if (bpjsExpenseAcc && bpjsExpenseAcc.id !== salaryExpenseAcc.id && totalBpjsEmployer > 0) {
-      lines.push({
-        accountId: bpjsExpenseAcc.id,
-        debit: totalBpjsEmployer,
-        credit: 0,
-        description: 'Biaya BPJS perusahaan',
-      })
-    }
-
-    // Credit: BPJS Payable (employee + employer contributions)
-    if (bpjsPayableAcc && (totalBpjsEmployee + totalBpjsEmployer) > 0) {
-      lines.push({
-        accountId: bpjsPayableAcc.id,
-        debit: 0,
-        credit: totalBpjsEmployee + totalBpjsEmployer,
-        description: 'Hutang BPJS (karyawan + perusahaan)',
-      })
-    }
-
-    // Credit: PPh 21 Payable (tax withheld from employees)
-    if (pph21PayableAcc && totalPph21 > 0) {
-      lines.push({
-        accountId: pph21PayableAcc.id,
-        debit: 0,
-        credit: totalPph21,
-        description: 'Hutang PPh 21',
-      })
-    }
-
-    // Credit: Cash/Bank (net pay to employees)
-    lines.push({
-      accountId: cashAcc.id,
-      debit: 0,
-      credit: totalNet,
-      description: 'Pembayaran bersih gaji karyawan',
-    })
-
-    // Verify balance before creating
-    const totalDebit = lines.reduce((s, l) => s + l.debit, 0)
-    const totalCredit = lines.reduce((s, l) => s + l.credit, 0)
-
-    if (Math.abs(totalDebit - totalCredit) > 0.01) {
-      throw new Error(
-        `Payroll journal entry is unbalanced. Debit: ${totalDebit}, Credit: ${totalCredit}`,
-      )
-    }
-
-    await this.journalEntryService.create(
-      {
-        date: new Date().toISOString().split('T')[0],
-        description: `Payroll ${run.month}/${run.year}`,
-        reference: `PAYROLL-${run.year}-${String(run.month).padStart(2, '0')}`,
-        lines,
-      },
-      'system',
-      false,
-    )
+    await queueRepo.save(queueRepo.create({
+      sourceType: 'payroll',
+      sourceId: run.id,
+      sourceNumber: `PAYROLL-${run.year}-${String(run.month).padStart(2, '0')}`,
+      eventType: 'payroll_run',
+      amount: totalGross,
+      description: `Payroll ${run.month}/${run.year} — ${details.length} employees`,
+      suggestedLines: [
+        {
+          accountId: '',
+          accountCode: '5101',
+          accountName: 'Biaya Gaji Karyawan',
+          debit: totalGross,
+          credit: 0,
+          description: `Gaji karyawan periode ${run.month}/${run.year}`,
+        },
+        {
+          accountId: '',
+          accountCode: '5102',
+          accountName: 'Biaya BPJS Perusahaan',
+          debit: totalBpjsEmployer,
+          credit: 0,
+          description: 'Biaya BPJS perusahaan',
+        },
+        {
+          accountId: '',
+          accountCode: '2300',
+          accountName: 'Hutang BPJS',
+          debit: 0,
+          credit: totalBpjsEmployee + totalBpjsEmployer,
+          description: 'Hutang BPJS (karyawan + perusahaan)',
+        },
+        {
+          accountId: '',
+          accountCode: '2310',
+          accountName: 'Hutang PPh 21',
+          debit: 0,
+          credit: totalPph21,
+          description: 'Hutang PPh 21',
+        },
+        {
+          accountId: '',
+          accountCode: '1100',
+          accountName: 'Kas & Bank',
+          debit: 0,
+          credit: totalNet,
+          description: 'Pembayaran bersih gaji karyawan',
+        },
+      ],
+      status: 'pending',
+    }))
   }
 }

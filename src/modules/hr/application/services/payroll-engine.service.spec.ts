@@ -1,19 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { BadRequestException } from '@nestjs/common'
+import { DataSource } from 'typeorm'
 import { PayrollEngineService } from './payroll-engine.service'
 import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port'
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port'
-import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port'
-import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port'
 
 describe('PayrollEngineService', () => {
   let service: PayrollEngineService
   let payrollRepo: any
   let employeeRepo: any
   let attendanceRepo: any
-  let journalEntryService: any
-  let accountRepo: any
+  let dataSource: any
 
   beforeEach(async () => {
     payrollRepo = {
@@ -33,11 +31,12 @@ describe('PayrollEngineService', () => {
     attendanceRepo = {
       getOvertimeHours: jest.fn(),
     }
-    journalEntryService = {
-      create: jest.fn(),
+    const mockQueueRepo = {
+      create: jest.fn((data) => data),
+      save: jest.fn(),
     }
-    accountRepo = {
-      findByCode: jest.fn(),
+    dataSource = {
+      getRepository: jest.fn().mockReturnValue(mockQueueRepo),
     }
 
     const module: TestingModule = await Test.createTestingModule({
@@ -46,8 +45,7 @@ describe('PayrollEngineService', () => {
         { provide: PAYROLL_REPOSITORY, useValue: payrollRepo },
         { provide: EMPLOYEE_REPOSITORY, useValue: employeeRepo },
         { provide: ATTENDANCE_REPOSITORY, useValue: attendanceRepo },
-        { provide: JOURNAL_ENTRY_SERVICE, useValue: journalEntryService },
-        { provide: ACCOUNT_REPOSITORY, useValue: accountRepo },
+        { provide: DataSource, useValue: dataSource },
       ],
     }).compile()
 
@@ -206,7 +204,7 @@ describe('PayrollEngineService', () => {
   })
 
   describe('postToGL', () => {
-    it('should post confirmed payroll to GL', async () => {
+    it('should post confirmed payroll to GL Posting Queue', async () => {
       const run = { id: 'run-1', month: 3, year: 2024, status: 'confirmed' }
       const details = [
         {
@@ -225,20 +223,10 @@ describe('PayrollEngineService', () => {
 
       payrollRepo.findRunById.mockResolvedValue(run)
       payrollRepo.findDetailsByRunId.mockResolvedValue(details)
-      accountRepo.findByCode.mockResolvedValue({ id: 'acc-1' })
-      journalEntryService.create.mockResolvedValue({})
       payrollRepo.updateRun.mockResolvedValue({ ...run, status: 'posted' })
 
       const result = await service.postToGL('run-1', 'user-1')
 
-      expect(journalEntryService.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          description: 'Payroll 3/2024',
-          reference: 'PAYROLL-2024-03',
-        }),
-        'system',
-        false,
-      )
       expect(payrollRepo.updateRun).toHaveBeenCalledWith('run-1', expect.objectContaining({
         status: 'posted',
         postedBy: 'user-1',

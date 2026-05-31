@@ -135,7 +135,7 @@ export class ThrService implements ThrServicePort {
           },
         ],
       },
-      userId || 'system',
+      userId || null,
       false,
     )
   }

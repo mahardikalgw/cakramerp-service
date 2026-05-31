@@ -38,6 +38,7 @@ import type { GlPostingQueueServicePort } from '../../../application/ports/gl-po
 import { SUBSIDIARY_LEDGER_SERVICE } from '../../../application/ports/subsidiary-ledger-service.port'
 import type { SubsidiaryLedgerServicePort } from '../../../application/ports/subsidiary-ledger-service.port'
 import { BillingLetterService } from '../../../application/services/billing-letter.service'
+import { SpendingService } from '../../../application/services/spending.service'
 
 import { CreateAccountCommand } from '../../../application/commands/create-account.command'
 import { UpdateAccountCommand } from '../../../application/commands/update-account.command'
@@ -83,6 +84,7 @@ export class FinanceManagementController {
     @Inject(SUBSIDIARY_LEDGER_SERVICE)
     private readonly subsidiaryLedgerService: SubsidiaryLedgerServicePort,
     private readonly billingLetterService: BillingLetterService,
+    private readonly spendingService: SpendingService,
   ) {}
 
   // ==================== Chart of Accounts ====================
@@ -734,5 +736,56 @@ export class FinanceManagementController {
     const balance = await this.subsidiaryLedgerService.getApInvoiceBalance(id)
     const ledger = await this.subsidiaryLedgerService.getApLedger({ invoiceId: id, limit: 100 })
     return { balance, entries: ledger.data }
+  }
+
+  // ==================== Spendings ====================
+
+  @Get('spendings')
+  @RequirePermissions('spendings:read')
+  async getSpendings(
+    @Query('search') search?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.spendingService.findAll({
+      search, category, status, startDate, endDate,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Get('spendings/:id')
+  @RequirePermissions('spendings:read')
+  async getSpending(@Param('id') id: string) {
+    return this.spendingService.findById(id)
+  }
+
+  @Post('spendings')
+  @RequirePermissions('spendings:create')
+  async createSpending(@Body() dto: any) {
+    return this.spendingService.create(dto)
+  }
+
+  @Put('spendings/:id')
+  @RequirePermissions('spendings:update')
+  async updateSpending(@Param('id') id: string, @Body() dto: any) {
+    return this.spendingService.update(id, dto)
+  }
+
+  @Delete('spendings/:id')
+  @RequirePermissions('spendings:delete')
+  async deleteSpending(@Param('id') id: string) {
+    await this.spendingService.delete(id)
+    return { success: true }
+  }
+
+  @Post('spendings/:id/post-to-gl')
+  @RequirePermissions('spendings:update')
+  async postSpendingToGL(@Param('id') id: string) {
+    return this.spendingService.postToGL(id)
   }
 }

@@ -15,6 +15,7 @@ import { FinancialStatementsService } from './application/services/financial-sta
 import { GlPostingQueueService } from './application/services/gl-posting-queue.service'
 import { SubsidiaryLedgerService } from './application/services/subsidiary-ledger.service'
 import { BillingLetterService } from './application/services/billing-letter.service'
+import { SpendingService } from './application/services/spending.service'
 import { KpiAlertCheckJob } from './application/jobs/kpi-alert-check.job'
 import { AccountTypeOrmEntity } from './infrastructure/entities/account-typeorm.entity'
 import { JournalEntryTypeOrmEntity } from './infrastructure/entities/journal-entry-typeorm.entity'
@@ -33,6 +34,7 @@ import { TaxInvoiceTypeOrmEntity } from './infrastructure/entities/tax-invoice-t
 import { GlPostingQueueTypeOrmEntity } from './infrastructure/entities/gl-posting-queue-typeorm.entity'
 import { ArSubsidiaryLedgerTypeOrmEntity } from './infrastructure/entities/ar-subsidiary-ledger-typeorm.entity'
 import { ApSubsidiaryLedgerTypeOrmEntity } from './infrastructure/entities/ap-subsidiary-ledger-typeorm.entity'
+import { SpendingTypeOrmEntity } from './infrastructure/entities/spending-typeorm.entity'
 import { AccountTypeOrmRepository } from './infrastructure/repositories/account-typeorm.repository'
 import { ARInvoiceTypeOrmRepository } from './infrastructure/repositories/ar-invoice-typeorm.repository'
 import { ARInvoiceLineTypeOrmRepository } from './infrastructure/repositories/ar-invoice-line-typeorm.repository'
@@ -97,6 +99,7 @@ import { SUBSIDIARY_LEDGER_SERVICE } from './application/ports/subsidiary-ledger
       GlPostingQueueTypeOrmEntity,
       ArSubsidiaryLedgerTypeOrmEntity,
       ApSubsidiaryLedgerTypeOrmEntity,
+      SpendingTypeOrmEntity,
     ]),
   ],
   controllers: [FinanceController, FinanceManagementController],
@@ -206,6 +209,7 @@ import { SUBSIDIARY_LEDGER_SERVICE } from './application/ports/subsidiary-ledger
       useClass: SubsidiaryLedgerService,
     },
     BillingLetterService,
+    SpendingService,
   ],
   exports: [FINANCE_SERVICE, ACCOUNT_SERVICE, JOURNAL_ENTRY_SERVICE, ACCOUNT_REPOSITORY, GL_POSTING_QUEUE_SERVICE, SUBSIDIARY_LEDGER_SERVICE],
 })
