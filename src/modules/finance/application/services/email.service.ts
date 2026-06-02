@@ -1,14 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common';
 
 export interface EmailPayload {
-  to: string
-  subject: string
-  body: string
+  to: string;
+  subject: string;
+  body: string;
 }
 
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger(EmailService.name)
+  private readonly logger = new Logger(EmailService.name);
 
   /**
    * Send an email notification.
@@ -19,16 +19,16 @@ export class EmailService {
     // TODO: Replace with actual SMTP/email transport in production
     this.logger.log(
       `[EMAIL] To: ${payload.to} | Subject: ${payload.subject} | Body: ${payload.body.substring(0, 100)}...`,
-    )
+    );
   }
 
   async sendAlertNotification(alert: {
-    type: string
-    message: string
-    severity: string
-    relatedUrl?: string
+    type: string;
+    message: string;
+    severity: string;
+    relatedUrl?: string;
   }): Promise<void> {
-    const subject = `[CakramERP Alert - ${alert.severity.toUpperCase()}] ${alert.type.replace(/_/g, ' ')}`
+    const subject = `[CakramERP Alert - ${alert.severity.toUpperCase()}] ${alert.type.replace(/_/g, ' ')}`;
     const body = `
 KPI Alert Notification
 ======================
@@ -41,15 +41,16 @@ ${alert.relatedUrl ? `View details: ${alert.relatedUrl}` : ''}
 
 ---
 This is an automated notification from CakramERP.
-    `.trim()
+    `.trim();
 
     // In production, fetch director email from user/settings table
-    const directorEmail = process.env.ALERT_NOTIFICATION_EMAIL || 'director@company.com'
+    const directorEmail =
+      process.env.ALERT_NOTIFICATION_EMAIL || 'director@company.com';
 
     await this.send({
       to: directorEmail,
       subject,
       body,
-    })
+    });
   }
 }

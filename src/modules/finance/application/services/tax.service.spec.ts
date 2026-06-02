@@ -72,7 +72,9 @@ describe('TaxService', () => {
       const result = await service.getMonthlyReport(1, 2024);
 
       expect(result.hasErrors).toBe(true);
-      expect(result.validationErrors[0].errors[0]).toContain('Invalid NPWP format');
+      expect(result.validationErrors[0].errors[0]).toContain(
+        'Invalid NPWP format',
+      );
     });
 
     it('should detect invalid tax invoice number format', async () => {
@@ -94,7 +96,11 @@ describe('TaxService', () => {
       const result = await service.getMonthlyReport(1, 2024);
 
       expect(result.hasErrors).toBe(true);
-      expect(result.validationErrors[0].errors.some((e) => e.includes('Invalid tax invoice number'))).toBe(true);
+      expect(
+        result.validationErrors[0].errors.some((e) =>
+          e.includes('Invalid tax invoice number'),
+        ),
+      ).toBe(true);
     });
 
     it('should detect DPP <= 0', async () => {
@@ -116,7 +122,9 @@ describe('TaxService', () => {
       const result = await service.getMonthlyReport(1, 2024);
 
       expect(result.hasErrors).toBe(true);
-      expect(result.validationErrors[0].errors).toContain('DPP must be greater than 0');
+      expect(result.validationErrors[0].errors).toContain(
+        'DPP must be greater than 0',
+      );
     });
 
     it('should detect PPN amount mismatch', async () => {
@@ -138,7 +146,11 @@ describe('TaxService', () => {
       const result = await service.getMonthlyReport(1, 2024);
 
       expect(result.hasErrors).toBe(true);
-      expect(result.validationErrors[0].errors.some((e) => e.includes("doesn't match 11% of DPP"))).toBe(true);
+      expect(
+        result.validationErrors[0].errors.some((e) =>
+          e.includes("doesn't match 11% of DPP"),
+        ),
+      ).toBe(true);
     });
 
     it('should return empty report when no invoices', async () => {
@@ -195,8 +207,12 @@ describe('TaxService', () => {
       ];
       mockRepo.findByMonthAndYear.mockResolvedValue(invoices);
 
-      await expect(service.exportCsv(1, 2024)).rejects.toThrow(BadRequestException);
-      await expect(service.exportCsv(1, 2024)).rejects.toThrow('Cannot export: there are validation errors');
+      await expect(service.exportCsv(1, 2024)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.exportCsv(1, 2024)).rejects.toThrow(
+        'Cannot export: there are validation errors',
+      );
     });
   });
 

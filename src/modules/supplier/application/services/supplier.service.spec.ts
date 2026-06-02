@@ -38,10 +38,20 @@ describe('SupplierService', () => {
       const expected = { data: [{ id: '1', name: 'Test Supplier' }], total: 1 };
       mockRepo.findAll.mockResolvedValue(expected);
 
-      const result = await service.findAll({ search: 'Test', status: 'active', page: 1, limit: 10 });
+      const result = await service.findAll({
+        search: 'Test',
+        status: 'active',
+        page: 1,
+        limit: 10,
+      });
 
       expect(result).toEqual(expected);
-      expect(mockRepo.findAll).toHaveBeenCalledWith({ search: 'Test', status: 'active', page: 1, limit: 10 });
+      expect(mockRepo.findAll).toHaveBeenCalledWith({
+        search: 'Test',
+        status: 'active',
+        page: 1,
+        limit: 10,
+      });
     });
 
     it('should return all suppliers without filters', async () => {
@@ -77,7 +87,18 @@ describe('SupplierService', () => {
 
   describe('create', () => {
     it('should create a supplier', async () => {
-      const command = new CreateSupplierCommand('Parts Co', 'parts@test.com', '123', 'Addr', 'City', 'John', 'TAX1', 'ACC1', 'Bank1', 'notes');
+      const command = new CreateSupplierCommand(
+        'Parts Co',
+        'parts@test.com',
+        '123',
+        'Addr',
+        'City',
+        'John',
+        'TAX1',
+        'ACC1',
+        'Bank1',
+        'notes',
+      );
       const created = { id: '1', ...command, status: 'active' };
       mockRepo.findByName.mockResolvedValue(null);
       mockRepo.create.mockReturnValue(created);
@@ -105,19 +126,33 @@ describe('SupplierService', () => {
 
     it('should throw ConflictException if supplier name already exists', async () => {
       const command = new CreateSupplierCommand('Existing Supplier');
-      mockRepo.findByName.mockResolvedValue({ id: '1', name: 'Existing Supplier' });
+      mockRepo.findByName.mockResolvedValue({
+        id: '1',
+        name: 'Existing Supplier',
+      });
 
       await expect(service.create(command)).rejects.toThrow(ConflictException);
-      await expect(service.create(command)).rejects.toThrow('Supplier with this name already exists');
+      await expect(service.create(command)).rejects.toThrow(
+        'Supplier with this name already exists',
+      );
     });
   });
 
   describe('update', () => {
     it('should update a supplier', async () => {
-      const entity = { id: '1', name: 'Old Name', email: 'old@test.com', status: 'active' };
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        email: 'old@test.com',
+        status: 'active',
+      };
       const command = new UpdateSupplierCommand('New Name', 'new@test.com');
       mockRepo.findById.mockResolvedValue(entity);
-      mockRepo.save.mockResolvedValue({ ...entity, name: 'New Name', email: 'new@test.com' });
+      mockRepo.save.mockResolvedValue({
+        ...entity,
+        name: 'New Name',
+        email: 'new@test.com',
+      });
 
       const result = await service.update('1', command);
 
@@ -128,7 +163,15 @@ describe('SupplierService', () => {
     });
 
     it('should update only provided fields', async () => {
-      const entity = { id: '1', name: 'Old Name', email: 'old@test.com', phone: '123', bankAccount: 'ACC1', bankName: 'Bank1', status: 'active' };
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        email: 'old@test.com',
+        phone: '123',
+        bankAccount: 'ACC1',
+        bankName: 'Bank1',
+        status: 'active',
+      };
       const command = new UpdateSupplierCommand(undefined, 'new@test.com');
       mockRepo.findById.mockResolvedValue(entity);
       mockRepo.save.mockImplementation(async (e) => e);
@@ -141,8 +184,24 @@ describe('SupplierService', () => {
     });
 
     it('should update bank details when provided', async () => {
-      const entity = { id: '1', name: 'Test', bankAccount: 'OLD_ACC', bankName: 'Old Bank', status: 'active' };
-      const command = new UpdateSupplierCommand(undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'NEW_ACC', 'New Bank');
+      const entity = {
+        id: '1',
+        name: 'Test',
+        bankAccount: 'OLD_ACC',
+        bankName: 'Old Bank',
+        status: 'active',
+      };
+      const command = new UpdateSupplierCommand(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'NEW_ACC',
+        'New Bank',
+      );
       mockRepo.findById.mockResolvedValue(entity);
       mockRepo.save.mockImplementation(async (e) => e);
 
@@ -155,8 +214,12 @@ describe('SupplierService', () => {
     it('should throw NotFoundException if supplier not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
 
-      await expect(service.update('999', new UpdateSupplierCommand('Test'))).rejects.toThrow(NotFoundException);
-      await expect(service.update('999', new UpdateSupplierCommand('Test'))).rejects.toThrow('Supplier not found');
+      await expect(
+        service.update('999', new UpdateSupplierCommand('Test')),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('999', new UpdateSupplierCommand('Test')),
+      ).rejects.toThrow('Supplier not found');
     });
   });
 

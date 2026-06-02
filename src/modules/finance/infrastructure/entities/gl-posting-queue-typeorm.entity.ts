@@ -1,50 +1,53 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('gl_posting_queue')
 export class GlPostingQueueTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50 })
-  sourceType: string
+  sourceType: string;
 
   @Column({ type: 'uuid' })
-  sourceId: string
+  sourceId: string;
 
   @Column({ type: 'varchar', length: 100 })
-  sourceNumber: string
+  sourceNumber: string;
 
   @Column({ type: 'varchar', length: 50 })
-  eventType: string
+  eventType: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number
+  amount: number;
 
   @Column({ type: 'text' })
-  description: string
+  description: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  suggestedLines: Record<string, unknown>[]
+  suggestedLines: Record<string, unknown>[];
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string
+  status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string
+  journalEntryId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  postedBy: string
+  postedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  postedAt: Date
+  postedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string
+  customerId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string
+  supplierId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  invoiceId: string
+  invoiceId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  billingLetterId: string
+  billingLetterId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  warehouseId: string;
 }

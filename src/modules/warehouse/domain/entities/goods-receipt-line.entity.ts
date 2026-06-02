@@ -1,42 +1,42 @@
 export class GoodsReceiptLine {
   constructor(
     public readonly props: {
-      id?: string
-      goodsReceiptId: string
-      itemId: string
-      itemName: string
-      poQty: number
-      receivedQty: number
-      discrepancyQty: number
-      uom: string
-      remarks?: string
+      id?: string;
+      goodsReceiptId: string;
+      itemId: string;
+      itemName: string;
+      poQty: number;
+      receivedQty: number;
+      discrepancyQty: number;
+      uom: string;
+      remarks?: string;
     },
   ) {}
   get id() {
-    return this.props.id
+    return this.props.id;
   }
   get goodsReceiptId() {
-    return this.props.goodsReceiptId
+    return this.props.goodsReceiptId;
   }
   get itemId() {
-    return this.props.itemId
+    return this.props.itemId;
   }
   get itemName() {
-    return this.props.itemName
+    return this.props.itemName;
   }
   get poQty() {
-    return this.props.poQty
+    return this.props.poQty;
   }
   get receivedQty() {
-    return this.props.receivedQty
+    return this.props.receivedQty;
   }
   get discrepancyQty() {
-    return this.props.discrepancyQty
+    return this.props.discrepancyQty;
   }
   get uom() {
-    return this.props.uom
+    return this.props.uom;
   }
   get remarks() {
-    return this.props.remarks
+    return this.props.remarks;
   }
 }

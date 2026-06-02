@@ -3,8 +3,14 @@ import { NotFoundException } from '@nestjs/common';
 import { BackupService } from './backup.service';
 import { BACKUP_JOB_REPOSITORY } from '../../domain/repositories/backup-job-repository.port';
 import { BACKUP_HISTORY_REPOSITORY } from '../../domain/repositories/backup-history-repository.port';
-import { BackupJob, BackupJobStatus } from '../../domain/entities/backup-job.entity';
-import { BackupHistory, BackupHistoryStatus } from '../../domain/entities/backup-history.entity';
+import {
+  BackupJob,
+  BackupJobStatus,
+} from '../../domain/entities/backup-job.entity';
+import {
+  BackupHistory,
+  BackupHistoryStatus,
+} from '../../domain/entities/backup-history.entity';
 import { CreateBackupCommand } from '../commands/create-backup.command';
 import { UpdateBackupCommand } from '../commands/update-backup.command';
 
@@ -85,15 +91,24 @@ describe('BackupService', () => {
     it('should throw NotFoundException if backup job not found', async () => {
       mockJobRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getBackupJobById('999')).rejects.toThrow(NotFoundException);
-      await expect(service.getBackupJobById('999')).rejects.toThrow('Backup job not found');
+      await expect(service.getBackupJobById('999')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.getBackupJobById('999')).rejects.toThrow(
+        'Backup job not found',
+      );
     });
   });
 
   describe('createBackupJob', () => {
     it('should create a backup job', async () => {
       const command = new CreateBackupCommand('Daily Backup', '0 2 * * *', 30);
-      const saved = { id: '1', name: 'Daily Backup', schedule: '0 2 * * *', retentionDays: 30 };
+      const saved = {
+        id: '1',
+        name: 'Daily Backup',
+        schedule: '0 2 * * *',
+        retentionDays: 30,
+      };
       mockJobRepo.save.mockResolvedValue(saved);
 
       const result = await service.createBackupJob(command);
@@ -119,10 +134,26 @@ describe('BackupService', () => {
 
   describe('updateBackupJob', () => {
     it('should update a backup job', async () => {
-      const entity = { id: '1', name: 'Old Name', schedule: '0 2 * * *', status: BackupJobStatus.ACTIVE, retentionDays: 7 };
-      const command = new UpdateBackupCommand('1', 'New Name', '0 3 * * *', 'inactive', 30);
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        schedule: '0 2 * * *',
+        status: BackupJobStatus.ACTIVE,
+        retentionDays: 7,
+      };
+      const command = new UpdateBackupCommand(
+        '1',
+        'New Name',
+        '0 3 * * *',
+        'inactive',
+        30,
+      );
       mockJobRepo.findById.mockResolvedValue(entity);
-      mockJobRepo.save.mockResolvedValue({ ...entity, name: 'New Name', schedule: '0 3 * * *' });
+      mockJobRepo.save.mockResolvedValue({
+        ...entity,
+        name: 'New Name',
+        schedule: '0 3 * * *',
+      });
 
       const result = await service.updateBackupJob(command);
 
@@ -133,7 +164,13 @@ describe('BackupService', () => {
     });
 
     it('should update only provided fields', async () => {
-      const entity = { id: '1', name: 'Old Name', schedule: '0 2 * * *', status: BackupJobStatus.ACTIVE, retentionDays: 7 };
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        schedule: '0 2 * * *',
+        status: BackupJobStatus.ACTIVE,
+        retentionDays: 7,
+      };
       const command = new UpdateBackupCommand('1', 'New Name');
       mockJobRepo.findById.mockResolvedValue(entity);
       mockJobRepo.save.mockImplementation(async (e) => e);
@@ -146,8 +183,20 @@ describe('BackupService', () => {
     });
 
     it('should update retentionDays when provided', async () => {
-      const entity = { id: '1', name: 'Test', schedule: '0 2 * * *', status: BackupJobStatus.ACTIVE, retentionDays: 7 };
-      const command = new UpdateBackupCommand('1', undefined, undefined, undefined, 60);
+      const entity = {
+        id: '1',
+        name: 'Test',
+        schedule: '0 2 * * *',
+        status: BackupJobStatus.ACTIVE,
+        retentionDays: 7,
+      };
+      const command = new UpdateBackupCommand(
+        '1',
+        undefined,
+        undefined,
+        undefined,
+        60,
+      );
       mockJobRepo.findById.mockResolvedValue(entity);
       mockJobRepo.save.mockImplementation(async (e) => e);
 
@@ -160,8 +209,12 @@ describe('BackupService', () => {
       const command = new UpdateBackupCommand('999', 'Test');
       mockJobRepo.findById.mockResolvedValue(null);
 
-      await expect(service.updateBackupJob(command)).rejects.toThrow(NotFoundException);
-      await expect(service.updateBackupJob(command)).rejects.toThrow('Backup job not found');
+      await expect(service.updateBackupJob(command)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.updateBackupJob(command)).rejects.toThrow(
+        'Backup job not found',
+      );
     });
   });
 
@@ -169,7 +222,10 @@ describe('BackupService', () => {
     it('should trigger a backup and create history entry', async () => {
       const job = { id: '1', name: 'Daily Backup', schedule: '0 2 * * *' };
       mockJobRepo.findById.mockResolvedValue(job);
-      mockHistoryRepo.save.mockImplementation(async (h) => ({ id: 'h1', ...h }));
+      mockHistoryRepo.save.mockImplementation(async (h) => ({
+        id: 'h1',
+        ...h,
+      }));
 
       const result = await service.triggerBackup('1');
 
@@ -184,8 +240,12 @@ describe('BackupService', () => {
     it('should throw NotFoundException if backup job not found', async () => {
       mockJobRepo.findById.mockResolvedValue(null);
 
-      await expect(service.triggerBackup('999')).rejects.toThrow(NotFoundException);
-      await expect(service.triggerBackup('999')).rejects.toThrow('Backup job not found');
+      await expect(service.triggerBackup('999')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.triggerBackup('999')).rejects.toThrow(
+        'Backup job not found',
+      );
     });
   });
 

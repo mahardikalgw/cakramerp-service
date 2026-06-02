@@ -38,10 +38,20 @@ describe('DepartmentService', () => {
       const expected = { data: [{ id: '1', name: 'Engineering' }], total: 1 };
       mockRepo.findAll.mockResolvedValue(expected);
 
-      const result = await service.findAll({ search: 'Eng', isActive: true, page: 1, limit: 10 });
+      const result = await service.findAll({
+        search: 'Eng',
+        isActive: true,
+        page: 1,
+        limit: 10,
+      });
 
       expect(result).toEqual(expected);
-      expect(mockRepo.findAll).toHaveBeenCalledWith({ search: 'Eng', isActive: true, page: 1, limit: 10 });
+      expect(mockRepo.findAll).toHaveBeenCalledWith({
+        search: 'Eng',
+        isActive: true,
+        page: 1,
+        limit: 10,
+      });
     });
 
     it('should return all departments without filters', async () => {
@@ -70,14 +80,24 @@ describe('DepartmentService', () => {
       mockRepo.findById.mockResolvedValue(null);
 
       await expect(service.findById('999')).rejects.toThrow(NotFoundException);
-      await expect(service.findById('999')).rejects.toThrow('Department not found');
+      await expect(service.findById('999')).rejects.toThrow(
+        'Department not found',
+      );
     });
   });
 
   describe('create', () => {
     it('should create a department', async () => {
-      const command = new CreateDepartmentCommand('Engineering', 'Software engineering team');
-      const created = { id: '1', name: 'Engineering', description: 'Software engineering team', isActive: true };
+      const command = new CreateDepartmentCommand(
+        'Engineering',
+        'Software engineering team',
+      );
+      const created = {
+        id: '1',
+        name: 'Engineering',
+        description: 'Software engineering team',
+        isActive: true,
+      };
       mockRepo.findByName.mockResolvedValue(null);
       mockRepo.create.mockResolvedValue(created);
 
@@ -113,35 +133,65 @@ describe('DepartmentService', () => {
       mockRepo.findByName.mockResolvedValue({ id: '1', name: 'Engineering' });
 
       await expect(service.create(command)).rejects.toThrow(ConflictException);
-      await expect(service.create(command)).rejects.toThrow('Department name already exists');
+      await expect(service.create(command)).rejects.toThrow(
+        'Department name already exists',
+      );
     });
   });
 
   describe('update', () => {
     it('should update a department', async () => {
-      const department = { id: '1', name: 'Old Name', description: 'Old desc', isActive: true };
-      const command = new UpdateDepartmentCommand('New Name', 'New desc', false);
+      const department = {
+        id: '1',
+        name: 'Old Name',
+        description: 'Old desc',
+        isActive: true,
+      };
+      const command = new UpdateDepartmentCommand(
+        'New Name',
+        'New desc',
+        false,
+      );
       mockRepo.findById.mockResolvedValue(department);
       mockRepo.findByName.mockResolvedValue(null);
-      mockRepo.update.mockResolvedValue({ ...department, name: 'New Name', description: 'New desc', isActive: false });
+      mockRepo.update.mockResolvedValue({
+        ...department,
+        name: 'New Name',
+        description: 'New desc',
+        isActive: false,
+      });
 
       const result = await service.update('1', command);
 
       expect(mockRepo.findById).toHaveBeenCalledWith('1');
-      expect(mockRepo.update).toHaveBeenCalledWith('1', { name: 'New Name', description: 'New desc', isActive: false });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', {
+        name: 'New Name',
+        description: 'New desc',
+        isActive: false,
+      });
     });
 
     it('should update only provided fields', async () => {
-      const department = { id: '1', name: 'Engineering', description: 'Old desc', isActive: true };
+      const department = {
+        id: '1',
+        name: 'Engineering',
+        description: 'Old desc',
+        isActive: true,
+      };
       const command = new UpdateDepartmentCommand(undefined, 'New desc');
       mockRepo.findById.mockResolvedValue(department);
-      mockRepo.update.mockImplementation(async (id, data) => ({ ...department, ...data }));
+      mockRepo.update.mockImplementation(async (id, data) => ({
+        ...department,
+        ...data,
+      }));
 
       const result = await service.update('1', command);
 
       expect(result.description).toBe('New desc');
       expect(result.name).toBe('Engineering');
-      expect(mockRepo.update).toHaveBeenCalledWith('1', { description: 'New desc' });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', {
+        description: 'New desc',
+      });
     });
 
     it('should check for name conflict when name changes', async () => {
@@ -150,15 +200,25 @@ describe('DepartmentService', () => {
       mockRepo.findById.mockResolvedValue(department);
       mockRepo.findByName.mockResolvedValue({ id: '2', name: 'HR' });
 
-      await expect(service.update('1', command)).rejects.toThrow(ConflictException);
-      await expect(service.update('1', command)).rejects.toThrow('Department name already exists');
+      await expect(service.update('1', command)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(service.update('1', command)).rejects.toThrow(
+        'Department name already exists',
+      );
     });
 
     it('should not check for name conflict when name is the same', async () => {
       const department = { id: '1', name: 'Engineering', isActive: true };
-      const command = new UpdateDepartmentCommand('Engineering', 'Updated desc');
+      const command = new UpdateDepartmentCommand(
+        'Engineering',
+        'Updated desc',
+      );
       mockRepo.findById.mockResolvedValue(department);
-      mockRepo.update.mockResolvedValue({ ...department, description: 'Updated desc' });
+      mockRepo.update.mockResolvedValue({
+        ...department,
+        description: 'Updated desc',
+      });
 
       await service.update('1', command);
 
@@ -168,8 +228,12 @@ describe('DepartmentService', () => {
     it('should throw NotFoundException if department not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
 
-      await expect(service.update('999', new UpdateDepartmentCommand('Test'))).rejects.toThrow(NotFoundException);
-      await expect(service.update('999', new UpdateDepartmentCommand('Test'))).rejects.toThrow('Department not found');
+      await expect(
+        service.update('999', new UpdateDepartmentCommand('Test')),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('999', new UpdateDepartmentCommand('Test')),
+      ).rejects.toThrow('Department not found');
     });
   });
 
@@ -188,7 +252,9 @@ describe('DepartmentService', () => {
       mockRepo.findById.mockResolvedValue(null);
 
       await expect(service.delete('999')).rejects.toThrow(NotFoundException);
-      await expect(service.delete('999')).rejects.toThrow('Department not found');
+      await expect(service.delete('999')).rejects.toThrow(
+        'Department not found',
+      );
     });
   });
 });

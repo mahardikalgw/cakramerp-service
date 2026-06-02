@@ -62,26 +62,46 @@ describe('RoleService', () => {
     it('should return paginated roles', async () => {
       const expectedResult = {
         data: [new Role({ id: '1', name: 'Admin' })],
-        meta: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRoleRepository.findAll.mockResolvedValue(expectedResult);
 
       const result = await service.findAll(1, 20);
 
       expect(result).toEqual(expectedResult);
-      expect(mockRoleRepository.findAll).toHaveBeenCalledWith({ page: 1, limit: 20 });
+      expect(mockRoleRepository.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+      });
     });
 
     it('should use default pagination values', async () => {
       const expectedResult = {
         data: [],
-        meta: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRoleRepository.findAll.mockResolvedValue(expectedResult);
 
       await service.findAll();
 
-      expect(mockRoleRepository.findAll).toHaveBeenCalledWith({ page: 1, limit: 20 });
+      expect(mockRoleRepository.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+      });
     });
   });
 
@@ -99,37 +119,72 @@ describe('RoleService', () => {
     it('should throw NotFoundException if role not found', async () => {
       mockRoleRepository.findById.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('findByName', () => {
     it('should return a role by name with permissions', async () => {
-      const permission = new Permission({ id: 'perm-1', name: 'Read Users', resource: 'users', action: 'read' });
-      const role = new Role({ id: 'role-1', name: 'Admin', permissions: [permission] });
+      const permission = new Permission({
+        id: 'perm-1',
+        name: 'Read Users',
+        resource: 'users',
+        action: 'read',
+      });
+      const role = new Role({
+        id: 'role-1',
+        name: 'Admin',
+        permissions: [permission],
+      });
       mockRoleRepository.findByNameWithPermissions.mockResolvedValue(role);
 
       const result = await service.findByName('Admin');
 
       expect(result).toEqual(role);
-      expect(mockRoleRepository.findByNameWithPermissions).toHaveBeenCalledWith('Admin');
+      expect(mockRoleRepository.findByNameWithPermissions).toHaveBeenCalledWith(
+        'Admin',
+      );
     });
 
     it('should throw NotFoundException if role not found by name', async () => {
       mockRoleRepository.findByNameWithPermissions.mockResolvedValue(null);
 
-      await expect(service.findByName('NonExistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findByName('NonExistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('create', () => {
     it('should create a role with valid permissions', async () => {
-      const command = new CreateRoleCommand('Manager', 'Manager role', ['perm-1', 'perm-2']);
-      const perm1 = new Permission({ id: 'perm-1', name: 'Read', resource: 'users', action: 'read' });
-      const perm2 = new Permission({ id: 'perm-2', name: 'Write', resource: 'users', action: 'write' });
+      const command = new CreateRoleCommand('Manager', 'Manager role', [
+        'perm-1',
+        'perm-2',
+      ]);
+      const perm1 = new Permission({
+        id: 'perm-1',
+        name: 'Read',
+        resource: 'users',
+        action: 'read',
+      });
+      const perm2 = new Permission({
+        id: 'perm-2',
+        name: 'Write',
+        resource: 'users',
+        action: 'write',
+      });
 
-      mockPermissionRepository.findById.mockResolvedValueOnce(perm1).mockResolvedValueOnce(perm2);
-      const savedRole = new Role({ id: 'role-1', name: 'Manager', description: 'Manager role', permissions: [perm1, perm2] });
+      mockPermissionRepository.findById
+        .mockResolvedValueOnce(perm1)
+        .mockResolvedValueOnce(perm2);
+      const savedRole = new Role({
+        id: 'role-1',
+        name: 'Manager',
+        description: 'Manager role',
+        permissions: [perm1, perm2],
+      });
       mockRoleRepository.save.mockResolvedValue(savedRole);
 
       const result = await service.create(command);
@@ -140,11 +195,25 @@ describe('RoleService', () => {
     });
 
     it('should filter out null permissions when creating role', async () => {
-      const command = new CreateRoleCommand('Manager', 'Manager role', ['perm-1', 'invalid-perm']);
-      const perm1 = new Permission({ id: 'perm-1', name: 'Read', resource: 'users', action: 'read' });
+      const command = new CreateRoleCommand('Manager', 'Manager role', [
+        'perm-1',
+        'invalid-perm',
+      ]);
+      const perm1 = new Permission({
+        id: 'perm-1',
+        name: 'Read',
+        resource: 'users',
+        action: 'read',
+      });
 
-      mockPermissionRepository.findById.mockResolvedValueOnce(perm1).mockResolvedValueOnce(null);
-      const savedRole = new Role({ id: 'role-1', name: 'Manager', permissions: [perm1] });
+      mockPermissionRepository.findById
+        .mockResolvedValueOnce(perm1)
+        .mockResolvedValueOnce(null);
+      const savedRole = new Role({
+        id: 'role-1',
+        name: 'Manager',
+        permissions: [perm1],
+      });
       mockRoleRepository.save.mockResolvedValue(savedRole);
 
       const result = await service.create(command);
@@ -165,7 +234,9 @@ describe('RoleService', () => {
     it('should throw NotFoundException if role not found on delete', async () => {
       mockRoleRepository.delete.mockResolvedValue(false);
 
-      await expect(service.delete('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -175,33 +246,60 @@ describe('RoleService', () => {
       const role1 = new Role({ id: 'role-1', name: 'Admin' });
       const role2 = new Role({ id: 'role-2', name: 'Manager' });
 
-      mockRoleRepository.findById.mockResolvedValueOnce(role1).mockResolvedValueOnce(role2);
+      mockRoleRepository.findById
+        .mockResolvedValueOnce(role1)
+        .mockResolvedValueOnce(role2);
       mockUserRoleAssigner.assignRoles.mockResolvedValue(undefined);
 
       await service.assignRolesToUser(command);
 
-      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', ['role-1', 'role-2']);
+      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', [
+        'role-1',
+        'role-2',
+      ]);
     });
 
     it('should throw NotFoundException if some roles not found', async () => {
-      const command = new AssignRoleCommand('user-1', ['role-1', 'invalid-role']);
+      const command = new AssignRoleCommand('user-1', [
+        'role-1',
+        'invalid-role',
+      ]);
       const role1 = new Role({ id: 'role-1', name: 'Admin' });
 
-      mockRoleRepository.findById.mockResolvedValueOnce(role1).mockResolvedValueOnce(null);
+      mockRoleRepository.findById
+        .mockResolvedValueOnce(role1)
+        .mockResolvedValueOnce(null);
 
-      await expect(service.assignRolesToUser(command)).rejects.toThrow(NotFoundException);
+      await expect(service.assignRolesToUser(command)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('updatePermissions', () => {
     it('should update role permissions', async () => {
-      const command = new UpdateRolePermissionsCommand('role-1', ['perm-1', 'perm-3']);
+      const command = new UpdateRolePermissionsCommand('role-1', [
+        'perm-1',
+        'perm-3',
+      ]);
       const role = new Role({ id: 'role-1', name: 'Admin', permissions: [] });
-      const perm1 = new Permission({ id: 'perm-1', name: 'Read', resource: 'users', action: 'read' });
-      const perm3 = new Permission({ id: 'perm-3', name: 'Delete', resource: 'users', action: 'delete' });
+      const perm1 = new Permission({
+        id: 'perm-1',
+        name: 'Read',
+        resource: 'users',
+        action: 'read',
+      });
+      const perm3 = new Permission({
+        id: 'perm-3',
+        name: 'Delete',
+        resource: 'users',
+        action: 'delete',
+      });
 
       mockRoleRepository.findById.mockResolvedValue(role);
-      mockPermissionRepository.findById.mockResolvedValueOnce(perm1).mockResolvedValueOnce(perm3);
+      mockPermissionRepository.findById
+        .mockResolvedValueOnce(perm1)
+        .mockResolvedValueOnce(perm3);
       mockRoleRepository.save.mockResolvedValue(role);
 
       const result = await service.updatePermissions(command);
@@ -211,10 +309,14 @@ describe('RoleService', () => {
     });
 
     it('should throw NotFoundException if role not found when updating permissions', async () => {
-      const command = new UpdateRolePermissionsCommand('non-existent', ['perm-1']);
+      const command = new UpdateRolePermissionsCommand('non-existent', [
+        'perm-1',
+      ]);
       mockRoleRepository.findById.mockResolvedValue(null);
 
-      await expect(service.updatePermissions(command)).rejects.toThrow(NotFoundException);
+      await expect(service.updatePermissions(command)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

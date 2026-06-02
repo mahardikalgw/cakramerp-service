@@ -1,31 +1,31 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common'
-import { DataSource } from 'typeorm'
-import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
-import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
-import { DEPARTMENT_REPOSITORY } from '../../domain/repositories/department-repository.port'
-import type { DepartmentRepositoryPort } from '../../domain/repositories/department-repository.port'
-import { POSITION_REPOSITORY } from '../../domain/repositories/position-repository.port'
-import type { PositionRepositoryPort } from '../../domain/repositories/position-repository.port'
-import { USER_SERVICE } from '../../../user/application/ports/user-service.port'
-import type { UserServicePort } from '../../../user/application/ports/user-service.port'
-import type { EmployeeServicePort } from '../ports/employee-service.port'
-import { CreateEmployeeCommand } from '../commands/create-employee.command'
-import { UpdateEmployeeCommand } from '../commands/update-employee.command'
-import { CreateUserCommand } from '../../../user/application/commands/create-user.command'
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
+import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port';
+import { DEPARTMENT_REPOSITORY } from '../../domain/repositories/department-repository.port';
+import type { DepartmentRepositoryPort } from '../../domain/repositories/department-repository.port';
+import { POSITION_REPOSITORY } from '../../domain/repositories/position-repository.port';
+import type { PositionRepositoryPort } from '../../domain/repositories/position-repository.port';
+import { USER_SERVICE } from '../../../user/application/ports/user-service.port';
+import type { UserServicePort } from '../../../user/application/ports/user-service.port';
+import type { EmployeeServicePort } from '../ports/employee-service.port';
+import { CreateEmployeeCommand } from '../commands/create-employee.command';
+import { UpdateEmployeeCommand } from '../commands/update-employee.command';
+import { CreateUserCommand } from '../../../user/application/commands/create-user.command';
 
 export interface UploadDocumentDto {
-  type: string
-  fileName: string
-  filePath: string
-  expiryDate?: string
+  type: string;
+  fileName: string;
+  filePath: string;
+  expiryDate?: string;
 }
 
 export interface AddHistoryEventDto {
-  eventType: string
-  description: string
-  previousValue?: string
-  newValue?: string
-  effectiveDate: string
+  eventType: string;
+  description: string;
+  previousValue?: string;
+  newValue?: string;
+  effectiveDate: string;
 }
 
 @Injectable()
@@ -43,44 +43,46 @@ export class EmployeeService implements EmployeeServicePort {
   ) {}
 
   async findAll(filters?: {
-    search?: string
-    employmentType?: string
-    departmentId?: string
-    status?: string
-    page?: number
-    limit?: number
+    search?: string;
+    employmentType?: string;
+    departmentId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: any[]; total: number }> {
-    return this.employeeRepo.findAll(filters)
+    return this.employeeRepo.findAll(filters);
   }
 
   async findById(id: string): Promise<{
-    employee: any
-    documents: any[]
-    history: any[]
+    employee: any;
+    documents: any[];
+    history: any[];
   }> {
-    const employee = await this.employeeRepo.findById(id)
-    if (!employee) throw new NotFoundException('Employee not found')
+    const employee = await this.employeeRepo.findById(id);
+    if (!employee) throw new NotFoundException('Employee not found');
 
-    const documents = await this.employeeRepo.getDocuments(id)
-    const history = await this.employeeRepo.getHistory(id)
+    const documents = await this.employeeRepo.getDocuments(id);
+    const history = await this.employeeRepo.getHistory(id);
 
-    return { employee, documents, history }
+    return { employee, documents, history };
   }
 
   async create(command: CreateEmployeeCommand): Promise<any> {
-    const employeeNumber = await this.generateEmployeeNumber()
-    const fullName = `${command.firstName} ${command.lastName}`.trim()
+    const employeeNumber = await this.generateEmployeeNumber();
+    const fullName = `${command.firstName} ${command.lastName}`.trim();
 
     // Validate department exists
     if (command.departmentId) {
-      const department = await this.departmentRepo.findById(command.departmentId)
-      if (!department) throw new NotFoundException('Department not found')
+      const department = await this.departmentRepo.findById(
+        command.departmentId,
+      );
+      if (!department) throw new NotFoundException('Department not found');
     }
 
     // Validate position exists
     if (command.positionId) {
-      const position = await this.positionRepo.findById(command.positionId)
-      if (!position) throw new NotFoundException('Position not found')
+      const position = await this.positionRepo.findById(command.positionId);
+      if (!position) throw new NotFoundException('Position not found');
     }
 
     const employee = await this.employeeRepo.create({
@@ -97,12 +99,15 @@ export class EmployeeService implements EmployeeServicePort {
       workStartTime: command.workStartTime ?? '08:00',
       workEndTime: command.workEndTime ?? '17:00',
       breakDurationMinutes: command.breakDurationMinutes ?? 60,
-    })
+    });
 
     // Auto-create user account for the employee and link it
     if (command.email) {
       try {
-        const defaultPassword = this.generateDefaultPassword(command.firstName, command.lastName)
+        const defaultPassword = this.generateDefaultPassword(
+          command.firstName,
+          command.lastName,
+        );
         const createUserCommand = new CreateUserCommand(
           command.email,
           defaultPassword,
@@ -110,76 +115,95 @@ export class EmployeeService implements EmployeeServicePort {
           command.lastName,
           [],
           'active',
-        )
-        const user = await this.userService.create(createUserCommand)
+        );
+        const user = await this.userService.create(createUserCommand);
         // Link user to employee
         await this.dataSource.query(
           `UPDATE users SET employee_id = $1 WHERE id = $2`,
           [employee.id, user.id],
-        )
+        );
       } catch (error) {
         // If user already exists, try to link existing user to this employee
         try {
           await this.dataSource.query(
             `UPDATE users SET employee_id = $1 WHERE email = $2 AND employee_id IS NULL`,
             [employee.id, command.email],
-          )
+          );
         } catch {
           // silently skip if linking fails
         }
       }
     }
 
-    return employee
+    return employee;
   }
 
   async update(id: string, command: UpdateEmployeeCommand): Promise<any> {
-    const employee = await this.employeeRepo.findById(id)
-    if (!employee) throw new NotFoundException('Employee not found')
+    const employee = await this.employeeRepo.findById(id);
+    if (!employee) throw new NotFoundException('Employee not found');
 
-    const updateData: any = {}
+    const updateData: any = {};
 
     if (command.firstName !== undefined || command.lastName !== undefined) {
-      const firstName = command.firstName ?? employee.fullName?.split(' ')[0] ?? ''
-      const lastName = command.lastName ?? employee.fullName?.split(' ').slice(1).join(' ') ?? ''
-      updateData.fullName = `${firstName} ${lastName}`.trim()
+      const firstName =
+        command.firstName ?? employee.fullName?.split(' ')[0] ?? '';
+      const lastName =
+        command.lastName ??
+        employee.fullName?.split(' ').slice(1).join(' ') ??
+        '';
+      updateData.fullName = `${firstName} ${lastName}`.trim();
     }
-    if (command.email !== undefined) updateData.email = command.email
-    if (command.phone !== undefined) updateData.phone = command.phone
-    if (command.employmentType !== undefined) updateData.employmentType = command.employmentType
+    if (command.email !== undefined) updateData.email = command.email;
+    if (command.phone !== undefined) updateData.phone = command.phone;
+    if (command.employmentType !== undefined)
+      updateData.employmentType = command.employmentType;
 
     if (command.departmentId !== undefined) {
       if (command.departmentId) {
-        const department = await this.departmentRepo.findById(command.departmentId)
-        if (!department) throw new NotFoundException('Department not found')
+        const department = await this.departmentRepo.findById(
+          command.departmentId,
+        );
+        if (!department) throw new NotFoundException('Department not found');
       }
-      updateData.departmentId = command.departmentId || null
+      updateData.departmentId = command.departmentId || null;
     }
 
     if (command.positionId !== undefined) {
       if (command.positionId) {
-        const position = await this.positionRepo.findById(command.positionId)
-        if (!position) throw new NotFoundException('Position not found')
+        const position = await this.positionRepo.findById(command.positionId);
+        if (!position) throw new NotFoundException('Position not found');
       }
-      updateData.positionId = command.positionId || null
+      updateData.positionId = command.positionId || null;
     }
 
-    if (command.baseSalary !== undefined) updateData.basicSalary = command.baseSalary
-    if (command.hireDate !== undefined) updateData.joinDate = new Date(command.hireDate)
-    if (command.status !== undefined) updateData.status = command.status
-    if (command.workStartTime !== undefined) updateData.workStartTime = command.workStartTime
-    if (command.workEndTime !== undefined) updateData.workEndTime = command.workEndTime
-    if (command.breakDurationMinutes !== undefined) updateData.breakDurationMinutes = command.breakDurationMinutes
+    if (command.baseSalary !== undefined)
+      updateData.basicSalary = command.baseSalary;
+    if (command.hireDate !== undefined)
+      updateData.joinDate = new Date(command.hireDate);
+    if (command.status !== undefined) updateData.status = command.status;
+    if (command.workStartTime !== undefined)
+      updateData.workStartTime = command.workStartTime;
+    if (command.workEndTime !== undefined)
+      updateData.workEndTime = command.workEndTime;
+    if (command.breakDurationMinutes !== undefined)
+      updateData.breakDurationMinutes = command.breakDurationMinutes;
 
-    const updatedEmployee = await this.employeeRepo.update(id, updateData)
+    const updatedEmployee = await this.employeeRepo.update(id, updateData);
 
     // Auto-create user account if email is being set and employee doesn't have one yet
-    const newEmail = command.email ?? employee.email
+    const newEmail = command.email ?? employee.email;
     if (newEmail && command.email && command.email !== employee.email) {
       try {
-        const firstName = command.firstName ?? employee.fullName?.split(' ')[0] ?? ''
-        const lastName = command.lastName ?? employee.fullName?.split(' ').slice(1).join(' ') ?? ''
-        const defaultPassword = this.generateDefaultPassword(firstName, lastName)
+        const firstName =
+          command.firstName ?? employee.fullName?.split(' ')[0] ?? '';
+        const lastName =
+          command.lastName ??
+          employee.fullName?.split(' ').slice(1).join(' ') ??
+          '';
+        const defaultPassword = this.generateDefaultPassword(
+          firstName,
+          lastName,
+        );
         const createUserCommand = new CreateUserCommand(
           newEmail,
           defaultPassword,
@@ -187,32 +211,35 @@ export class EmployeeService implements EmployeeServicePort {
           lastName,
           [],
           'active',
-        )
-        const user = await this.userService.create(createUserCommand)
+        );
+        const user = await this.userService.create(createUserCommand);
         // Link user to employee
         await this.dataSource.query(
           `UPDATE users SET employee_id = $1 WHERE id = $2`,
           [id, user.id],
-        )
+        );
       } catch (error) {
         // If user already exists, try to link existing user to this employee
         try {
           await this.dataSource.query(
             `UPDATE users SET employee_id = $1 WHERE email = $2 AND employee_id IS NULL`,
             [id, newEmail],
-          )
+          );
         } catch {
           // silently skip
         }
       }
     }
 
-    return updatedEmployee
+    return updatedEmployee;
   }
 
-  async uploadDocument(employeeId: string, dto: UploadDocumentDto): Promise<any> {
-    const employee = await this.employeeRepo.findById(employeeId)
-    if (!employee) throw new NotFoundException('Employee not found')
+  async uploadDocument(
+    employeeId: string,
+    dto: UploadDocumentDto,
+  ): Promise<any> {
+    const employee = await this.employeeRepo.findById(employeeId);
+    if (!employee) throw new NotFoundException('Employee not found');
 
     return this.employeeRepo.createDocument({
       employeeId,
@@ -220,20 +247,23 @@ export class EmployeeService implements EmployeeServicePort {
       fileName: dto.fileName,
       filePath: dto.filePath,
       expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : undefined,
-    })
+    });
   }
 
   async getDocuments(employeeId: string): Promise<any[]> {
-    return this.employeeRepo.getDocuments(employeeId)
+    return this.employeeRepo.getDocuments(employeeId);
   }
 
   async getHistory(employeeId: string): Promise<any[]> {
-    return this.employeeRepo.getHistory(employeeId)
+    return this.employeeRepo.getHistory(employeeId);
   }
 
-  async addHistoryEvent(employeeId: string, dto: AddHistoryEventDto): Promise<any> {
-    const employee = await this.employeeRepo.findById(employeeId)
-    if (!employee) throw new NotFoundException('Employee not found')
+  async addHistoryEvent(
+    employeeId: string,
+    dto: AddHistoryEventDto,
+  ): Promise<any> {
+    const employee = await this.employeeRepo.findById(employeeId);
+    if (!employee) throw new NotFoundException('Employee not found');
 
     return this.employeeRepo.createHistoryEvent({
       employeeId,
@@ -242,22 +272,22 @@ export class EmployeeService implements EmployeeServicePort {
       previousValue: dto.previousValue,
       newValue: dto.newValue,
       effectiveDate: new Date(dto.effectiveDate),
-    })
+    });
   }
 
   private async generateEmployeeNumber(): Promise<string> {
-    const year = new Date().getFullYear()
-    const prefix = `EMP-${year}-`
-    const lastNumber = await this.employeeRepo.getLastEmployeeNumber(prefix)
+    const year = new Date().getFullYear();
+    const prefix = `EMP-${year}-`;
+    const lastNumber = await this.employeeRepo.getLastEmployeeNumber(prefix);
 
-    if (!lastNumber) return `${prefix}0001`
-    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1
-    return `${prefix}${seq.toString().padStart(4, '0')}`
+    if (!lastNumber) return `${prefix}0001`;
+    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1;
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
   private generateDefaultPassword(firstName: string, lastName: string): string {
-    const timestamp = Date.now().toString().slice(-4)
-    const name = (firstName || 'user').toLowerCase().replace(/[^a-z]/g, '')
-    return `${name.charAt(0).toUpperCase()}${name.slice(1)}@${timestamp}`
+    const timestamp = Date.now().toString().slice(-4);
+    const name = (firstName || 'user').toLowerCase().replace(/[^a-z]/g, '');
+    return `${name.charAt(0).toUpperCase()}${name.slice(1)}@${timestamp}`;
   }
 }

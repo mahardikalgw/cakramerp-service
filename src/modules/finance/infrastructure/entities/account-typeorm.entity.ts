@@ -1,29 +1,29 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('accounts')
 export class AccountTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
-  code: string
+  code: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string
+  name: string;
 
   @Column({ type: 'varchar', length: 50 })
-  type: string
+  type: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  taxCategory: string
+  taxCategory: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string
+  segment: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  costCenter: string
+  costCenter: string;
 
   @Column({ type: 'uuid', nullable: true })
-  parentId: string
+  parentId: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean
+  isActive: boolean;
 }

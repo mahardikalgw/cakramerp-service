@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateHrModule20250522000003 implements MigrationInterface {
-  name = 'CreateHrModule20250522000003'
+  name = 'CreateHrModule20250522000003';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== Employees ====================
@@ -34,7 +34,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Employee Documents ====================
 
@@ -50,7 +50,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Employee History ====================
 
@@ -66,7 +66,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Attendance Records ====================
 
@@ -84,7 +84,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Payroll Runs ====================
 
@@ -105,7 +105,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(month, year)
       );
-    `)
+    `);
 
     // ==================== Payroll Details ====================
 
@@ -136,7 +136,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== THR Records ====================
 
@@ -157,7 +157,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== BPJS Enrollments ====================
 
@@ -174,7 +174,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Indexes ====================
 
@@ -193,7 +193,7 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_bpjs_enrollments_program ON bpjs_enrollments(program);
       CREATE INDEX IF NOT EXISTS idx_employee_documents_employee ON employee_documents(employee_id);
       CREATE INDEX IF NOT EXISTS idx_employee_history_employee ON employee_history(employee_id);
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -221,6 +221,6 @@ export class CreateHrModule20250522000003 implements MigrationInterface {
       DROP TABLE IF EXISTS employee_history;
       DROP TABLE IF EXISTS employee_documents;
       DROP TABLE IF EXISTS employees;
-    `)
+    `);
   }
 }

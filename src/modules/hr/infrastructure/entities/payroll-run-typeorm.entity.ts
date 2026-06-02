@@ -1,35 +1,35 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('payroll_runs')
 export class PayrollRunTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'integer' })
-  month: number
+  month: number;
 
   @Column({ type: 'integer' })
-  year: number
+  year: number;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string
+  status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalGross: number
+  totalGross: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalNet: number
+  totalNet: number;
 
   @Column({ type: 'integer', default: 0 })
-  totalEmployees: number
+  totalEmployees: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  confirmedAt: Date
+  confirmedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  confirmedBy: string
+  confirmedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  postedAt: Date
+  postedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  postedBy: string
+  postedBy: string;
 }

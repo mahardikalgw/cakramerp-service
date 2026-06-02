@@ -13,52 +13,66 @@ import {
   StreamableFile,
   Req,
   Inject,
-} from '@nestjs/common'
-import type { Response, Request } from 'express'
-import { DataSource } from 'typeorm'
-import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard'
-import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard'
-import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator'
-import { ACCOUNT_SERVICE } from '../../../application/ports/account-service.port'
-import type { AccountServicePort } from '../../../application/ports/account-service.port'
-import { JOURNAL_ENTRY_SERVICE } from '../../../application/ports/journal-entry-service.port'
-import type { JournalEntryServicePort } from '../../../application/ports/journal-entry-service.port'
-import { AR_INVOICE_SERVICE } from '../../../application/ports/ar-invoice-service.port'
-import type { ARInvoiceServicePort } from '../../../application/ports/ar-invoice-service.port'
-import { AP_INVOICE_SERVICE } from '../../../application/ports/ap-invoice-service.port'
-import type { APInvoiceServicePort } from '../../../application/ports/ap-invoice-service.port'
-import { TAX_SERVICE } from '../../../application/ports/tax-service.port'
-import type { TaxServicePort } from '../../../application/ports/tax-service.port'
-import { BANK_RECONCILIATION_SERVICE } from '../../../application/ports/bank-reconciliation-service.port'
-import type { BankReconciliationServicePort } from '../../../application/ports/bank-reconciliation-service.port'
-import { FINANCIAL_STATEMENTS_SERVICE } from '../../../application/ports/financial-statements-service.port'
-import type { FinancialStatementsServicePort } from '../../../application/ports/financial-statements-service.port'
-import { GL_POSTING_QUEUE_SERVICE } from '../../../application/ports/gl-posting-queue-service.port'
-import type { GlPostingQueueServicePort } from '../../../application/ports/gl-posting-queue-service.port'
-import { SUBSIDIARY_LEDGER_SERVICE } from '../../../application/ports/subsidiary-ledger-service.port'
-import type { SubsidiaryLedgerServicePort } from '../../../application/ports/subsidiary-ledger-service.port'
-import { BillingLetterService } from '../../../application/services/billing-letter.service'
-import { SpendingService } from '../../../application/services/spending.service'
+} from '@nestjs/common';
+import type { Response, Request } from 'express';
+import { DataSource } from 'typeorm';
+import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
+import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
+import { ACCOUNT_SERVICE } from '../../../application/ports/account-service.port';
+import type { AccountServicePort } from '../../../application/ports/account-service.port';
+import { JOURNAL_ENTRY_SERVICE } from '../../../application/ports/journal-entry-service.port';
+import type { JournalEntryServicePort } from '../../../application/ports/journal-entry-service.port';
+import { AR_INVOICE_SERVICE } from '../../../application/ports/ar-invoice-service.port';
+import type { ARInvoiceServicePort } from '../../../application/ports/ar-invoice-service.port';
+import { AP_INVOICE_SERVICE } from '../../../application/ports/ap-invoice-service.port';
+import type { APInvoiceServicePort } from '../../../application/ports/ap-invoice-service.port';
+import { TAX_SERVICE } from '../../../application/ports/tax-service.port';
+import type { TaxServicePort } from '../../../application/ports/tax-service.port';
+import { BANK_RECONCILIATION_SERVICE } from '../../../application/ports/bank-reconciliation-service.port';
+import type { BankReconciliationServicePort } from '../../../application/ports/bank-reconciliation-service.port';
+import { FINANCIAL_STATEMENTS_SERVICE } from '../../../application/ports/financial-statements-service.port';
+import type { FinancialStatementsServicePort } from '../../../application/ports/financial-statements-service.port';
+import { GL_POSTING_QUEUE_SERVICE } from '../../../application/ports/gl-posting-queue-service.port';
+import type { GlPostingQueueServicePort } from '../../../application/ports/gl-posting-queue-service.port';
+import { SUBSIDIARY_LEDGER_SERVICE } from '../../../application/ports/subsidiary-ledger-service.port';
+import type { SubsidiaryLedgerServicePort } from '../../../application/ports/subsidiary-ledger-service.port';
+import { BillingLetterService } from '../../../application/services/billing-letter.service';
+import { SpendingService } from '../../../application/services/spending.service';
 
-import { CreateAccountCommand } from '../../../application/commands/create-account.command'
-import { UpdateAccountCommand } from '../../../application/commands/update-account.command'
-import { CreateJournalEntryCommand } from '../../../application/commands/create-journal-entry.command'
-import { CreateARInvoiceCommand } from '../../../application/commands/create-ar-invoice.command'
-import { UpdateARInvoiceCommand } from '../../../application/commands/update-ar-invoice.command'
-import { RecordPaymentCommand } from '../../../application/commands/record-payment.command'
-import { CreateAPInvoiceCommand } from '../../../application/commands/create-ap-invoice.command'
-import { SchedulePaymentCommand } from '../../../application/commands/schedule-payment.command'
-import { BulkPaymentCommand } from '../../../application/commands/bulk-payment.command'
-import { ImportBankStatementCommand } from '../../../application/commands/import-bank-statement.command'
-import { ManualReconciliationMatchCommand } from '../../../application/commands/manual-reconciliation-match.command'
-import { PostGlToJournalCommand } from '../../../application/commands/post-gl-to-journal.command'
+import { CreateAccountCommand } from '../../../application/commands/create-account.command';
+import { UpdateAccountCommand } from '../../../application/commands/update-account.command';
+import { CreateJournalEntryCommand } from '../../../application/commands/create-journal-entry.command';
+import { CreateARInvoiceCommand } from '../../../application/commands/create-ar-invoice.command';
+import { UpdateARInvoiceCommand } from '../../../application/commands/update-ar-invoice.command';
+import { RecordPaymentCommand } from '../../../application/commands/record-payment.command';
+import { CreateAPInvoiceCommand } from '../../../application/commands/create-ap-invoice.command';
+import { SchedulePaymentCommand } from '../../../application/commands/schedule-payment.command';
+import { BulkPaymentCommand } from '../../../application/commands/bulk-payment.command';
+import { ImportBankStatementCommand } from '../../../application/commands/import-bank-statement.command';
+import { ManualReconciliationMatchCommand } from '../../../application/commands/manual-reconciliation-match.command';
+import { PostGlToJournalCommand } from '../../../application/commands/post-gl-to-journal.command';
 
-import { CreateAccountHttpDto, UpdateAccountHttpDto } from '../dtos/account.dto'
-import { CreateJournalEntryHttpDto } from '../dtos/journal-entry.dto'
-import { CreateARInvoiceHttpDto, UpdateARInvoiceHttpDto, RecordPaymentHttpDto } from '../dtos/ar-invoice.dto'
-import { CreateAPInvoiceHttpDto, SchedulePaymentHttpDto, BulkPaymentHttpDto } from '../dtos/ap-invoice.dto'
-import { ImportBankStatementHttpDto, ManualMatchHttpDto } from '../dtos/bank-reconciliation.dto'
-import { PostGlToJournalHttpDto } from '../dtos/gl-posting-queue.dto'
+import {
+  CreateAccountHttpDto,
+  UpdateAccountHttpDto,
+} from '../dtos/account.dto';
+import { CreateJournalEntryHttpDto } from '../dtos/journal-entry.dto';
+import {
+  CreateARInvoiceHttpDto,
+  UpdateARInvoiceHttpDto,
+  RecordPaymentHttpDto,
+} from '../dtos/ar-invoice.dto';
+import {
+  CreateAPInvoiceHttpDto,
+  SchedulePaymentHttpDto,
+  BulkPaymentHttpDto,
+} from '../dtos/ap-invoice.dto';
+import {
+  ImportBankStatementHttpDto,
+  ManualMatchHttpDto,
+} from '../dtos/bank-reconciliation.dto';
+import { PostGlToJournalHttpDto } from '../dtos/gl-posting-queue.dto';
 
 @Controller('finance')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -93,9 +107,9 @@ export class FinanceManagementController {
   @RequirePermissions('chart-of-accounts:read')
   async getAccounts(@Query('format') format?: string) {
     if (format === 'flat') {
-      return this.accountService.getActiveAccounts()
+      return this.accountService.getActiveAccounts();
     }
-    return this.accountService.getAccountTree()
+    return this.accountService.getAccountTree();
   }
 
   @Post('accounts')
@@ -109,13 +123,16 @@ export class FinanceManagementController {
       dto.segment,
       dto.costCenter,
       dto.parentId,
-    )
-    return this.accountService.createAccount(command)
+    );
+    return this.accountService.createAccount(command);
   }
 
   @Put('accounts/:id')
   @RequirePermissions('chart-of-accounts:update')
-  async updateAccount(@Param('id') id: string, @Body() dto: UpdateAccountHttpDto) {
+  async updateAccount(
+    @Param('id') id: string,
+    @Body() dto: UpdateAccountHttpDto,
+  ) {
     const command = new UpdateAccountCommand(
       dto.code,
       dto.name,
@@ -124,14 +141,14 @@ export class FinanceManagementController {
       dto.segment,
       dto.costCenter,
       dto.parentId,
-    )
-    return this.accountService.updateAccount(id, command)
+    );
+    return this.accountService.updateAccount(id, command);
   }
 
   @Patch('accounts/:id/deactivate')
   @RequirePermissions('chart-of-accounts:delete')
   async deactivateAccount(@Param('id') id: string) {
-    return this.accountService.deactivateAccount(id)
+    return this.accountService.deactivateAccount(id);
   }
 
   // ==================== Journal Entries ====================
@@ -151,48 +168,54 @@ export class FinanceManagementController {
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('journal-entries/:id')
   @RequirePermissions('journal-entries:read')
   async getJournalEntry(@Param('id') id: string) {
-    const result = await this.journalEntryService.findById(id)
-    if (!result) return null
+    const result = await this.journalEntryService.findById(id);
+    if (!result) return null;
 
-    const entry = result.entry as any
-    entry.createdByName = await this.resolveUserName(entry.createdBy)
-    entry.approvedByName = entry.approvedBy ? await this.resolveUserName(entry.approvedBy) : null
+    const entry = result.entry as any;
+    entry.createdByName = await this.resolveUserName(entry.createdBy);
+    entry.approvedByName = entry.approvedBy
+      ? await this.resolveUserName(entry.approvedBy)
+      : null;
 
     if (entry.sourceType && entry.sourceId) {
       try {
-        const table = entry.sourceType === 'sales_invoice' ? 'ar_invoices' : 'ap_invoices'
-        const field = entry.sourceType === 'sales_invoice' ? 'invoice_number' : 'invoice_number'
+        const table =
+          entry.sourceType === 'sales_invoice' ? 'ar_invoices' : 'ap_invoices';
+        const field =
+          entry.sourceType === 'sales_invoice'
+            ? 'invoice_number'
+            : 'invoice_number';
         const rows = await this.dataSource.query(
           `SELECT ${field} FROM ${table} WHERE id = $1 LIMIT 1`,
           [entry.sourceId],
-        )
+        );
         if (rows.length > 0) {
-          entry.sourceNumber = rows[0][field]
+          entry.sourceNumber = rows[0][field];
         }
       } catch {}
     }
 
-    return result
+    return result;
   }
 
   private async resolveUserName(userId: string): Promise<string> {
-    if (!userId || userId === 'unknown' || userId === 'system') return userId
+    if (!userId || userId === 'unknown' || userId === 'system') return userId;
     try {
       const rows = await this.dataSource.query(
         `SELECT first_name, last_name FROM users WHERE id = $1 LIMIT 1`,
         [userId],
-      )
+      );
       if (rows.length > 0) {
-        return `${rows[0].first_name} ${rows[0].last_name}`.trim()
+        return `${rows[0].first_name} ${rows[0].last_name}`.trim();
       }
     } catch {}
-    return userId
+    return userId;
   }
 
   @Post('journal-entries')
@@ -201,7 +224,7 @@ export class FinanceManagementController {
     @Body() dto: CreateJournalEntryHttpDto,
     @Req() req: any,
   ) {
-    const userId = req.user?.id ?? 'unknown'
+    const userId = req.user?.id ?? 'unknown';
     const command = new CreateJournalEntryCommand(
       dto.date,
       dto.description,
@@ -210,46 +233,60 @@ export class FinanceManagementController {
       dto.segment,
       dto.projectId,
       dto.costCenter,
-    )
-    const result = await this.journalEntryService.create(command, userId, !dto.submitForApproval)
+    );
+    const result = await this.journalEntryService.create(
+      command,
+      userId,
+      !dto.submitForApproval,
+    );
 
     // Store journal type and party on the journal entry for subsidiary ledger recording on approval
     if (dto.journalType && dto.journalType !== 'cash') {
       if (dto.journalType === 'payment_payable' && dto.supplierId) {
         await this.dataSource.query(
           `UPDATE journal_entries SET journal_type = $1, supplier_id = $2, party_name = $3 WHERE id = $4`,
-          [dto.journalType, dto.supplierId, dto.supplierName || '', result.entry.id],
-        )
+          [
+            dto.journalType,
+            dto.supplierId,
+            dto.supplierName || '',
+            result.entry.id,
+          ],
+        );
       } else if (dto.journalType === 'payment_receivable' && dto.customerId) {
         await this.dataSource.query(
           `UPDATE journal_entries SET journal_type = $1, customer_id = $2, party_name = $3 WHERE id = $4`,
-          [dto.journalType, dto.customerId, dto.customerName || '', result.entry.id],
-        )
+          [
+            dto.journalType,
+            dto.customerId,
+            dto.customerName || '',
+            result.entry.id,
+          ],
+        );
       }
     }
 
-    return result
+    return result;
   }
 
   @Patch('journal-entries/:id/submit')
   @RequirePermissions('journal-entries:update')
   async submitJournalEntry(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
-    return this.journalEntryService.submit(id, userId)
+    const userId = req.user?.id ?? 'unknown';
+    return this.journalEntryService.submit(id, userId);
   }
 
   @Patch('journal-entries/:id/approve')
   @RequirePermissions('journal-entries:approve')
   async approveJournalEntry(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
-    return this.journalEntryService.approve(id, userId)
+    const userId = req.user?.id ?? 'unknown';
+    return this.journalEntryService.approve(id, userId);
   }
 
   @Post('journal-entries/:id/reverse')
   @RequirePermissions('journal-entries:update')
   async reverseJournalEntry(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
-    return this.journalEntryService.reverse(id, userId)
+    const userId = req.user?.id ?? 'unknown';
+    return this.journalEntryService.reverse(id, userId);
   }
 
   // ==================== AR Invoices ====================
@@ -269,13 +306,13 @@ export class FinanceManagementController {
       customerId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('invoices/:id')
   @RequirePermissions('sales-invoices:read')
   async getInvoice(@Param('id') id: string) {
-    return this.arInvoiceService.findById(id)
+    return this.arInvoiceService.findById(id);
   }
 
   @Post('invoices')
@@ -295,13 +332,16 @@ export class FinanceManagementController {
       dto.paymentTermLabel,
       dto.additionalDiscount,
       dto.asDraft,
-    )
-    return this.arInvoiceService.create(command, dto.asDraft !== false)
+    );
+    return this.arInvoiceService.create(command, dto.asDraft !== false);
   }
 
   @Put('invoices/:id')
   @RequirePermissions('sales-invoices:update')
-  async updateInvoice(@Param('id') id: string, @Body() dto: UpdateARInvoiceHttpDto) {
+  async updateInvoice(
+    @Param('id') id: string,
+    @Body() dto: UpdateARInvoiceHttpDto,
+  ) {
     const command = new UpdateARInvoiceCommand(
       dto.clientId,
       dto.clientName,
@@ -314,26 +354,29 @@ export class FinanceManagementController {
       dto.paymentTermLabel,
       dto.additionalDiscount,
       dto.lines,
-    )
-    return this.arInvoiceService.update(id, command)
+    );
+    return this.arInvoiceService.update(id, command);
   }
 
   @Post('invoices/:id/send')
   @RequirePermissions('sales-invoices:update')
   async sendInvoice(@Param('id') id: string) {
-    return this.arInvoiceService.send(id)
+    return this.arInvoiceService.send(id);
   }
 
   @Post('invoices/:id/record-payment')
   @RequirePermissions('sales-invoices:update')
-  async recordPayment(@Param('id') id: string, @Body() dto: RecordPaymentHttpDto) {
+  async recordPayment(
+    @Param('id') id: string,
+    @Body() dto: RecordPaymentHttpDto,
+  ) {
     const command = new RecordPaymentCommand(
       dto.amount,
       dto.paymentDate,
       dto.bankAccountId,
       dto.reference,
-    )
-    return this.arInvoiceService.recordPayment(id, command)
+    );
+    return this.arInvoiceService.recordPayment(id, command);
   }
 
   // ==================== AP Invoices ====================
@@ -355,13 +398,13 @@ export class FinanceManagementController {
       dueDateTo,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('supplier-invoices/:id')
   @RequirePermissions('supplier-invoices:read')
   async getSupplierInvoice(@Param('id') id: string) {
-    return this.apInvoiceService.findById(id)
+    return this.apInvoiceService.findById(id);
   }
 
   @Post('supplier-invoices')
@@ -381,15 +424,18 @@ export class FinanceManagementController {
       dto.paymentTermLabel,
       dto.additionalDiscount,
       dto.lines,
-    )
-    return this.apInvoiceService.create(command)
+    );
+    return this.apInvoiceService.create(command);
   }
 
   @Post('ap-invoices/:id/schedule-payment')
   @RequirePermissions('supplier-invoices:update')
-  async schedulePayment(@Param('id') id: string, @Body() dto: SchedulePaymentHttpDto) {
-    const command = new SchedulePaymentCommand(dto.dueDate, dto.bankAccountId)
-    return this.apInvoiceService.schedulePayment(id, command)
+  async schedulePayment(
+    @Param('id') id: string,
+    @Body() dto: SchedulePaymentHttpDto,
+  ) {
+    const command = new SchedulePaymentCommand(dto.dueDate, dto.bankAccountId);
+    return this.apInvoiceService.schedulePayment(id, command);
   }
 
   @Post('ap-payments/bulk')
@@ -400,16 +446,22 @@ export class FinanceManagementController {
       dto.bankAccountId,
       dto.paymentDate,
       dto.reference,
-    )
-    return this.apInvoiceService.bulkPayment(command)
+    );
+    return this.apInvoiceService.bulkPayment(command);
   }
 
   // ==================== Tax / e-Faktur ====================
 
   @Get('tax/ppn')
   @RequirePermissions('tax:read')
-  async getTaxReport(@Query('month') month: string, @Query('year') year: string) {
-    return this.taxService.getMonthlyReport(parseInt(month, 10), parseInt(year, 10))
+  async getTaxReport(
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    return this.taxService.getMonthlyReport(
+      parseInt(month, 10),
+      parseInt(year, 10),
+    );
   }
 
   @Get('tax/ppn/export/csv')
@@ -419,11 +471,14 @@ export class FinanceManagementController {
     @Query('year') year: string,
     @Res({ passthrough: true }) res?: any,
   ) {
-    const csv = await this.taxService.exportCsv(parseInt(month, 10), parseInt(year, 10))
-    const filename = `e-faktur-${year}-${month.padStart(2, '0')}.csv`
-    res.setHeader('Content-Type', 'text/csv')
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    return new StreamableFile(Buffer.from(csv, 'utf-8'))
+    const csv = await this.taxService.exportCsv(
+      parseInt(month, 10),
+      parseInt(year, 10),
+    );
+    const filename = `e-faktur-${year}-${month.padStart(2, '0')}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return new StreamableFile(Buffer.from(csv, 'utf-8'));
   }
 
   @Get('tax/ppn/export/pdf')
@@ -433,11 +488,14 @@ export class FinanceManagementController {
     @Query('year') year: string,
     @Res({ passthrough: true }) res?: any,
   ) {
-    const content = await this.taxService.exportPdf(parseInt(month, 10), parseInt(year, 10))
-    const filename = `ppn-report-${year}-${month.padStart(2, '0')}.csv`
-    res.setHeader('Content-Type', 'text/csv')
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    return new StreamableFile(Buffer.from(content, 'utf-8'))
+    const content = await this.taxService.exportPdf(
+      parseInt(month, 10),
+      parseInt(year, 10),
+    );
+    const filename = `ppn-report-${year}-${month.padStart(2, '0')}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return new StreamableFile(Buffer.from(content, 'utf-8'));
   }
 
   // ==================== Bank Reconciliation ====================
@@ -445,45 +503,51 @@ export class FinanceManagementController {
   @Get('reconciliation/bank-accounts')
   @RequirePermissions('bank-reconciliation:read')
   async getBankAccounts() {
-    return this.reconciliationService.getBankAccounts()
+    return this.reconciliationService.getBankAccounts();
   }
 
   @Post('reconciliation/import')
   @RequirePermissions('bank-reconciliation:create')
-  async importStatement(@Body() dto: ImportBankStatementHttpDto, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
+  async importStatement(
+    @Body() dto: ImportBankStatementHttpDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.id ?? 'unknown';
     const command = new ImportBankStatementCommand(
       dto.bankAccountId,
       dto.periodStart,
       dto.periodEnd,
       dto.lines,
-    )
-    return this.reconciliationService.importStatement(command, userId)
+    );
+    return this.reconciliationService.importStatement(command, userId);
   }
 
   @Post('reconciliation/:id/auto-match')
   @RequirePermissions('bank-reconciliation:update')
   async autoMatch(@Param('id') id: string) {
-    return this.reconciliationService.autoMatch(id)
+    return this.reconciliationService.autoMatch(id);
   }
 
   @Post('reconciliation/:id/manual-match')
   @RequirePermissions('bank-reconciliation:update')
   async manualMatch(@Param('id') id: string, @Body() dto: ManualMatchHttpDto) {
-    const command = new ManualReconciliationMatchCommand(dto.bankStatementLineId, dto.journalLineId)
-    return this.reconciliationService.manualMatch(id, command)
+    const command = new ManualReconciliationMatchCommand(
+      dto.bankStatementLineId,
+      dto.journalLineId,
+    );
+    return this.reconciliationService.manualMatch(id, command);
   }
 
   @Post('reconciliation/:id/finalize')
   @RequirePermissions('bank-reconciliation:update')
   async finalizeReconciliation(@Param('id') id: string) {
-    return this.reconciliationService.finalize(id)
+    return this.reconciliationService.finalize(id);
   }
 
   @Get('reconciliation/:id/report')
   @RequirePermissions('bank-reconciliation:read')
   async getReconciliationReport(@Param('id') id: string) {
-    return this.reconciliationService.getReport(id)
+    return this.reconciliationService.getReport(id);
   }
 
   // ==================== Financial Statements ====================
@@ -496,19 +560,30 @@ export class FinanceManagementController {
     @Query('date_to') dateTo?: string,
     @Query('compare_prior') comparePrior?: string,
   ) {
-    const now = new Date()
-    const from = dateFrom ?? new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-    const to = dateTo ?? now.toISOString().split('T')[0]
+    const now = new Date();
+    const from =
+      dateFrom ??
+      new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .split('T')[0];
+    const to = dateTo ?? now.toISOString().split('T')[0];
 
     switch (type) {
       case 'profit-loss':
-        return this.financialStatementsService.getProfitLoss(from, to, comparePrior === 'true')
+        return this.financialStatementsService.getProfitLoss(
+          from,
+          to,
+          comparePrior === 'true',
+        );
       case 'balance-sheet':
-        return this.financialStatementsService.getBalanceSheet(to)
+        return this.financialStatementsService.getBalanceSheet(to);
       case 'cash-flow':
-        return this.financialStatementsService.getCashFlow(from, to)
+        return this.financialStatementsService.getCashFlow(from, to);
       default:
-        return { error: 'Invalid statement type. Use: profit-loss, balance-sheet, or cash-flow' }
+        return {
+          error:
+            'Invalid statement type. Use: profit-loss, balance-sheet, or cash-flow',
+        };
     }
   }
 
@@ -520,15 +595,19 @@ export class FinanceManagementController {
     @Query('date_to') dateTo?: string,
     @Res({ passthrough: true }) res?: any,
   ) {
-    const now = new Date()
-    const from = dateFrom ?? new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-    const to = dateTo ?? now.toISOString().split('T')[0]
+    const now = new Date();
+    const from =
+      dateFrom ??
+      new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString()
+        .split('T')[0];
+    const to = dateTo ?? now.toISOString().split('T')[0];
 
-    const csv = await this.financialStatementsService.exportCsv(type, from, to)
-    const filename = `${type}-${from}-to-${to}.csv`
-    res.setHeader('Content-Type', 'text/csv')
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    return new StreamableFile(Buffer.from(csv, 'utf-8'))
+    const csv = await this.financialStatementsService.exportCsv(type, from, to);
+    const filename = `${type}-${from}-to-${to}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return new StreamableFile(Buffer.from(csv, 'utf-8'));
   }
 
   // ==================== GL Posting Queue ====================
@@ -546,13 +625,13 @@ export class FinanceManagementController {
       sourceType,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('gl-posting-queue/:id')
   @RequirePermissions('gl-posting-queue:read')
   async getGlPostingQueueItem(@Param('id') id: string) {
-    return this.glPostingQueueService.findById(id)
+    return this.glPostingQueueService.findById(id);
   }
 
   @Post('gl-posting-queue/:id/post')
@@ -562,54 +641,83 @@ export class FinanceManagementController {
     @Body() dto: PostGlToJournalHttpDto,
     @Req() req: any,
   ) {
-    const userId = req.user?.id ?? 'unknown'
-    const command = new PostGlToJournalCommand(dto.date, dto.description, dto.lines)
-    const result = await this.glPostingQueueService.postToJournal(id, command, userId)
+    const userId = req.user?.id ?? 'unknown';
+    const command = new PostGlToJournalCommand(
+      dto.date,
+      dto.description,
+      dto.lines,
+    );
+    const result = await this.glPostingQueueService.postToJournal(
+      id,
+      command,
+      userId,
+    );
 
     // Store journal type and party on the journal entry for subsidiary ledger recording on approval
-    const queueItem = await this.glPostingQueueService.findById(id)
+    const queueItem = await this.glPostingQueueService.findById(id);
     if (queueItem) {
-      if (queueItem.sourceType === 'sales_invoice' && (queueItem.customerId || (dto as any).customerId)) {
-        const custId = queueItem.customerId || (dto as any).customerId
-        const custName = (dto as any).customerName || queueItem.description
-        const invoiceId = queueItem.invoiceId || queueItem.sourceId
+      if (
+        queueItem.sourceType === 'sales_invoice' &&
+        (queueItem.customerId || (dto as any).customerId)
+      ) {
+        const custId = queueItem.customerId || (dto as any).customerId;
+        const custName = (dto as any).customerName || queueItem.description;
+        const invoiceId = queueItem.invoiceId || queueItem.sourceId;
         await this.dataSource.query(
           `UPDATE journal_entries SET journal_type = 'invoice_receivable', customer_id = $1, party_name = $2, invoice_id = $3 WHERE id = $4`,
           [custId, custName, invoiceId, result.journalEntryId],
-        )
-      } else if (queueItem.sourceType === 'supplier_invoice' && (queueItem.supplierId || (dto as any).supplierId)) {
-        const supId = queueItem.supplierId || (dto as any).supplierId
-        const supName = (dto as any).supplierName || queueItem.description
-        const invoiceId = queueItem.invoiceId || queueItem.sourceId
+        );
+      } else if (
+        queueItem.sourceType === 'supplier_invoice' &&
+        (queueItem.supplierId || (dto as any).supplierId)
+      ) {
+        const supId = queueItem.supplierId || (dto as any).supplierId;
+        const supName = (dto as any).supplierName || queueItem.description;
+        const invoiceId = queueItem.invoiceId || queueItem.sourceId;
         await this.dataSource.query(
           `UPDATE journal_entries SET journal_type = 'invoice_payable', supplier_id = $1, party_name = $2, invoice_id = $3 WHERE id = $4`,
           [supId, supName, invoiceId, result.journalEntryId],
-        )
-      } else if (queueItem.sourceType === 'billing_letter' && queueItem.billingLetterId) {
-        const billingLetterId = queueItem.billingLetterId
-        const invoiceId = queueItem.invoiceId || null
+        );
+      } else if (
+        queueItem.sourceType === 'billing_letter' &&
+        queueItem.billingLetterId
+      ) {
+        const billingLetterId = queueItem.billingLetterId;
+        const invoiceId = queueItem.invoiceId || null;
         if (queueItem.supplierId) {
           await this.dataSource.query(
             `UPDATE journal_entries SET journal_type = 'payment_payable', supplier_id = $1, party_name = $2, invoice_id = $3, billing_letter_id = $4 WHERE id = $5`,
-            [queueItem.supplierId, queueItem.description, invoiceId, billingLetterId, result.journalEntryId],
-          )
+            [
+              queueItem.supplierId,
+              queueItem.description,
+              invoiceId,
+              billingLetterId,
+              result.journalEntryId,
+            ],
+          );
         } else if (queueItem.customerId) {
           await this.dataSource.query(
             `UPDATE journal_entries SET journal_type = 'payment_receivable', customer_id = $1, party_name = $2, invoice_id = $3, billing_letter_id = $4 WHERE id = $5`,
-            [queueItem.customerId, queueItem.description, invoiceId, billingLetterId, result.journalEntryId],
-          )
+            [
+              queueItem.customerId,
+              queueItem.description,
+              invoiceId,
+              billingLetterId,
+              result.journalEntryId,
+            ],
+          );
         }
       }
     }
 
-    return result
+    return result;
   }
 
   @Patch('gl-posting-queue/:id/cancel')
   @RequirePermissions('gl-posting-queue:create')
   async cancelGlPostingQueueItem(@Param('id') id: string) {
-    await this.glPostingQueueService.cancel(id)
-    return { success: true }
+    await this.glPostingQueueService.cancel(id);
+    return { success: true };
   }
 
   // ==================== AR Subsidiary Ledger ====================
@@ -631,13 +739,13 @@ export class FinanceManagementController {
       endDate,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('ar-subsidiary-ledger/summary')
   @RequirePermissions('ar-subsidiary-ledger:read')
   async getArCustomerSummary() {
-    return this.subsidiaryLedgerService.getArCustomerSummary()
+    return this.subsidiaryLedgerService.getArCustomerSummary();
   }
 
   // ==================== AP Subsidiary Ledger ====================
@@ -659,13 +767,13 @@ export class FinanceManagementController {
       endDate,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('ap-subsidiary-ledger/summary')
   @RequirePermissions('ap-subsidiary-ledger:read')
   async getApSupplierSummary() {
-    return this.subsidiaryLedgerService.getApSupplierSummary()
+    return this.subsidiaryLedgerService.getApSupplierSummary();
   }
 
   // ==================== Billing Letters ====================
@@ -681,16 +789,19 @@ export class FinanceManagementController {
     @Query('limit') limit?: string,
   ) {
     return this.billingLetterService.findAll({
-      type, status, customerId, supplierId,
+      type,
+      status,
+      customerId,
+      supplierId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('billing-letters/:id')
   @RequirePermissions('billing-letters:read')
   async getBillingLetter(@Param('id') id: string) {
-    return this.billingLetterService.findById(id)
+    return this.billingLetterService.findById(id);
   }
 
   @Post('billing-letters')
@@ -704,20 +815,20 @@ export class FinanceManagementController {
       notes: dto.notes,
       dueDate: dto.dueDate,
       paymentAmount: dto.paymentAmount,
-    })
+    });
   }
 
   @Patch('billing-letters/:id/update-status')
   @RequirePermissions('billing-letters:update')
   async updateBillingLetterStatus(@Param('id') id: string) {
-    return this.billingLetterService.updateStatus(id)
+    return this.billingLetterService.updateStatus(id);
   }
 
   @Delete('billing-letters/:id')
   @RequirePermissions('billing-letters:update')
   async deleteBillingLetter(@Param('id') id: string) {
-    await this.billingLetterService.delete(id)
-    return { success: true }
+    await this.billingLetterService.delete(id);
+    return { success: true };
   }
 
   // ==================== Invoice Payment History ====================
@@ -725,17 +836,23 @@ export class FinanceManagementController {
   @Get('ar-invoices/:id/payment-history')
   @RequirePermissions('ar-subsidiary-ledger:read')
   async getArInvoicePaymentHistory(@Param('id') id: string) {
-    const balance = await this.subsidiaryLedgerService.getArInvoiceBalance(id)
-    const ledger = await this.subsidiaryLedgerService.getArLedger({ invoiceId: id, limit: 100 })
-    return { balance, entries: ledger.data }
+    const balance = await this.subsidiaryLedgerService.getArInvoiceBalance(id);
+    const ledger = await this.subsidiaryLedgerService.getArLedger({
+      invoiceId: id,
+      limit: 100,
+    });
+    return { balance, entries: ledger.data };
   }
 
   @Get('ap-invoices/:id/payment-history')
   @RequirePermissions('ap-subsidiary-ledger:read')
   async getApInvoicePaymentHistory(@Param('id') id: string) {
-    const balance = await this.subsidiaryLedgerService.getApInvoiceBalance(id)
-    const ledger = await this.subsidiaryLedgerService.getApLedger({ invoiceId: id, limit: 100 })
-    return { balance, entries: ledger.data }
+    const balance = await this.subsidiaryLedgerService.getApInvoiceBalance(id);
+    const ledger = await this.subsidiaryLedgerService.getApLedger({
+      invoiceId: id,
+      limit: 100,
+    });
+    return { balance, entries: ledger.data };
   }
 
   // ==================== Spendings ====================
@@ -752,40 +869,44 @@ export class FinanceManagementController {
     @Query('limit') limit?: string,
   ) {
     return this.spendingService.findAll({
-      search, category, status, startDate, endDate,
+      search,
+      category,
+      status,
+      startDate,
+      endDate,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('spendings/:id')
   @RequirePermissions('spendings:read')
   async getSpending(@Param('id') id: string) {
-    return this.spendingService.findById(id)
+    return this.spendingService.findById(id);
   }
 
   @Post('spendings')
   @RequirePermissions('spendings:create')
   async createSpending(@Body() dto: any) {
-    return this.spendingService.create(dto)
+    return this.spendingService.create(dto);
   }
 
   @Put('spendings/:id')
   @RequirePermissions('spendings:update')
   async updateSpending(@Param('id') id: string, @Body() dto: any) {
-    return this.spendingService.update(id, dto)
+    return this.spendingService.update(id, dto);
   }
 
   @Delete('spendings/:id')
   @RequirePermissions('spendings:delete')
   async deleteSpending(@Param('id') id: string) {
-    await this.spendingService.delete(id)
-    return { success: true }
+    await this.spendingService.delete(id);
+    return { success: true };
   }
 
   @Post('spendings/:id/post-to-gl')
   @RequirePermissions('spendings:update')
   async postSpendingToGL(@Param('id') id: string) {
-    return this.spendingService.postToGL(id)
+    return this.spendingService.postToGL(id);
   }
 }

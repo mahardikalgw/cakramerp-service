@@ -1,43 +1,48 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm'
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity('ar_subsidiary_ledger')
 export class ArSubsidiaryLedgerTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column({ type: 'uuid' })
-  customerId: string
+  customerId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  customerName: string
+  customerName: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string
+  journalEntryId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  glPostingQueueId: string
+  glPostingQueueId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  invoiceId: string
+  invoiceId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  invoiceNumber: string
+  invoiceNumber: string;
 
   @Column({ type: 'date' })
-  date: Date
+  date: Date;
 
   @Column({ type: 'text' })
-  description: string
+  description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  debit: number
+  debit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  credit: number
+  credit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  balance: number
+  balance: number;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  createdAt: Date
+  createdAt: Date;
 }

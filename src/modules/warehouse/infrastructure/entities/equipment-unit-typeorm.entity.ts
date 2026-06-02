@@ -1,32 +1,32 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('equipment_units')
 export class EquipmentUnitTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  unitId: string
+  unitId: string;
 
   @Column({ type: 'varchar', length: 100 })
-  type: string
+  type: string;
 
   @Column({ type: 'varchar', length: 100 })
-  brand: string
+  brand: string;
 
   @Column({ type: 'varchar', length: 100 })
-  model: string
+  model: string;
 
   @Column({ type: 'integer' })
-  year: number
+  year: number;
 
   @Column({ type: 'uuid', nullable: true })
-  siteId: string
+  siteId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  siteName: string
+  siteName: string;
 
   @Column({ type: 'varchar', length: 50, default: 'active' })
-  status: string
+  status: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  currentHours: number
+  currentHours: number;
 }

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddApprovalPermissions20250525000001 implements MigrationInterface {
-  name = 'AddApprovalPermissions20250525000001'
+  name = 'AddApprovalPermissions20250525000001';
 
   async up(queryRunner: QueryRunner): Promise<void> {
     const permissions = [
@@ -26,7 +26,7 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
       { name: 'users:update', resource: 'users', action: 'update' },
       { name: 'roles:create', resource: 'roles', action: 'create' },
       { name: 'roles:update', resource: 'roles', action: 'update' },
-    ]
+    ];
 
     for (const p of permissions) {
       await queryRunner.query(
@@ -34,7 +34,7 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
          VALUES (gen_random_uuid(), $1, $2, $3, now(), now())
          ON CONFLICT (name) DO NOTHING`,
         [p.name, p.resource, p.action],
-      )
+      );
     }
 
     // Give admin role all new permissions
@@ -45,7 +45,7 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
          WHERE r.name = 'admin' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [p.name],
-      )
+      );
     }
 
     // Give director all new permissions
@@ -56,7 +56,7 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
          WHERE r.name = 'director' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [p.name],
-      )
+      );
     }
 
     // finance:approve -> finance_manager
@@ -65,50 +65,74 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
        SELECT r.id, p.id FROM roles r, permissions p
        WHERE r.name = 'finance_manager' AND p.name = 'finance:approve'
        ON CONFLICT (role_id, permission_id) DO NOTHING`,
-    )
+    );
 
     // finance CRUD permissions -> finance_manager
-    for (const perm of ['finance:create', 'finance:update', 'invoices:create', 'invoices:update']) {
+    for (const perm of [
+      'finance:create',
+      'finance:update',
+      'invoices:create',
+      'invoices:update',
+    ]) {
       await queryRunner.query(
         `INSERT INTO role_permissions (role_id, permission_id)
          SELECT r.id, p.id FROM roles r, permissions p
          WHERE r.name = 'finance_manager' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [perm],
-      )
+      );
     }
 
     // finance create/update -> accountant (but NOT approve)
-    for (const perm of ['finance:create', 'finance:update', 'invoices:create', 'invoices:update']) {
+    for (const perm of [
+      'finance:create',
+      'finance:update',
+      'invoices:create',
+      'invoices:update',
+    ]) {
       await queryRunner.query(
         `INSERT INTO role_permissions (role_id, permission_id)
          SELECT r.id, p.id FROM roles r, permissions p
          WHERE r.name = 'accountant' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [perm],
-      )
+      );
     }
 
     // HR permissions -> hr_manager
-    for (const perm of ['employees:create', 'employees:update', 'attendance:create', 'payroll:create', 'payroll:update', 'payroll:approve']) {
+    for (const perm of [
+      'employees:create',
+      'employees:update',
+      'attendance:create',
+      'payroll:create',
+      'payroll:update',
+      'payroll:approve',
+    ]) {
       await queryRunner.query(
         `INSERT INTO role_permissions (role_id, permission_id)
          SELECT r.id, p.id FROM roles r, permissions p
          WHERE r.name = 'hr_manager' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [perm],
-      )
+      );
     }
 
     // Warehouse permissions -> warehouse_manager
-    for (const perm of ['warehouse:create', 'warehouse:update', 'inventory:create', 'inventory:update', 'equipment:create', 'equipment:update']) {
+    for (const perm of [
+      'warehouse:create',
+      'warehouse:update',
+      'inventory:create',
+      'inventory:update',
+      'equipment:create',
+      'equipment:update',
+    ]) {
       await queryRunner.query(
         `INSERT INTO role_permissions (role_id, permission_id)
          SELECT r.id, p.id FROM roles r, permissions p
          WHERE r.name = 'warehouse_manager' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [perm],
-      )
+      );
     }
 
     // User/role permissions -> admin (already done above with the loop)
@@ -116,28 +140,38 @@ export class AddApprovalPermissions20250525000001 implements MigrationInterface 
 
   async down(queryRunner: QueryRunner): Promise<void> {
     const permNames = [
-      'finance:approve', 'finance:update', 'finance:create',
-      'invoices:create', 'invoices:update',
-      'employees:create', 'employees:update',
+      'finance:approve',
+      'finance:update',
+      'finance:create',
+      'invoices:create',
+      'invoices:update',
+      'employees:create',
+      'employees:update',
       'attendance:create',
-      'inventory:create', 'inventory:update',
-      'equipment:create', 'equipment:update',
-      'payroll:create', 'payroll:update', 'payroll:approve',
-      'warehouse:update', 'warehouse:create',
-      'users:create', 'users:update',
-      'roles:create', 'roles:update',
-    ]
+      'inventory:create',
+      'inventory:update',
+      'equipment:create',
+      'equipment:update',
+      'payroll:create',
+      'payroll:update',
+      'payroll:approve',
+      'warehouse:update',
+      'warehouse:create',
+      'users:create',
+      'users:update',
+      'roles:create',
+      'roles:update',
+    ];
 
     await queryRunner.query(
       `DELETE FROM role_permissions WHERE permission_id IN (
         SELECT id FROM permissions WHERE name = ANY($1)
       )`,
       [permNames],
-    )
+    );
 
-    await queryRunner.query(
-      `DELETE FROM permissions WHERE name = ANY($1)`,
-      [permNames],
-    )
+    await queryRunner.query(`DELETE FROM permissions WHERE name = ANY($1)`, [
+      permNames,
+    ]);
   }
 }

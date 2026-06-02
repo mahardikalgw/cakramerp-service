@@ -1,13 +1,13 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common'
-import { THR_REPOSITORY } from '../../domain/repositories/thr-repository.port'
-import type { ThrRepositoryPort } from '../../domain/repositories/thr-repository.port'
-import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
-import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
-import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port'
-import type { JournalEntryServicePort } from '../../../finance/application/ports/journal-entry-service.port'
-import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port'
-import type { AccountRepositoryPort } from '../../../finance/domain/repositories/finance-repository.port'
-import type { ThrServicePort } from '../ports/thr-service.port'
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { THR_REPOSITORY } from '../../domain/repositories/thr-repository.port';
+import type { ThrRepositoryPort } from '../../domain/repositories/thr-repository.port';
+import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
+import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port';
+import { JOURNAL_ENTRY_SERVICE } from '../../../finance/application/ports/journal-entry-service.port';
+import type { JournalEntryServicePort } from '../../../finance/application/ports/journal-entry-service.port';
+import { ACCOUNT_REPOSITORY } from '../../../finance/domain/repositories/finance-repository.port';
+import type { AccountRepositoryPort } from '../../../finance/domain/repositories/finance-repository.port';
+import type { ThrServicePort } from '../ports/thr-service.port';
 
 @Injectable()
 export class ThrService implements ThrServicePort {
@@ -22,31 +22,36 @@ export class ThrService implements ThrServicePort {
     private readonly accountRepo: AccountRepositoryPort,
   ) {}
 
-  async calculate(year: number): Promise<{ calculated: number; excluded: number }> {
+  async calculate(
+    year: number,
+  ): Promise<{ calculated: number; excluded: number }> {
     // Delete existing draft records for this year
-    await this.thrRepo.deleteByYear(year)
+    await this.thrRepo.deleteByYear(year);
 
-    const employees = await this.employeeRepo.findActiveEmployees()
+    const employees = await this.employeeRepo.findActiveEmployees();
 
-    let calculated = 0
-    let excluded = 0
+    let calculated = 0;
+    let excluded = 0;
 
     for (const emp of employees) {
-      const joinDate = new Date(emp.joinDate)
-      const thrCutoffDate = new Date(year, 3, 1) // April 1st as typical THR reference date
-      const monthsOfService = this.calculateMonthsOfService(joinDate, thrCutoffDate)
+      const joinDate = new Date(emp.joinDate);
+      const thrCutoffDate = new Date(year, 3, 1); // April 1st as typical THR reference date
+      const monthsOfService = this.calculateMonthsOfService(
+        joinDate,
+        thrCutoffDate,
+      );
 
       // Exclude employees with less than 1 month of service
       if (monthsOfService < 1) {
-        excluded++
-        continue
+        excluded++;
+        continue;
       }
 
-      const monthlySalary = Number(emp.basicSalary)
-      const isProRated = monthsOfService < 12
+      const monthlySalary = Number(emp.basicSalary);
+      const isProRated = monthsOfService < 12;
       const thrAmount = isProRated
         ? (monthsOfService / 12) * monthlySalary
-        : monthlySalary
+        : monthlySalary;
 
       await this.thrRepo.create({
         employeeId: emp.id,
@@ -59,61 +64,66 @@ export class ThrService implements ThrServicePort {
         isProRated,
         isExcluded: false,
         status: 'calculated',
-      })
+      });
 
-      calculated++
+      calculated++;
     }
 
-    return { calculated, excluded }
+    return { calculated, excluded };
   }
 
   async getRecords(year: number): Promise<any[]> {
-    return this.thrRepo.findByYear(year)
+    return this.thrRepo.findByYear(year);
   }
 
   async confirm(id: string, userId: string): Promise<any> {
-    const record = await this.thrRepo.findById(id)
-    if (!record) throw new BadRequestException('THR record not found')
+    const record = await this.thrRepo.findById(id);
+    if (!record) throw new BadRequestException('THR record not found');
     if (record.status !== 'calculated') {
-      throw new BadRequestException('Only calculated THR records can be confirmed')
+      throw new BadRequestException(
+        'Only calculated THR records can be confirmed',
+      );
     }
 
     const saved = await this.thrRepo.update(id, {
       status: 'confirmed',
       confirmedAt: new Date(),
-    })
+    });
 
     // Create journal entry for THR expense
-    await this.createThrJournalEntry(record, userId)
+    await this.createThrJournalEntry(record, userId);
 
-    return saved
+    return saved;
   }
 
-  private calculateMonthsOfService(joinDate: Date, referenceDate: Date): number {
-    const years = referenceDate.getFullYear() - joinDate.getFullYear()
-    const months = referenceDate.getMonth() - joinDate.getMonth()
-    const totalMonths = years * 12 + months
+  private calculateMonthsOfService(
+    joinDate: Date,
+    referenceDate: Date,
+  ): number {
+    const years = referenceDate.getFullYear() - joinDate.getFullYear();
+    const months = referenceDate.getMonth() - joinDate.getMonth();
+    const totalMonths = years * 12 + months;
 
     // Adjust if reference day is before join day
     if (referenceDate.getDate() < joinDate.getDate()) {
-      return Math.max(0, totalMonths - 1)
+      return Math.max(0, totalMonths - 1);
     }
 
-    return Math.max(0, totalMonths)
+    return Math.max(0, totalMonths);
   }
 
   private async createThrJournalEntry(
     record: any,
     userId: string,
   ): Promise<void> {
-    const thrExpenseAcc = await this.accountRepo.findByCode('5200')
-    const thrPayableAcc = await this.accountRepo.findByCode('2320')
-    const cashAcc = await this.accountRepo.findByCode('1100')
+    const thrExpenseAcc = await this.accountRepo.findByCode('5200');
+    const thrPayableAcc = await this.accountRepo.findByCode('2320');
+    const cashAcc = await this.accountRepo.findByCode('1100');
 
-    const expenseAccountId = thrExpenseAcc?.id ?? cashAcc?.id
-    const creditAccountId = thrPayableAcc?.id ?? cashAcc?.id
+    const expenseAccountId = thrExpenseAcc?.id ?? cashAcc?.id;
+    const creditAccountId = thrPayableAcc?.id ?? cashAcc?.id;
 
-    if (!expenseAccountId || !creditAccountId) return
+    if (!expenseAccountId || !creditAccountId) return;
 
     await this.journalEntryService.create(
       {
@@ -137,6 +147,6 @@ export class ThrService implements ThrServicePort {
       },
       userId || null,
       false,
-    )
+    );
   }
 }

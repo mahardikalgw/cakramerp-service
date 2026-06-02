@@ -11,10 +11,10 @@ export class UpdateARInvoiceCommand {
     public readonly paymentTermLabel?: string,
     public readonly additionalDiscount?: number,
     public readonly lines?: {
-      description: string
-      quantity: number
-      unitPrice: number
-      taxPercent: number
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      taxPercent: number;
     }[],
   ) {}
 }

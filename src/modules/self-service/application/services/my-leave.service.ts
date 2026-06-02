@@ -1,19 +1,27 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common'
-import { MyLeaveServicePort } from '../ports/my-leave-service.port'
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { MyLeaveServicePort } from '../ports/my-leave-service.port';
 import {
   LEAVE_TYPE_REPOSITORY,
   LEAVE_BALANCE_REPOSITORY,
   LEAVE_REQUEST_REPOSITORY,
-} from '../../domain/repositories/self-service-repository.port'
+} from '../../domain/repositories/self-service-repository.port';
 import type {
   LeaveTypeRepositoryPort,
   LeaveBalanceRepositoryPort,
   LeaveRequestRepositoryPort,
-} from '../../domain/repositories/self-service-repository.port'
+} from '../../domain/repositories/self-service-repository.port';
+import { AttendanceRecordTypeOrmEntity } from '../../../hr/infrastructure/entities/attendance-record-typeorm.entity';
 
 @Injectable()
 export class MyLeaveService implements MyLeaveServicePort {
   constructor(
+    private readonly dataSource: DataSource,
     @Inject(LEAVE_TYPE_REPOSITORY)
     private readonly leaveTypeRepo: LeaveTypeRepositoryPort,
     @Inject(LEAVE_BALANCE_REPOSITORY)
@@ -23,55 +31,57 @@ export class MyLeaveService implements MyLeaveServicePort {
   ) {}
 
   async getLeaveBalance(employeeId: string, year: number): Promise<any[]> {
-    return this.leaveBalanceRepo.findByEmployeeAndYear(employeeId, year)
+    return this.leaveBalanceRepo.findByEmployeeAndYear(employeeId, year);
   }
 
   async getLeaveHistory(
     employeeId: string,
     filters?: { status?: string; year?: number },
   ): Promise<any[]> {
-    return this.leaveRequestRepo.findByEmployeeId(employeeId, filters)
+    return this.leaveRequestRepo.findByEmployeeId(employeeId, filters);
   }
 
   async applyLeave(
     employeeId: string,
     data: {
-      leaveTypeId: string
-      startDate: string
-      endDate: string
-      reason: string
-      attachmentPath?: string
+      leaveTypeId: string;
+      startDate: string;
+      endDate: string;
+      reason: string;
+      attachmentPath?: string;
     },
   ): Promise<any> {
-    const leaveType = await this.leaveTypeRepo.findById(data.leaveTypeId)
+    const leaveType = await this.leaveTypeRepo.findById(data.leaveTypeId);
     if (!leaveType) {
-      throw new NotFoundException('Leave type not found')
+      throw new NotFoundException('Leave type not found');
     }
 
-    const startDate = new Date(data.startDate)
-    const endDate = new Date(data.endDate)
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
 
     if (endDate < startDate) {
-      throw new BadRequestException('End date must be after start date')
+      throw new BadRequestException('End date must be after start date');
     }
 
-    const workingDays = this.calculateWorkingDays(startDate, endDate)
+    const workingDays = this.calculateWorkingDays(startDate, endDate);
 
-    const year = startDate.getFullYear()
+    const year = startDate.getFullYear();
     const balance = await this.leaveBalanceRepo.findByEmployeeTypeAndYear(
       employeeId,
       data.leaveTypeId,
       year,
-    )
+    );
 
     if (!balance) {
-      throw new BadRequestException('No leave balance found for this leave type and year')
+      throw new BadRequestException(
+        'No leave balance found for this leave type and year',
+      );
     }
 
     if (balance.remainingDays < workingDays) {
       throw new BadRequestException(
         `Insufficient leave balance. Available: ${balance.remainingDays}, Requested: ${workingDays}`,
-      )
+      );
     }
 
     const leaveRequest = await this.leaveRequestRepo.create({
@@ -84,59 +94,183 @@ export class MyLeaveService implements MyLeaveServicePort {
       reason: data.reason,
       attachmentPath: data.attachmentPath || null,
       status: 'pending',
-    })
+    });
 
-    // Deduct from balance
-    await this.leaveBalanceRepo.update(balance.id, {
-      usedDays: Number(balance.usedDays) + workingDays,
-      remainingDays: Number(balance.remainingDays) - workingDays,
-    })
-
-    return leaveRequest
+    return leaveRequest;
   }
 
-  async cancelLeave(employeeId: string, leaveRequestId: string): Promise<any> {
-    const leaveRequest = await this.leaveRequestRepo.findById(leaveRequestId)
+  async approveLeave(
+    employeeId: string,
+    leaveRequestId: string,
+    approverId: string,
+  ): Promise<any> {
+    const leaveRequest = await this.leaveRequestRepo.findById(leaveRequestId);
     if (!leaveRequest) {
-      throw new NotFoundException('Leave request not found')
+      throw new NotFoundException('Leave request not found');
     }
 
     if (leaveRequest.employeeId !== employeeId) {
-      throw new BadRequestException('You can only cancel your own leave requests')
+      throw new BadRequestException(
+        'Leave request does not belong to this employee',
+      );
     }
 
     if (leaveRequest.status !== 'pending') {
-      throw new BadRequestException('Only pending leave requests can be cancelled')
+      throw new BadRequestException(
+        'Only pending leave requests can be approved',
+      );
     }
 
-    // Restore balance
-    const year = new Date(leaveRequest.startDate).getFullYear()
+    const updated = await this.leaveRequestRepo.update(leaveRequestId, {
+      status: 'approved',
+      approvedBy: approverId,
+      approvedAt: new Date(),
+    });
+
+    const year = new Date(leaveRequest.startDate).getFullYear();
     const balance = await this.leaveBalanceRepo.findByEmployeeTypeAndYear(
       employeeId,
       leaveRequest.leaveTypeId,
       year,
-    )
+    );
 
     if (balance) {
       await this.leaveBalanceRepo.update(balance.id, {
-        usedDays: Number(balance.usedDays) - Number(leaveRequest.workingDays),
-        remainingDays: Number(balance.remainingDays) + Number(leaveRequest.workingDays),
-      })
+        usedDays: Number(balance.usedDays) + Number(leaveRequest.workingDays),
+        remainingDays:
+          Number(balance.remainingDays) - Number(leaveRequest.workingDays),
+      });
     }
 
-    return this.leaveRequestRepo.update(leaveRequestId, { status: 'cancelled' })
+    await this.createLeaveAttendanceRecords(
+      employeeId,
+      new Date(leaveRequest.startDate),
+      new Date(leaveRequest.endDate),
+    );
+
+    return updated;
+  }
+
+  async rejectLeave(
+    employeeId: string,
+    leaveRequestId: string,
+    approverId: string,
+    rejectionReason: string,
+  ): Promise<any> {
+    const leaveRequest = await this.leaveRequestRepo.findById(leaveRequestId);
+    if (!leaveRequest) {
+      throw new NotFoundException('Leave request not found');
+    }
+
+    if (leaveRequest.employeeId !== employeeId) {
+      throw new BadRequestException(
+        'Leave request does not belong to this employee',
+      );
+    }
+
+    if (leaveRequest.status !== 'pending') {
+      throw new BadRequestException(
+        'Only pending leave requests can be rejected',
+      );
+    }
+
+    return this.leaveRequestRepo.update(leaveRequestId, {
+      status: 'rejected',
+      rejectionReason,
+    });
+  }
+
+  async cancelLeave(employeeId: string, leaveRequestId: string): Promise<any> {
+    const leaveRequest = await this.leaveRequestRepo.findById(leaveRequestId);
+    if (!leaveRequest) {
+      throw new NotFoundException('Leave request not found');
+    }
+
+    if (leaveRequest.employeeId !== employeeId) {
+      throw new BadRequestException(
+        'You can only cancel your own leave requests',
+      );
+    }
+
+    if (
+      leaveRequest.status !== 'pending' &&
+      leaveRequest.status !== 'approved'
+    ) {
+      throw new BadRequestException(
+        'Only pending or approved leave requests can be cancelled',
+      );
+    }
+
+    if (leaveRequest.status === 'approved') {
+      const year = new Date(leaveRequest.startDate).getFullYear();
+      const balance = await this.leaveBalanceRepo.findByEmployeeTypeAndYear(
+        employeeId,
+        leaveRequest.leaveTypeId,
+        year,
+      );
+
+      if (balance) {
+        await this.leaveBalanceRepo.update(balance.id, {
+          usedDays: Number(balance.usedDays) - Number(leaveRequest.workingDays),
+          remainingDays:
+            Number(balance.remainingDays) + Number(leaveRequest.workingDays),
+        });
+      }
+    }
+
+    return this.leaveRequestRepo.update(leaveRequestId, {
+      status: 'cancelled',
+    });
+  }
+
+  private async createLeaveAttendanceRecords(
+    employeeId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<void> {
+    const attendanceRepo = this.dataSource.getRepository(
+      AttendanceRecordTypeOrmEntity,
+    );
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      const dayOfWeek = current.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const dateOnly = new Date(current);
+        dateOnly.setHours(0, 0, 0, 0);
+
+        const existing = await attendanceRepo.findOne({
+          where: { employeeId, date: dateOnly },
+        });
+
+        if (!existing) {
+          const record = attendanceRepo.create({
+            employeeId,
+            date: dateOnly,
+            status: 'leave',
+            isImported: false,
+            overtimeHours: 0,
+          });
+          await attendanceRepo.save(record);
+        } else {
+          existing.status = 'leave';
+          await attendanceRepo.save(existing);
+        }
+      }
+      current.setDate(current.getDate() + 1);
+    }
   }
 
   private calculateWorkingDays(startDate: Date, endDate: Date): number {
-    let count = 0
-    const current = new Date(startDate)
+    let count = 0;
+    const current = new Date(startDate);
     while (current <= endDate) {
-      const dayOfWeek = current.getDay()
+      const dayOfWeek = current.getDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        count++
+        count++;
       }
-      current.setDate(current.getDate() + 1)
+      current.setDate(current.getDate() + 1);
     }
-    return count
+    return count;
   }
 }

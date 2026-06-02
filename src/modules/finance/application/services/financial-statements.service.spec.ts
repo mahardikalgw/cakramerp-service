@@ -23,7 +23,10 @@ describe('FinancialStatementsService', () => {
       providers: [
         FinancialStatementsService,
         { provide: ACCOUNT_REPOSITORY, useValue: mockAccountRepo },
-        { provide: JOURNAL_ENTRY_LINE_REPOSITORY, useValue: mockJournalLineRepo },
+        {
+          provide: JOURNAL_ENTRY_LINE_REPOSITORY,
+          useValue: mockJournalLineRepo,
+        },
       ],
     }).compile();
 
@@ -62,7 +65,11 @@ describe('FinancialStatementsService', () => {
         .mockResolvedValueOnce(expenseAccounts);
 
       const allLines = [
-        { accountId: 'a1', debit: new Decimal(10000), credit: new Decimal(3000) },
+        {
+          accountId: 'a1',
+          debit: new Decimal(10000),
+          credit: new Decimal(3000),
+        },
         { accountId: 'a2', debit: new Decimal(5000), credit: new Decimal(0) },
         { accountId: 'l1', debit: new Decimal(0), credit: new Decimal(4000) },
         { accountId: 'e1', debit: new Decimal(0), credit: new Decimal(5000) },
@@ -77,12 +84,16 @@ describe('FinancialStatementsService', () => {
       expect(result.totalAssets).toBe(12000); // (10000-3000) + (5000-0)
       expect(result.totalLiabilities).toBe(4000); // 0-0+4000
       expect(result.totalEquity).toBe(5000 + 5000); // Capital + Retained Earnings (8000-3000)
-      expect(result.totalLiabilitiesAndEquity).toBe(result.totalLiabilities + result.totalEquity);
+      expect(result.totalLiabilitiesAndEquity).toBe(
+        result.totalLiabilities + result.totalEquity,
+      );
     });
 
     it('should exclude accounts with zero balance', async () => {
       mockAccountRepo.findByType
-        .mockResolvedValueOnce([{ id: 'a1', code: '1100', name: 'Cash', type: 'asset' }])
+        .mockResolvedValueOnce([
+          { id: 'a1', code: '1100', name: 'Cash', type: 'asset' },
+        ])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
@@ -103,8 +114,12 @@ describe('FinancialStatementsService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: 'r1', code: '4100', name: 'Revenue', type: 'revenue' }])
-        .mockResolvedValueOnce([{ id: 'x1', code: '5100', name: 'Expense', type: 'expense' }]);
+        .mockResolvedValueOnce([
+          { id: 'r1', code: '4100', name: 'Revenue', type: 'revenue' },
+        ])
+        .mockResolvedValueOnce([
+          { id: 'x1', code: '5100', name: 'Expense', type: 'expense' },
+        ]);
 
       mockJournalLineRepo.findByDateRange.mockResolvedValue([
         { accountId: 'r1', debit: new Decimal(0), credit: new Decimal(10000) },
@@ -115,7 +130,7 @@ describe('FinancialStatementsService', () => {
 
       const retainedEarnings = result.equity.find((e) => e.code === 'RE');
       expect(retainedEarnings).toBeDefined();
-      expect(retainedEarnings!.amount).toBe(4000); // 10000 - 6000
+      expect(retainedEarnings.amount).toBe(4000); // 10000 - 6000
     });
   });
 
@@ -151,7 +166,9 @@ describe('FinancialStatementsService', () => {
     });
 
     it('should include prior period comparison when comparePrior is true', async () => {
-      const revenueAccounts = [{ id: 'r1', code: '4100', name: 'Sales', type: 'revenue' }];
+      const revenueAccounts = [
+        { id: 'r1', code: '4100', name: 'Sales', type: 'revenue' },
+      ];
       const expenseAccounts: any[] = [];
 
       mockAccountRepo.findByType
@@ -167,7 +184,11 @@ describe('FinancialStatementsService', () => {
         { accountId: 'r1', debit: new Decimal(0), credit: new Decimal(8000) },
       ]);
 
-      const result = await service.getProfitLoss('2024-01-01', '2024-12-31', true);
+      const result = await service.getProfitLoss(
+        '2024-01-01',
+        '2024-12-31',
+        true,
+      );
 
       expect(result.priorPeriod).toBeDefined();
       expect(result.totalRevenue).toBe(10000);
@@ -183,7 +204,11 @@ describe('FinancialStatementsService', () => {
 
       mockJournalLineRepo.findByDateRange.mockResolvedValue([]);
 
-      const result = await service.getProfitLoss('2024-01-01', '2024-12-31', false);
+      const result = await service.getProfitLoss(
+        '2024-01-01',
+        '2024-12-31',
+        false,
+      );
 
       expect(result.priorPeriod).toBeUndefined();
       expect(result.priorTotalRevenue).toBeUndefined();

@@ -93,3 +93,18 @@ export class CreateOvertimeRequestHttpDto {
   @IsString()
   projectReference?: string;
 }
+
+export class RejectLeaveHttpDto {
+  @IsString()
+  reason: string;
+}
+
+export class ResolveDiscrepancyHttpDto {
+  @IsString()
+  resolution: string;
+}
+
+export class RejectChangeRequestHttpDto {
+  @IsString()
+  reason: string;
+}

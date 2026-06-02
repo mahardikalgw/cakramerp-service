@@ -53,21 +53,47 @@ describe('UserService', () => {
   describe('findAll', () => {
     it('should return paginated users', async () => {
       const expectedResult = {
-        data: [new User({ id: '1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' })],
-        meta: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        data: [
+          new User({
+            id: '1',
+            email: 'test@example.com',
+            passwordHash: 'hash',
+            firstName: 'John',
+            lastName: 'Doe',
+          }),
+        ],
+        meta: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockUserRepository.findAll.mockResolvedValue(expectedResult);
 
       const result = await service.findAll(1, 20);
 
       expect(result).toEqual(expectedResult);
-      expect(mockUserRepository.findAll).toHaveBeenCalledWith({ page: 1, limit: 20, filters: {} });
+      expect(mockUserRepository.findAll).toHaveBeenCalledWith({
+        page: 1,
+        limit: 20,
+        filters: {},
+      });
     });
 
     it('should pass status and role filters', async () => {
       const expectedResult = {
         data: [],
-        meta: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockUserRepository.findAll.mockResolvedValue(expectedResult);
 
@@ -83,7 +109,13 @@ describe('UserService', () => {
 
   describe('findById', () => {
     it('should return a user by id', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.findById.mockResolvedValue(user);
 
       const result = await service.findById('user-1');
@@ -94,13 +126,21 @@ describe('UserService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('findByEmail', () => {
     it('should return a user by email', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.findByEmail.mockResolvedValue(user);
 
       const result = await service.findByEmail('test@example.com');
@@ -111,13 +151,20 @@ describe('UserService', () => {
     it('should throw NotFoundException if user not found by email', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(service.findByEmail('unknown@example.com')).rejects.toThrow(NotFoundException);
+      await expect(service.findByEmail('unknown@example.com')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('create', () => {
     it('should create a user and return it', async () => {
-      const command = new CreateUserCommand('test@example.com', 'Pass123!', 'John', 'Doe');
+      const command = new CreateUserCommand(
+        'test@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(false);
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-password');
       const savedUser = new User({
@@ -131,36 +178,72 @@ describe('UserService', () => {
 
       const result = await service.create(command);
 
-      expect(mockUserRepository.existsByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(mockUserRepository.existsByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
       expect(bcryptjs.hash).toHaveBeenCalledWith('Pass123!', 12);
       expect(result.email).toBe('test@example.com');
     });
 
     it('should throw ConflictException if email already exists', async () => {
-      const command = new CreateUserCommand('existing@example.com', 'Pass123!', 'John', 'Doe');
+      const command = new CreateUserCommand(
+        'existing@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(true);
 
       await expect(service.create(command)).rejects.toThrow(ConflictException);
     });
 
     it('should assign roles if roleIds provided', async () => {
-      const command = new CreateUserCommand('test@example.com', 'Pass123!', 'John', 'Doe', ['role-1', 'role-2']);
+      const command = new CreateUserCommand(
+        'test@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+        ['role-1', 'role-2'],
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(false);
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-password');
-      const savedUser = new User({ id: 'user-1', email: command.email, passwordHash: 'hashed-password', firstName: 'John', lastName: 'Doe' });
+      const savedUser = new User({
+        id: 'user-1',
+        email: command.email,
+        passwordHash: 'hashed-password',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.save.mockResolvedValue(savedUser);
       mockUserRoleAssigner.assignRoles.mockResolvedValue(undefined);
 
       await service.create(command);
 
-      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', ['role-1', 'role-2']);
+      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', [
+        'role-1',
+        'role-2',
+      ]);
     });
 
     it('should set correct status from command', async () => {
-      const command = new CreateUserCommand('test@example.com', 'Pass123!', 'John', 'Doe', undefined, 'inactive');
+      const command = new CreateUserCommand(
+        'test@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+        undefined,
+        'inactive',
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(false);
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-password');
-      const savedUser = new User({ id: 'user-1', email: command.email, passwordHash: 'hashed-password', firstName: 'John', lastName: 'Doe', status: UserStatus.INACTIVE });
+      const savedUser = new User({
+        id: 'user-1',
+        email: command.email,
+        passwordHash: 'hashed-password',
+        firstName: 'John',
+        lastName: 'Doe',
+        status: UserStatus.INACTIVE,
+      });
       mockUserRepository.save.mockResolvedValue(savedUser);
 
       const result = await service.create(command);
@@ -171,9 +254,21 @@ describe('UserService', () => {
 
   describe('update', () => {
     it('should update user fields', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.findById.mockResolvedValue(user);
-      const updatedUser = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'Jane', lastName: 'Smith' });
+      const updatedUser = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'Jane',
+        lastName: 'Smith',
+      });
       mockUserRepository.save.mockResolvedValue(updatedUser);
 
       const command = new UpdateUserCommand('Jane', 'Smith');
@@ -188,11 +283,20 @@ describe('UserService', () => {
       mockUserRepository.findById.mockResolvedValue(null);
       const command = new UpdateUserCommand('Jane');
 
-      await expect(service.update('non-existent', command)).rejects.toThrow(NotFoundException);
+      await expect(service.update('non-existent', command)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should activate user when status is active', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe', status: UserStatus.INACTIVE });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+        status: UserStatus.INACTIVE,
+      });
       user.activate = jest.fn();
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
@@ -204,7 +308,13 @@ describe('UserService', () => {
     });
 
     it('should deactivate user when status is inactive', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       user.deactivate = jest.fn();
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
@@ -216,21 +326,37 @@ describe('UserService', () => {
     });
 
     it('should assign roles when roleIds provided', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
       mockUserRoleAssigner.assignRoles.mockResolvedValue(undefined);
 
-      const command = new UpdateUserCommand(undefined, undefined, undefined, ['role-1']);
+      const command = new UpdateUserCommand(undefined, undefined, undefined, [
+        'role-1',
+      ]);
       await service.update('user-1', command);
 
-      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', ['role-1']);
+      expect(mockUserRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', [
+        'role-1',
+      ]);
     });
   });
 
   describe('changePassword', () => {
     it('should change user password', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'old-hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'old-hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       mockUserRepository.findById.mockResolvedValue(user);
       (bcryptjs.hash as jest.Mock).mockResolvedValue('new-hashed-password');
       mockUserRepository.save.mockResolvedValue(user);
@@ -247,13 +373,21 @@ describe('UserService', () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
       const command = new ChangePasswordCommand('non-existent', 'NewPass123!');
-      await expect(service.changePassword(command)).rejects.toThrow(NotFoundException);
+      await expect(service.changePassword(command)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('delete', () => {
     it('should deactivate user instead of deleting', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       user.deactivate = jest.fn();
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
@@ -267,7 +401,13 @@ describe('UserService', () => {
 
   describe('deactivate', () => {
     it('should deactivate a user', async () => {
-      const user = new User({ id: 'user-1', email: 'test@example.com', passwordHash: 'hash', firstName: 'John', lastName: 'Doe' });
+      const user = new User({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: 'hash',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
       user.deactivate = jest.fn();
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
@@ -281,7 +421,9 @@ describe('UserService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(service.deactivate('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.deactivate('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -1,25 +1,29 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common'
-import { GOODS_RECEIPT_REPOSITORY } from '../../domain/repositories/goods-receipt-repository.port'
-import type { GoodsReceiptRepositoryPort } from '../../domain/repositories/goods-receipt-repository.port'
-import { STOCK_MOVEMENT_SERVICE } from '../ports/stock-movement-service.port'
-import type { StockMovementServicePort } from '../ports/stock-movement-service.port'
-import type { GoodsReceiptServicePort } from '../ports/goods-receipt-service.port'
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { GOODS_RECEIPT_REPOSITORY } from '../../domain/repositories/goods-receipt-repository.port';
+import type { GoodsReceiptRepositoryPort } from '../../domain/repositories/goods-receipt-repository.port';
+import { STOCK_MOVEMENT_SERVICE } from '../ports/stock-movement-service.port';
+import type { StockMovementServicePort } from '../ports/stock-movement-service.port';
+import type { GoodsReceiptServicePort } from '../ports/goods-receipt-service.port';
+import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
+import type { GlPostingQueueServicePort } from '../../../finance/application/ports/gl-posting-queue-service.port';
 
 export interface CreateGoodsReceiptDto {
-  poId?: string
-  warehouseId: string
-  supplierId?: string
-  vendorName: string
-  receivedDate: string
-  notes?: string
+  poId?: string;
+  warehouseId: string;
+  supplierId?: string;
+  vendorName: string;
+  receivedDate: string;
+  notes?: string;
   lines: {
-    itemId: string
-    itemName: string
-    poQty: number
-    receivedQty: number
-    uom: string
-    remarks?: string
-  }[]
+    itemId: string;
+    itemName: string;
+    poQty: number;
+    receivedQty: number;
+    uom: string;
+    unitCost?: number;
+    remarks?: string;
+  }[];
 }
 
 @Injectable()
@@ -29,14 +33,19 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
     private readonly goodsReceiptRepo: GoodsReceiptRepositoryPort,
     @Inject(STOCK_MOVEMENT_SERVICE)
     private readonly stockMovementService: StockMovementServicePort,
+    @Inject(GL_POSTING_QUEUE_SERVICE)
+    private readonly glPostingQueueService: GlPostingQueueServicePort,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(dto: CreateGoodsReceiptDto, userId: string): Promise<any> {
     if (!dto.lines || dto.lines.length === 0) {
-      throw new BadRequestException('Goods receipt must have at least one line')
+      throw new BadRequestException(
+        'Goods receipt must have at least one line',
+      );
     }
 
-    const grnNumber = await this.generateGrnNumber()
+    const grnNumber = await this.generateGrnNumber();
 
     const savedReceipt = await this.goodsReceiptRepo.create({
       grnNumber,
@@ -48,11 +57,15 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
       notes: dto.notes,
       status: 'confirmed',
       createdBy: userId,
-    })
+    });
 
-    const lines: any[] = []
+    const lines: any[] = [];
+    let totalGrnAmount = 0;
+
     for (const line of dto.lines) {
-      const discrepancyQty = line.poQty - line.receivedQty
+      const discrepancyQty = line.poQty - line.receivedQty;
+      const unitCost = line.unitCost ?? 0;
+      const totalCost = unitCost * line.receivedQty;
 
       const savedLine = await this.goodsReceiptRepo.createLine({
         goodsReceiptId: savedReceipt.id,
@@ -63,9 +76,10 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
         discrepancyQty,
         uom: line.uom,
         remarks: line.remarks,
-      })
+      });
 
-      lines.push(savedLine)
+      lines.push({ ...savedLine, unitCost, totalCost });
+      totalGrnAmount += totalCost;
 
       // Record stock movement for each line
       await this.stockMovementService.recordMovement({
@@ -77,31 +91,107 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
         referenceId: savedReceipt.id,
         description: `GRN ${grnNumber} - ${line.itemName}`,
         createdBy: userId,
-      })
+      });
+
+      // Update weighted average cost in item_stock_balances
+      if (unitCost > 0) {
+        await this.updateWeightedAverageCost(
+          line.itemId,
+          dto.warehouseId,
+          line.receivedQty,
+          unitCost,
+        );
+      }
     }
 
-    return { receipt: savedReceipt, lines }
+    // Create GL Posting Queue entry (DR Inventory 1300 / CR GRNI 1310)
+    if (totalGrnAmount > 0) {
+      await this.glPostingQueueService.createEntry({
+        sourceType: 'goods_receipt',
+        sourceId: savedReceipt.id,
+        sourceNumber: grnNumber,
+        eventType: 'grn_received',
+        amount: totalGrnAmount,
+        description: `Goods Receipt ${grnNumber} - ${dto.vendorName}`,
+        suggestedLines: [
+          {
+            accountId: '1300',
+            accountCode: '1300',
+            accountName: 'Inventory',
+            debit: totalGrnAmount,
+            credit: 0,
+            description: `Inventory received via GRN ${grnNumber}`,
+          },
+          {
+            accountId: '1310',
+            accountCode: '1310',
+            accountName: 'GRNI',
+            debit: 0,
+            credit: totalGrnAmount,
+            description: `GRNI cleared for GRN ${grnNumber}`,
+          },
+        ],
+      });
+    }
+
+    return { receipt: savedReceipt, lines };
   }
 
   async findAll(filters?: {
-    warehouseId?: string
-    page?: number
-    limit?: number
+    warehouseId?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: any[]; total: number }> {
-    return this.goodsReceiptRepo.findAll(filters)
+    return this.goodsReceiptRepo.findAll(filters);
   }
 
   async findById(id: string): Promise<any | null> {
-    return this.goodsReceiptRepo.findById(id)
+    return this.goodsReceiptRepo.findById(id);
+  }
+
+  private async updateWeightedAverageCost(
+    itemId: string,
+    warehouseId: string,
+    receivedQty: number,
+    unitCost: number,
+  ): Promise<void> {
+    const rows = await this.dataSource.query(
+      `SELECT quantity, unit_cost FROM item_stock_balances
+       WHERE item_id = $1 AND warehouse_id = $2 LIMIT 1`,
+      [itemId, warehouseId],
+    );
+
+    if (rows.length > 0) {
+      const currentQty = Number(rows[0].quantity);
+      const currentCost = Number(rows[0].unit_cost ?? 0);
+      const newTotalQty = currentQty + receivedQty;
+      const newWeightedCost =
+        newTotalQty > 0
+          ? (currentCost * currentQty + unitCost * receivedQty) / newTotalQty
+          : unitCost;
+
+      await this.dataSource.query(
+        `UPDATE item_stock_balances SET unit_cost = $1, updated_at = NOW()
+         WHERE item_id = $2 AND warehouse_id = $3`,
+        [newWeightedCost, itemId, warehouseId],
+      );
+    } else {
+      await this.dataSource.query(
+        `INSERT INTO item_stock_balances (item_id, warehouse_id, quantity, unit_cost)
+         VALUES ($1, $2, 0, $3)
+         ON CONFLICT (item_id, warehouse_id) DO UPDATE SET unit_cost = $3`,
+        [itemId, warehouseId, unitCost],
+      );
+    }
   }
 
   private async generateGrnNumber(): Promise<string> {
-    const year = new Date().getFullYear()
-    const prefix = `GRN-${year}-`
-    const lastNumber = await this.goodsReceiptRepo.getLastGrnNumber(prefix)
+    const year = new Date().getFullYear();
+    const prefix = `GRN-${year}-`;
+    const lastNumber = await this.goodsReceiptRepo.getLastGrnNumber(prefix);
 
-    if (!lastNumber) return `${prefix}0001`
-    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1
-    return `${prefix}${seq.toString().padStart(4, '0')}`
+    if (!lastNumber) return `${prefix}0001`;
+    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1;
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 }

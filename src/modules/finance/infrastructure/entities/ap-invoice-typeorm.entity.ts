@@ -1,62 +1,62 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('ap_invoices')
 export class APInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  invoiceNumber: string
+  invoiceNumber: string;
 
   @Column({ type: 'uuid' })
-  vendorId: string
+  vendorId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  vendorName: string
+  vendorName: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  supplierInvoiceNumber: string
+  supplierInvoiceNumber: string;
 
   @Column({ type: 'uuid', nullable: true })
-  poReferenceId: string
+  poReferenceId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  grnReferenceId: string
+  grnReferenceId: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number
+  amount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  paidAmount: number
+  paidAmount: number;
 
   @Column({ type: 'date' })
-  invoiceDate: Date
+  invoiceDate: Date;
 
   @Column({ type: 'date' })
-  dueDate: Date
+  dueDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string
+  status: string;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  threeWayMatchStatus: string
+  threeWayMatchStatus: string;
 
   @Column({ type: 'uuid', nullable: true })
-  bankAccountId: string
+  bankAccountId: string;
 
   @Column({ type: 'date', nullable: true })
-  scheduledPaymentDate: Date
+  scheduledPaymentDate: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string
+  supplierId: string;
 
   @Column({ type: 'int', nullable: true })
-  paymentTermDays: number
+  paymentTermDays: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  paymentTermLabel: string
+  paymentTermLabel: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  additionalDiscount: number
+  additionalDiscount: number;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string
+  journalEntryId: string;
 }

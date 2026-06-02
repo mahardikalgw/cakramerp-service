@@ -39,7 +39,10 @@ describe('GlPostingQueueService', () => {
         GlPostingQueueService,
         { provide: GL_POSTING_QUEUE_REPOSITORY, useValue: mockRepo },
         { provide: JOURNAL_ENTRY_REPOSITORY, useValue: mockJournalEntryRepo },
-        { provide: JOURNAL_ENTRY_LINE_REPOSITORY, useValue: mockJournalLineRepo },
+        {
+          provide: JOURNAL_ENTRY_LINE_REPOSITORY,
+          useValue: mockJournalLineRepo,
+        },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
@@ -78,7 +81,11 @@ describe('GlPostingQueueService', () => {
       mockRepo.findAll.mockResolvedValue({ data: items, total: 1 });
       mockDataSource.query.mockResolvedValue([]);
 
-      const result = await service.findAll({ status: 'pending', page: 1, limit: 10 });
+      const result = await service.findAll({
+        status: 'pending',
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.total).toBe(1);
       expect(result.data).toHaveLength(1);
@@ -109,7 +116,7 @@ describe('GlPostingQueueService', () => {
       const result = await service.findById('1');
 
       expect(result).not.toBeNull();
-      expect(result!.id).toBe('1');
+      expect(result.id).toBe('1');
     });
 
     it('should return null when not found', async () => {
@@ -135,7 +142,10 @@ describe('GlPostingQueueService', () => {
           { accountId: 'a2', debit: 0, credit: 1000 },
         ],
       };
-      mockRepo.save.mockImplementation(async (entity) => ({ id: 'q1', ...entity }));
+      mockRepo.save.mockImplementation(async (entity) => ({
+        id: 'q1',
+        ...entity,
+      }));
 
       const result = await service.createEntry(input);
 
@@ -152,21 +162,27 @@ describe('GlPostingQueueService', () => {
 
       await service.cancel('1');
 
-      expect(mockRepo.update).toHaveBeenCalledWith('1', { status: 'cancelled' });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', {
+        status: 'cancelled',
+      });
     });
 
     it('should throw if queue item not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
 
       await expect(service.cancel('999')).rejects.toThrow(BadRequestException);
-      await expect(service.cancel('999')).rejects.toThrow('Queue item not found');
+      await expect(service.cancel('999')).rejects.toThrow(
+        'Queue item not found',
+      );
     });
 
     it('should throw if queue item is not pending', async () => {
       mockRepo.findById.mockResolvedValue({ id: '1', status: 'posted' });
 
       await expect(service.cancel('1')).rejects.toThrow(BadRequestException);
-      await expect(service.cancel('1')).rejects.toThrow('Only pending items can be cancelled');
+      await expect(service.cancel('1')).rejects.toThrow(
+        'Only pending items can be cancelled',
+      );
     });
   });
 
@@ -183,7 +199,10 @@ describe('GlPostingQueueService', () => {
       };
       mockRepo.findById.mockResolvedValue(queueItem);
       mockJournalEntryRepo.getNextEntryNumber.mockResolvedValue('JE-001');
-      mockJournalEntryRepo.save.mockImplementation(async (e) => ({ ...e, id: 'je1' }));
+      mockJournalEntryRepo.save.mockImplementation(async (e) => ({
+        ...e,
+        id: 'je1',
+      }));
       mockJournalLineRepo.save.mockImplementation(async (l) => l);
       mockRepo.update.mockResolvedValue(undefined);
       mockDataSource.query.mockResolvedValue(undefined);
@@ -197,7 +216,10 @@ describe('GlPostingQueueService', () => {
 
       expect(result.journalEntryId).toBe('je1');
       expect(result.journalEntryNumber).toBe('JE-001');
-      expect(mockRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({ status: 'posted' }));
+      expect(mockRepo.update).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({ status: 'posted' }),
+      );
       expect(mockDataSource.query).toHaveBeenCalledWith(
         expect.stringContaining('ar_invoices'),
         expect.arrayContaining(['je1', 'inv1']),
@@ -214,15 +236,22 @@ describe('GlPostingQueueService', () => {
       };
       mockRepo.findById.mockResolvedValue(queueItem);
       mockJournalEntryRepo.getNextEntryNumber.mockResolvedValue('JE-002');
-      mockJournalEntryRepo.save.mockImplementation(async (e) => ({ ...e, id: 'je2' }));
+      mockJournalEntryRepo.save.mockImplementation(async (e) => ({
+        ...e,
+        id: 'je2',
+      }));
       mockJournalLineRepo.save.mockImplementation(async (l) => l);
       mockRepo.update.mockResolvedValue(undefined);
       mockDataSource.query.mockResolvedValue(undefined);
 
-      const command = new PostGlToJournalCommand('2024-01-15', 'Post supplier invoice', [
-        { accountId: 'a1', debit: 500, credit: 0 },
-        { accountId: 'a2', debit: 0, credit: 500 },
-      ]);
+      const command = new PostGlToJournalCommand(
+        '2024-01-15',
+        'Post supplier invoice',
+        [
+          { accountId: 'a1', debit: 500, credit: 0 },
+          { accountId: 'a2', debit: 0, credit: 500 },
+        ],
+      );
 
       await service.postToJournal('2', command, 'user1');
 
@@ -235,13 +264,25 @@ describe('GlPostingQueueService', () => {
     it('should throw if queue item not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
 
-      await expect(service.postToJournal('999', new PostGlToJournalCommand('2024-01-15', 'test', []), 'user1')).rejects.toThrow('Queue item not found');
+      await expect(
+        service.postToJournal(
+          '999',
+          new PostGlToJournalCommand('2024-01-15', 'test', []),
+          'user1',
+        ),
+      ).rejects.toThrow('Queue item not found');
     });
 
     it('should throw if queue item is not pending', async () => {
       mockRepo.findById.mockResolvedValue({ id: '1', status: 'posted' });
 
-      await expect(service.postToJournal('1', new PostGlToJournalCommand('2024-01-15', 'test', []), 'user1')).rejects.toThrow('Only pending items can be posted');
+      await expect(
+        service.postToJournal(
+          '1',
+          new PostGlToJournalCommand('2024-01-15', 'test', []),
+          'user1',
+        ),
+      ).rejects.toThrow('Only pending items can be posted');
     });
   });
 });

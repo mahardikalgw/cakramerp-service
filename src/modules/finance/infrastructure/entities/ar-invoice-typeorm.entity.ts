@@ -1,50 +1,50 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('ar_invoices')
 export class ARInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  invoiceNumber: string
+  invoiceNumber: string;
 
   @Column({ type: 'varchar', length: 100 })
-  clientId: string
+  clientId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  clientName: string
+  clientName: string;
 
   @Column({ type: 'uuid', nullable: true })
-  projectId: string
+  projectId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string
+  segment: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number
+  amount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  paidAmount: number
+  paidAmount: number;
 
   @Column({ type: 'date' })
-  dueDate: Date
+  dueDate: Date;
 
   @Column({ type: 'date' })
-  issueDate: Date
+  issueDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string
+  status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string
+  customerId: string;
 
   @Column({ type: 'int', nullable: true })
-  paymentTermDays: number
+  paymentTermDays: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  paymentTermLabel: string
+  paymentTermLabel: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  additionalDiscount: number
+  additionalDiscount: number;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string
+  journalEntryId: string;
 }

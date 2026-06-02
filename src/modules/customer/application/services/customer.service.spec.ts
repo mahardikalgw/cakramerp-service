@@ -38,10 +38,18 @@ describe('CustomerService', () => {
       const expected = { data: [{ id: '1', name: 'Test' }], total: 1 };
       mockRepo.findAll.mockResolvedValue(expected);
 
-      const result = await service.findAll({ search: 'Test', page: 1, limit: 10 });
+      const result = await service.findAll({
+        search: 'Test',
+        page: 1,
+        limit: 10,
+      });
 
       expect(result).toEqual(expected);
-      expect(mockRepo.findAll).toHaveBeenCalledWith({ search: 'Test', page: 1, limit: 10 });
+      expect(mockRepo.findAll).toHaveBeenCalledWith({
+        search: 'Test',
+        page: 1,
+        limit: 10,
+      });
     });
 
     it('should return all customers without filters', async () => {
@@ -77,7 +85,16 @@ describe('CustomerService', () => {
 
   describe('create', () => {
     it('should create a customer', async () => {
-      const command = new CreateCustomerCommand('Acme Corp', 'acme@test.com', '123', 'Addr', 'City', 'John', 'TAX1', 'notes');
+      const command = new CreateCustomerCommand(
+        'Acme Corp',
+        'acme@test.com',
+        '123',
+        'Addr',
+        'City',
+        'John',
+        'TAX1',
+        'notes',
+      );
       const created = { id: '1', ...command, status: 'active' };
       mockRepo.findByName.mockResolvedValue(null);
       mockRepo.create.mockReturnValue(created);
@@ -106,16 +123,27 @@ describe('CustomerService', () => {
       mockRepo.findByName.mockResolvedValue({ id: '1', name: 'Existing Corp' });
 
       await expect(service.create(command)).rejects.toThrow(ConflictException);
-      await expect(service.create(command)).rejects.toThrow('Customer with this name already exists');
+      await expect(service.create(command)).rejects.toThrow(
+        'Customer with this name already exists',
+      );
     });
   });
 
   describe('update', () => {
     it('should update a customer', async () => {
-      const entity = { id: '1', name: 'Old Name', email: 'old@test.com', status: 'active' };
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        email: 'old@test.com',
+        status: 'active',
+      };
       const command = new UpdateCustomerCommand('New Name', 'new@test.com');
       mockRepo.findById.mockResolvedValue(entity);
-      mockRepo.save.mockResolvedValue({ ...entity, name: 'New Name', email: 'new@test.com' });
+      mockRepo.save.mockResolvedValue({
+        ...entity,
+        name: 'New Name',
+        email: 'new@test.com',
+      });
 
       const result = await service.update('1', command);
 
@@ -126,7 +154,13 @@ describe('CustomerService', () => {
     });
 
     it('should update only provided fields', async () => {
-      const entity = { id: '1', name: 'Old Name', email: 'old@test.com', phone: '123', status: 'active' };
+      const entity = {
+        id: '1',
+        name: 'Old Name',
+        email: 'old@test.com',
+        phone: '123',
+        status: 'active',
+      };
       const command = new UpdateCustomerCommand(undefined, 'new@test.com');
       mockRepo.findById.mockResolvedValue(entity);
       mockRepo.save.mockImplementation(async (e) => e);
@@ -140,7 +174,17 @@ describe('CustomerService', () => {
 
     it('should update status when provided', async () => {
       const entity = { id: '1', name: 'Test', status: 'active' };
-      const command = new UpdateCustomerCommand(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'inactive');
+      const command = new UpdateCustomerCommand(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'inactive',
+      );
       mockRepo.findById.mockResolvedValue(entity);
       mockRepo.save.mockImplementation(async (e) => e);
 
@@ -152,8 +196,12 @@ describe('CustomerService', () => {
     it('should throw NotFoundException if customer not found', async () => {
       mockRepo.findById.mockResolvedValue(null);
 
-      await expect(service.update('999', new UpdateCustomerCommand('Test'))).rejects.toThrow(NotFoundException);
-      await expect(service.update('999', new UpdateCustomerCommand('Test'))).rejects.toThrow('Customer not found');
+      await expect(
+        service.update('999', new UpdateCustomerCommand('Test')),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('999', new UpdateCustomerCommand('Test')),
+      ).rejects.toThrow('Customer not found');
     });
   });
 

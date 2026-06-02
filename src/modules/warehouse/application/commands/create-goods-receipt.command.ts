@@ -3,9 +3,9 @@ export class CreateGoodsReceiptCommand {
     public readonly warehouseId: string,
     public readonly reference?: string,
     public readonly lines?: {
-      itemId: string
-      quantity: number
-      unitCost?: number
+      itemId: string;
+      quantity: number;
+      unitCost?: number;
     }[],
   ) {}
 }

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEmail, IsArray, IsIn, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsArray,
+  IsIn,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserHttpDto {
   @IsEmail()

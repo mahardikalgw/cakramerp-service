@@ -1,32 +1,32 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('stock_ledger')
 export class StockLedgerTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  itemId: string
+  itemId: string;
 
   @Column({ type: 'uuid' })
-  warehouseId: string
+  warehouseId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  movementType: string
+  movementType: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4 })
-  quantity: number
+  quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4 })
-  balanceAfter: number
+  balanceAfter: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  referenceType: string
+  referenceType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  referenceId: string
+  referenceId: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  description: string
+  description: string;
 
   @Column({ type: 'uuid' })
-  createdBy: string
+  createdBy: string;
 }

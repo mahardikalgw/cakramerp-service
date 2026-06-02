@@ -11,46 +11,51 @@ import {
   UseGuards,
   Inject,
   Req,
-} from '@nestjs/common'
-import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard'
-import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard'
-import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator'
-import { STOCK_MOVEMENT_SERVICE } from '../../../application/ports/stock-movement-service.port'
-import type { StockMovementServicePort } from '../../../application/ports/stock-movement-service.port'
-import { GOODS_RECEIPT_SERVICE } from '../../../application/ports/goods-receipt-service.port'
-import type { GoodsReceiptServicePort } from '../../../application/ports/goods-receipt-service.port'
-import { STOCK_ISSUANCE_SERVICE } from '../../../application/ports/stock-issuance-service.port'
-import type { StockIssuanceServicePort } from '../../../application/ports/stock-issuance-service.port'
-import { STOCK_OPNAME_SERVICE } from '../../../application/ports/stock-opname-service.port'
-import type { StockOpnameServicePort } from '../../../application/ports/stock-opname-service.port'
-import { EQUIPMENT_SERVICE } from '../../../application/ports/equipment-service.port'
-import type { EquipmentServicePort } from '../../../application/ports/equipment-service.port'
-import { ITEM_SERVICE } from '../../../application/ports/item-service.port'
-import type { ItemServicePort } from '../../../application/ports/item-service.port'
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
+import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
+import { STOCK_MOVEMENT_SERVICE } from '../../../application/ports/stock-movement-service.port';
+import type { StockMovementServicePort } from '../../../application/ports/stock-movement-service.port';
+import { GOODS_RECEIPT_SERVICE } from '../../../application/ports/goods-receipt-service.port';
+import type { GoodsReceiptServicePort } from '../../../application/ports/goods-receipt-service.port';
+import { STOCK_ISSUANCE_SERVICE } from '../../../application/ports/stock-issuance-service.port';
+import type { StockIssuanceServicePort } from '../../../application/ports/stock-issuance-service.port';
+import { STOCK_OPNAME_SERVICE } from '../../../application/ports/stock-opname-service.port';
+import type { StockOpnameServicePort } from '../../../application/ports/stock-opname-service.port';
+import { EQUIPMENT_SERVICE } from '../../../application/ports/equipment-service.port';
+import type { EquipmentServicePort } from '../../../application/ports/equipment-service.port';
+import { ITEM_SERVICE } from '../../../application/ports/item-service.port';
+import type { ItemServicePort } from '../../../application/ports/item-service.port';
+import { WarehouseService } from '../../../application/services/warehouse.service';
 
-import { CreateItemCommand } from '../../../application/commands/create-item.command'
-import { UpdateItemCommand } from '../../../application/commands/update-item.command'
-import { CreateGoodsReceiptCommand } from '../../../application/commands/create-goods-receipt.command'
-import { CreateStockIssuanceCommand } from '../../../application/commands/create-stock-issuance.command'
-import { CreateStockOpnameSessionCommand } from '../../../application/commands/create-stock-opname-session.command'
-import { UpdateOpnameCountsCommand } from '../../../application/commands/update-opname-counts.command'
-import { CreateEquipmentCommand } from '../../../application/commands/create-equipment.command'
-import { UpdateEquipmentCommand } from '../../../application/commands/update-equipment.command'
-import { LogMaintenanceCommand } from '../../../application/commands/log-maintenance.command'
+import { CreateItemCommand } from '../../../application/commands/create-item.command';
+import { UpdateItemCommand } from '../../../application/commands/update-item.command';
+import { CreateGoodsReceiptCommand } from '../../../application/commands/create-goods-receipt.command';
+import { CreateStockIssuanceCommand } from '../../../application/commands/create-stock-issuance.command';
+import { CreateStockOpnameSessionCommand } from '../../../application/commands/create-stock-opname-session.command';
+import { UpdateOpnameCountsCommand } from '../../../application/commands/update-opname-counts.command';
+import { CreateEquipmentCommand } from '../../../application/commands/create-equipment.command';
+import { UpdateEquipmentCommand } from '../../../application/commands/update-equipment.command';
+import { LogMaintenanceCommand } from '../../../application/commands/log-maintenance.command';
 
-import { CreateItemHttpDto, UpdateItemHttpDto } from '../dtos/item.dto'
+import { CreateItemHttpDto, UpdateItemHttpDto } from '../dtos/item.dto';
 import {
   CreateGoodsReceiptHttpDto,
   CreateStockIssuanceHttpDto,
   ReverseIssuanceHttpDto,
   CreateStockOpnameHttpDto,
   UpdateOpnameCountsHttpDto,
-} from '../dtos/stock.dto'
+} from '../dtos/stock.dto';
 import {
   CreateEquipmentHttpDto,
   UpdateEquipmentHttpDto,
   LogMaintenanceHttpDto,
-} from '../dtos/equipment.dto'
+} from '../dtos/equipment.dto';
+import {
+  CreateWarehouseHttpDto,
+  UpdateWarehouseHttpDto,
+} from '../dtos/warehouse.dto';
 
 @Controller('warehouse')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -68,7 +73,53 @@ export class WarehouseController {
     private readonly equipmentService: EquipmentServicePort,
     @Inject(ITEM_SERVICE)
     private readonly itemService: ItemServicePort,
+    private readonly warehouseService: WarehouseService,
   ) {}
+
+  // ==================== Warehouses ====================
+
+  @Get('warehouses')
+  @RequirePermissions('warehouses:read')
+  async getWarehouses(
+    @Query('search') search?: string,
+    @Query('is_active') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.warehouseService.findAll({
+      search,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get('warehouses/:id')
+  @RequirePermissions('warehouses:read')
+  async getWarehouse(@Param('id') id: string) {
+    return this.warehouseService.findById(id);
+  }
+
+  @Post('warehouses')
+  @RequirePermissions('warehouses:create')
+  async createWarehouse(@Body() dto: CreateWarehouseHttpDto) {
+    return this.warehouseService.create(dto);
+  }
+
+  @Put('warehouses/:id')
+  @RequirePermissions('warehouses:update')
+  async updateWarehouse(
+    @Param('id') id: string,
+    @Body() dto: UpdateWarehouseHttpDto,
+  ) {
+    return this.warehouseService.update(id, dto);
+  }
+
+  @Delete('warehouses/:id')
+  @RequirePermissions('warehouses:delete')
+  async deleteWarehouse(@Param('id') id: string) {
+    return this.warehouseService.delete(id);
+  }
 
   // ==================== Items (Stock Items) ====================
 
@@ -87,13 +138,13 @@ export class WarehouseController {
       isActive: isActive !== undefined ? isActive === 'true' : undefined,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('items/:id')
   @RequirePermissions('stock-items:read')
   async getItem(@Param('id') id: string) {
-    return this.itemService.findById(id)
+    return this.itemService.findById(id);
   }
 
   @Post('items')
@@ -105,8 +156,8 @@ export class WarehouseController {
       dto.category,
       dto.uom,
       dto.minStockLevel,
-    )
-    return this.itemService.create(command)
+    );
+    return this.itemService.create(command);
   }
 
   @Put('items/:id')
@@ -119,14 +170,14 @@ export class WarehouseController {
       dto.uom,
       dto.minStockLevel,
       dto.isActive,
-    )
-    return this.itemService.update(id, command)
+    );
+    return this.itemService.update(id, command);
   }
 
   @Delete('items/:id')
   @RequirePermissions('stock-items:delete')
   async deleteItem(@Param('id') id: string) {
-    return this.itemService.delete(id)
+    return this.itemService.delete(id);
   }
 
   // ==================== Stock Dashboard ====================
@@ -142,13 +193,13 @@ export class WarehouseController {
       warehouseId,
       category,
       belowMinimum: belowMinimum === 'true',
-    })
+    });
   }
 
   @Get('stock/:itemId/card')
   @RequirePermissions('stock:read')
   async getStockCard(@Param('itemId') itemId: string) {
-    return this.stockService.getStockCard(itemId)
+    return this.stockService.getStockCard(itemId);
   }
 
   // ==================== Goods Receipts ====================
@@ -164,25 +215,28 @@ export class WarehouseController {
       warehouseId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('goods-receipts/:id')
   @RequirePermissions('goods-receipts:read')
   async getGoodsReceipt(@Param('id') id: string) {
-    return this.goodsReceiptService.findById(id)
+    return this.goodsReceiptService.findById(id);
   }
 
   @Post('goods-receipts')
   @RequirePermissions('goods-receipts:create')
-  async createGoodsReceipt(@Body() dto: CreateGoodsReceiptHttpDto, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
+  async createGoodsReceipt(
+    @Body() dto: CreateGoodsReceiptHttpDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.id ?? 'unknown';
     const command = new CreateGoodsReceiptCommand(
       dto.warehouseId,
       dto.reference,
       dto.lines,
-    )
-    return this.goodsReceiptService.create(command, userId)
+    );
+    return this.goodsReceiptService.create(command, userId);
   }
 
   // ==================== Stock Issuances ====================
@@ -200,26 +254,29 @@ export class WarehouseController {
       destinationType,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('issuances/:id')
   @RequirePermissions('issuances:read')
   async getIssuance(@Param('id') id: string) {
-    return this.issuanceService.findById(id)
+    return this.issuanceService.findById(id);
   }
 
   @Post('issuances')
   @RequirePermissions('issuances:create')
-  async createIssuance(@Body() dto: CreateStockIssuanceHttpDto, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
+  async createIssuance(
+    @Body() dto: CreateStockIssuanceHttpDto,
+    @Req() req: any,
+  ) {
+    const userId = req.user?.id ?? 'unknown';
     const command = new CreateStockIssuanceCommand(
       dto.warehouseId,
       dto.destinationType,
       dto.destinationId,
       dto.lines,
-    )
-    return this.issuanceService.create(command, userId)
+    );
+    return this.issuanceService.create(command, userId);
   }
 
   @Post('issuances/:id/reverse')
@@ -229,8 +286,8 @@ export class WarehouseController {
     @Body() dto: ReverseIssuanceHttpDto,
     @Req() req: any,
   ) {
-    const userId = req.user?.id ?? 'unknown'
-    return this.issuanceService.reverse(id, dto.reason, userId)
+    const userId = req.user?.id ?? 'unknown';
+    return this.issuanceService.reverse(id, dto.reason, userId);
   }
 
   // ==================== Stock Opname ====================
@@ -241,21 +298,21 @@ export class WarehouseController {
     @Query('warehouse_id') warehouseId?: string,
     @Query('status') status?: string,
   ) {
-    return this.opnameService.findAll({ warehouseId, status })
+    return this.opnameService.findAll({ warehouseId, status });
   }
 
   @Get('stock-opname/:id')
   @RequirePermissions('stock-opname:read')
   async getOpnameSession(@Param('id') id: string) {
-    return this.opnameService.findById(id)
+    return this.opnameService.findById(id);
   }
 
   @Post('stock-opname')
   @RequirePermissions('stock-opname:create')
   async createOpname(@Body() dto: CreateStockOpnameHttpDto, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
-    const command = new CreateStockOpnameSessionCommand(dto.warehouseId)
-    return this.opnameService.create(command.warehouseId, userId)
+    const userId = req.user?.id ?? 'unknown';
+    const command = new CreateStockOpnameSessionCommand(dto.warehouseId);
+    return this.opnameService.create(command.warehouseId, userId);
   }
 
   @Patch('stock-opname/:id/counts')
@@ -264,21 +321,21 @@ export class WarehouseController {
     @Param('id') id: string,
     @Body() dto: UpdateOpnameCountsHttpDto,
   ) {
-    const command = new UpdateOpnameCountsCommand(dto.lines)
-    return this.opnameService.updateCounts(id, command.lines)
+    const command = new UpdateOpnameCountsCommand(dto.lines);
+    return this.opnameService.updateCounts(id, command.lines);
   }
 
   @Patch('stock-opname/:id/submit')
   @RequirePermissions('stock-opname:update')
   async submitOpname(@Param('id') id: string) {
-    return this.opnameService.submit(id)
+    return this.opnameService.submit(id);
   }
 
   @Patch('stock-opname/:id/approve')
   @RequirePermissions('stock-opname:approve')
   async approveOpname(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown'
-    return this.opnameService.approve(id, userId)
+    const userId = req.user?.id ?? 'unknown';
+    return this.opnameService.approve(id, userId);
   }
 
   // ==================== Equipment ====================
@@ -298,13 +355,13 @@ export class WarehouseController {
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get('equipment/:id')
   @RequirePermissions('equipment:read')
   async getEquipmentDetail(@Param('id') id: string) {
-    return this.equipmentService.findById(id)
+    return this.equipmentService.findById(id);
   }
 
   @Post('equipment')
@@ -316,13 +373,16 @@ export class WarehouseController {
       dto.siteId,
       dto.serialNumber,
       dto.purchaseDate,
-    )
-    return this.equipmentService.create(command)
+    );
+    return this.equipmentService.create(command);
   }
 
   @Put('equipment/:id')
   @RequirePermissions('equipment:update')
-  async updateEquipment(@Param('id') id: string, @Body() dto: UpdateEquipmentHttpDto) {
+  async updateEquipment(
+    @Param('id') id: string,
+    @Body() dto: UpdateEquipmentHttpDto,
+  ) {
     const command = new UpdateEquipmentCommand(
       dto.name,
       dto.type,
@@ -330,8 +390,8 @@ export class WarehouseController {
       dto.serialNumber,
       dto.status,
       dto.purchaseDate,
-    )
-    return this.equipmentService.update(id, command)
+    );
+    return this.equipmentService.update(id, command);
   }
 
   @Post('equipment/:id/log-maintenance')
@@ -341,26 +401,26 @@ export class WarehouseController {
     @Body() dto: LogMaintenanceHttpDto,
     @Req() req: any,
   ) {
-    const userId = req.user?.id ?? 'unknown'
+    const userId = req.user?.id ?? 'unknown';
     const command = new LogMaintenanceCommand(
       dto.type,
       dto.description,
       dto.cost,
       dto.performedBy,
       dto.nextMaintenanceDate,
-    )
-    return this.equipmentService.logMaintenance(id, command, userId)
+    );
+    return this.equipmentService.logMaintenance(id, command, userId);
   }
 
   @Get('equipment/:id/schedules')
   @RequirePermissions('equipment:read')
   async getMaintenanceSchedules(@Param('id') id: string) {
-    return this.equipmentService.getMaintenanceSchedules(id)
+    return this.equipmentService.getMaintenanceSchedules(id);
   }
 
   @Get('equipment/:id/logs')
   @RequirePermissions('equipment:read')
   async getMaintenanceLogs(@Param('id') id: string) {
-    return this.equipmentService.getMaintenanceLogs(id)
+    return this.equipmentService.getMaintenanceLogs(id);
   }
 }

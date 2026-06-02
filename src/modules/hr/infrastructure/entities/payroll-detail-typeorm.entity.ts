@@ -1,68 +1,68 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('payroll_details')
 export class PayrollDetailTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  payrollRunId: string
+  payrollRunId: string;
 
   @Column({ type: 'uuid' })
-  employeeId: string
+  employeeId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  employeeName: string
+  employeeName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  basicSalary: number
+  basicSalary: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  siteAllowance: number
+  siteAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  mealAllowance: number
+  mealAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  transportAllowance: number
+  transportAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  overtimePay: number
+  overtimePay: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  otherAllowances: number
+  otherAllowances: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  grossPay: number
+  grossPay: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsKesehatanEmployee: number
+  bpjsKesehatanEmployee: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsKesehatanEmployer: number
+  bpjsKesehatanEmployer: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJkk: number
+  bpjsJkk: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJkm: number
+  bpjsJkm: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJht: number
+  bpjsJht: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJp: number
+  bpjsJp: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  pph21: number
+  pph21: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  loanDeduction: number
+  loanDeduction: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  otherDeductions: number
+  otherDeductions: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalDeductions: number
+  totalDeductions: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  netPay: number
+  netPay: number;
 }

@@ -1,27 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { DataSource } from 'typeorm'
-import { MyPayslipServicePort } from '../ports/my-payslip-service.port'
-import { PayrollRunTypeOrmEntity } from '../../../hr/infrastructure/entities/payroll-run-typeorm.entity'
-import { PayrollDetailTypeOrmEntity } from '../../../hr/infrastructure/entities/payroll-detail-typeorm.entity'
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { MyPayslipServicePort } from '../ports/my-payslip-service.port';
+import { PayrollRunTypeOrmEntity } from '../../../hr/infrastructure/entities/payroll-run-typeorm.entity';
+import { PayrollDetailTypeOrmEntity } from '../../../hr/infrastructure/entities/payroll-detail-typeorm.entity';
 
 @Injectable()
 export class MyPayslipService implements MyPayslipServicePort {
   constructor(private readonly dataSource: DataSource) {}
 
   async getPayslips(employeeId: string): Promise<any[]> {
-    const detailRepo = this.dataSource.getRepository(PayrollDetailTypeOrmEntity)
-    const runRepo = this.dataSource.getRepository(PayrollRunTypeOrmEntity)
+    const detailRepo = this.dataSource.getRepository(
+      PayrollDetailTypeOrmEntity,
+    );
+    const runRepo = this.dataSource.getRepository(PayrollRunTypeOrmEntity);
 
     const details = await detailRepo.find({
       where: { employeeId },
       order: { createdAt: 'DESC' },
-    })
+    });
 
-    const payslips: any[] = []
+    const payslips: any[] = [];
     for (const detail of details) {
       const run = await runRepo.findOne({
         where: { id: detail.payrollRunId, status: 'posted' },
-      })
+      });
       if (run) {
         payslips.push({
           payrollRunId: run.id,
@@ -31,25 +33,30 @@ export class MyPayslipService implements MyPayslipServicePort {
           grossPay: detail.grossPay,
           totalDeductions: detail.totalDeductions,
           netPay: detail.netPay,
-        })
+        });
       }
     }
 
-    return payslips
+    return payslips;
   }
 
-  async downloadPayslip(employeeId: string, payrollId: string): Promise<string> {
-    const detailRepo = this.dataSource.getRepository(PayrollDetailTypeOrmEntity)
+  async downloadPayslip(
+    employeeId: string,
+    payrollId: string,
+  ): Promise<string> {
+    const detailRepo = this.dataSource.getRepository(
+      PayrollDetailTypeOrmEntity,
+    );
     const detail = await detailRepo.findOne({
       where: { employeeId, payrollRunId: payrollId },
-    })
+    });
     if (!detail) {
-      throw new NotFoundException('Payslip not found for this payroll run')
+      throw new NotFoundException('Payslip not found for this payroll run');
     }
 
     // Return a placeholder file path with expiry
-    const expiry = Date.now() + 3600 * 1000
-    return `/payslips/${payrollId}/${employeeId}.pdf?expires=${expiry}`
+    const expiry = Date.now() + 3600 * 1000;
+    return `/payslips/${payrollId}/${employeeId}.pdf?expires=${expiry}`;
   }
 
   async getTaxYtdSummary(employeeId: string, year: number): Promise<any> {
@@ -65,20 +72,20 @@ export class MyPayslipService implements MyPayslipServicePort {
         AND pr.year = $2
         AND pr.status = 'posted'`,
       [employeeId, year],
-    )
+    );
 
-    const summary = result[0] || {}
+    const summary = result[0] || {};
     return {
       year,
       totalPph21: Number(summary.total_pph21) || 0,
       totalGross: Number(summary.total_gross) || 0,
       totalNet: Number(summary.total_net) || 0,
       monthsCount: Number(summary.months_count) || 0,
-    }
+    };
   }
 
   async downloadBuktiPotong(employeeId: string, year: number): Promise<string> {
-    const expiry = Date.now() + 3600 * 1000
-    return `/tax/1721-A1/${year}/${employeeId}.pdf?expires=${expiry}`
+    const expiry = Date.now() + 3600 * 1000;
+    return `/tax/1721-A1/${year}/${employeeId}.pdf?expires=${expiry}`;
   }
 }

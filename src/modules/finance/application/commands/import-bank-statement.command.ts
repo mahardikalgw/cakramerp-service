@@ -4,12 +4,12 @@ export class ImportBankStatementCommand {
     public readonly periodStart: string,
     public readonly periodEnd: string,
     public readonly lines: {
-      date: string
-      description: string
-      debit: number
-      credit: number
-      balance: number
-      reference?: string
+      date: string;
+      description: string;
+      debit: number;
+      credit: number;
+      balance: number;
+      reference?: string;
     }[],
   ) {}
 }

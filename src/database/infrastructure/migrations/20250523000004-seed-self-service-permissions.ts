@@ -1,28 +1,68 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class SeedSelfServicePermissions20250523000004 implements MigrationInterface {
-  name = 'SeedSelfServicePermissions20250523000004'
+  name = 'SeedSelfServicePermissions20250523000004';
 
   async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== SELF-SERVICE PERMISSIONS ====================
 
     const permissions = [
       // Profile
-      { name: 'self-service-profile:read', resource: 'self-service-profile', action: 'read' },
-      { name: 'self-service-profile:write', resource: 'self-service-profile', action: 'write' },
+      {
+        name: 'self-service-profile:read',
+        resource: 'self-service-profile',
+        action: 'read',
+      },
+      {
+        name: 'self-service-profile:write',
+        resource: 'self-service-profile',
+        action: 'write',
+      },
       // Attendance
-      { name: 'self-service-attendance:read', resource: 'self-service-attendance', action: 'read' },
-      { name: 'self-service-attendance:write', resource: 'self-service-attendance', action: 'write' },
+      {
+        name: 'self-service-attendance:read',
+        resource: 'self-service-attendance',
+        action: 'read',
+      },
+      {
+        name: 'self-service-attendance:write',
+        resource: 'self-service-attendance',
+        action: 'write',
+      },
       // Leave
-      { name: 'self-service-leave:read', resource: 'self-service-leave', action: 'read' },
-      { name: 'self-service-leave:write', resource: 'self-service-leave', action: 'write' },
+      {
+        name: 'self-service-leave:read',
+        resource: 'self-service-leave',
+        action: 'read',
+      },
+      {
+        name: 'self-service-leave:write',
+        resource: 'self-service-leave',
+        action: 'write',
+      },
       // Payslip
-      { name: 'self-service-payslip:read', resource: 'self-service-payslip', action: 'read' },
+      {
+        name: 'self-service-payslip:read',
+        resource: 'self-service-payslip',
+        action: 'read',
+      },
       // Schedule
-      { name: 'self-service-schedule:read', resource: 'self-service-schedule', action: 'read' },
+      {
+        name: 'self-service-schedule:read',
+        resource: 'self-service-schedule',
+        action: 'read',
+      },
       // Overtime
-      { name: 'self-service-overtime:read', resource: 'self-service-overtime', action: 'read' },
-      { name: 'self-service-overtime:write', resource: 'self-service-overtime', action: 'write' },
+      {
+        name: 'self-service-overtime:read',
+        resource: 'self-service-overtime',
+        action: 'read',
+      },
+      {
+        name: 'self-service-overtime:write',
+        resource: 'self-service-overtime',
+        action: 'write',
+      },
       // Overtime approval (admin/supervisor)
       { name: 'overtime:approve', resource: 'overtime', action: 'approve' },
       // Leave approval (admin/supervisor)
@@ -34,7 +74,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
       { name: 'backups:write', resource: 'backups', action: 'write' },
       { name: 'settings:read', resource: 'settings', action: 'read' },
       { name: 'settings:write', resource: 'settings', action: 'write' },
-    ]
+    ];
 
     for (const p of permissions) {
       await queryRunner.query(
@@ -42,15 +82,22 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          VALUES (gen_random_uuid(), $1, $2, $3, now(), now())
          ON CONFLICT (name) DO NOTHING`,
         [p.name, p.resource, p.action],
-      )
+      );
     }
 
     // ==================== ROLES ====================
 
     const roles = [
-      { name: 'employee', description: 'Regular employee with self-service access' },
-      { name: 'supervisor', description: 'Supervisor with self-service access and approval authority' },
-    ]
+      {
+        name: 'employee',
+        description: 'Regular employee with self-service access',
+      },
+      {
+        name: 'supervisor',
+        description:
+          'Supervisor with self-service access and approval authority',
+      },
+    ];
 
     for (const r of roles) {
       await queryRunner.query(
@@ -58,7 +105,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          VALUES (gen_random_uuid(), $1, $2, now(), now())
          ON CONFLICT (name) DO NOTHING`,
         [r.name, r.description],
-      )
+      );
     }
 
     // ==================== ROLE-PERMISSION MAPPINGS ====================
@@ -74,18 +121,18 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
       'self-service-schedule:read',
       'self-service-overtime:read',
       'self-service-overtime:write',
-    ]
+    ];
 
     const supervisorPermissions = [
       ...employeePermissions,
       'overtime:approve',
       'leave:approve',
-    ]
+    ];
 
     const rolePermissions: Record<string, string[]> = {
       employee: employeePermissions,
       supervisor: supervisorPermissions,
-    }
+    };
 
     // Give admin role all self-service permissions
     for (const p of permissions) {
@@ -95,7 +142,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          WHERE r.name = 'admin' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [p.name],
-      )
+      );
     }
 
     // Give hr_manager role all self-service permissions (manages employee requests)
@@ -106,7 +153,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          WHERE r.name = 'hr_manager' AND p.name = $1
          ON CONFLICT (role_id, permission_id) DO NOTHING`,
         [p.name],
-      )
+      );
     }
 
     // Map permissions to employee and supervisor roles
@@ -118,7 +165,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
            WHERE r.name = $1 AND p.name = $2
            ON CONFLICT (role_id, permission_id) DO NOTHING`,
           [roleName, permName],
-        )
+        );
       }
     }
 
@@ -285,10 +332,11 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
         npwp: '12.345.678.9-010.000',
         role: 'employee',
       },
-    ]
+    ];
 
     // Password: password123 (bcrypt hash)
-    const passwordHash = '$2b$12$WIZvM.m4FSdRAodeJ4v5QeY49xKhMZD0Sp0ifrrvrp3YG6x17b7de'
+    const passwordHash =
+      '$2b$12$WIZvM.m4FSdRAodeJ4v5QeY49xKhMZD0Sp0ifrrvrp3YG6x17b7de';
 
     for (const emp of employees) {
       // Insert employee record
@@ -297,27 +345,36 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'active', now(), now())
          ON CONFLICT (employee_number) DO NOTHING`,
         [
-          emp.employeeNumber, emp.fullName, emp.email, emp.phone,
-          emp.employmentType, emp.positionName, emp.departmentName,
-          emp.siteName, emp.joinDate, emp.basicSalary, emp.bankName,
-          emp.bankAccountNumber, emp.npwp,
+          emp.employeeNumber,
+          emp.fullName,
+          emp.email,
+          emp.phone,
+          emp.employmentType,
+          emp.positionName,
+          emp.departmentName,
+          emp.siteName,
+          emp.joinDate,
+          emp.basicSalary,
+          emp.bankName,
+          emp.bankAccountNumber,
+          emp.npwp,
         ],
-      )
+      );
 
       // Create user account for new employees (EMP-006 to EMP-010)
       // EMP-001 to EMP-005 already have user accounts from previous seeder
-      const isNewUser = parseInt(emp.employeeNumber.replace('EMP-', '')) > 5
+      const isNewUser = parseInt(emp.employeeNumber.replace('EMP-', '')) > 5;
 
       if (isNewUser) {
-        const [firstName, ...lastParts] = emp.fullName.split(' ')
-        const lastName = lastParts.join(' ')
+        const [firstName, ...lastParts] = emp.fullName.split(' ');
+        const lastName = lastParts.join(' ');
 
         await queryRunner.query(
           `INSERT INTO users (id, email, password_hash, first_name, last_name, status, created_at, updated_at)
            VALUES (gen_random_uuid(), $1, $2, $3, $4, 'active', now(), now())
            ON CONFLICT (email) DO NOTHING`,
           [emp.email, passwordHash, firstName, lastName],
-        )
+        );
 
         // Assign role to new user
         await queryRunner.query(
@@ -326,7 +383,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
            WHERE u.email = $1 AND r.name = $2
            ON CONFLICT (user_id, role_id) DO NOTHING`,
           [emp.email, emp.role],
-        )
+        );
       }
 
       // Link user to employee record (set employee_id on users table)
@@ -334,7 +391,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
         `UPDATE users SET employee_id = (SELECT id FROM employees WHERE employee_number = $1)
          WHERE email = $2 AND employee_id IS NULL`,
         [emp.employeeNumber, emp.email],
-      )
+      );
     }
 
     // Set supervisor_id for employees (managers supervise their department staff)
@@ -349,19 +406,19 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
       { employee: 'EMP-009', supervisor: 'EMP-005' },
       // Putri (Admin) → supervised by Budi (Director)
       { employee: 'EMP-010', supervisor: 'EMP-001' },
-    ]
+    ];
 
     for (const mapping of supervisorMappings) {
       await queryRunner.query(
         `UPDATE employees SET supervisor_id = (SELECT id FROM employees WHERE employee_number = $1)
          WHERE employee_number = $2`,
         [mapping.supervisor, mapping.employee],
-      )
+      );
     }
 
     // ==================== LEAVE BALANCES (for current year) ====================
 
-    const currentYear = new Date().getFullYear()
+    const currentYear = new Date().getFullYear();
 
     for (const emp of employees) {
       // Annual leave balance
@@ -372,7 +429,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          WHERE e.employee_number = $1 AND lt.code = $2
          ON CONFLICT (employee_id, leave_type_id, year) DO NOTHING`,
         [emp.employeeNumber, 'annual', currentYear],
-      )
+      );
 
       // Sick leave balance
       await queryRunner.query(
@@ -382,11 +439,17 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          WHERE e.employee_number = $1 AND lt.code = $2
          ON CONFLICT (employee_id, leave_type_id, year) DO NOTHING`,
         [emp.employeeNumber, 'sick', currentYear],
-      )
+      );
     }
 
     // Also give existing manager users the employee/supervisor role
-    const managerEmails = ['director@cakra.com', 'finance@cakra.com', 'hr@cakra.com', 'warehouse@cakra.com', 'site@cakra.com']
+    const managerEmails = [
+      'director@cakra.com',
+      'finance@cakra.com',
+      'hr@cakra.com',
+      'warehouse@cakra.com',
+      'site@cakra.com',
+    ];
     for (const email of managerEmails) {
       await queryRunner.query(
         `INSERT INTO user_roles (user_id, role_id)
@@ -394,7 +457,7 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
          WHERE u.email = $1 AND r.name = 'supervisor'
          ON CONFLICT (user_id, role_id) DO NOTHING`,
         [email],
-      )
+      );
     }
   }
 
@@ -418,30 +481,47 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
       'backups:write',
       'settings:read',
       'settings:write',
-    ]
+    ];
 
     // Remove leave balances for seeded employees
-    const employeeNumbers = ['EMP-001', 'EMP-002', 'EMP-003', 'EMP-004', 'EMP-005', 'EMP-006', 'EMP-007', 'EMP-008', 'EMP-009', 'EMP-010']
+    const employeeNumbers = [
+      'EMP-001',
+      'EMP-002',
+      'EMP-003',
+      'EMP-004',
+      'EMP-005',
+      'EMP-006',
+      'EMP-007',
+      'EMP-008',
+      'EMP-009',
+      'EMP-010',
+    ];
     for (const empNum of employeeNumbers) {
       await queryRunner.query(
         `DELETE FROM leave_balances WHERE employee_id = (SELECT id FROM employees WHERE employee_number = $1)`,
         [empNum],
-      )
+      );
     }
 
     // Remove supervisor role from manager users
-    const managerEmails = ['director@cakra.com', 'finance@cakra.com', 'hr@cakra.com', 'warehouse@cakra.com', 'site@cakra.com']
+    const managerEmails = [
+      'director@cakra.com',
+      'finance@cakra.com',
+      'hr@cakra.com',
+      'warehouse@cakra.com',
+      'site@cakra.com',
+    ];
     for (const email of managerEmails) {
       await queryRunner.query(
         `DELETE FROM user_roles WHERE user_id = (SELECT id FROM users WHERE email = $1) AND role_id = (SELECT id FROM roles WHERE name = 'supervisor')`,
         [email],
-      )
+      );
     }
 
     // Unlink users from employees
     await queryRunner.query(
       `UPDATE users SET employee_id = NULL WHERE employee_id IS NOT NULL`,
-    )
+    );
 
     // Remove new staff user accounts and their roles (EMP-006 to EMP-010)
     const newUserEmails = [
@@ -450,28 +530,31 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
       'dewi.lestari@cakra.com',
       'hendra.gunawan@cakra.com',
       'putri.amelia@cakra.com',
-    ]
+    ];
     for (const email of newUserEmails) {
       await queryRunner.query(
         `DELETE FROM user_roles WHERE user_id = (SELECT id FROM users WHERE email = $1)`,
         [email],
-      )
-      await queryRunner.query(`DELETE FROM users WHERE email = $1`, [email])
+      );
+      await queryRunner.query(`DELETE FROM users WHERE email = $1`, [email]);
     }
 
     // Remove employee records
     for (const empNum of employeeNumbers) {
-      await queryRunner.query(`DELETE FROM employees WHERE employee_number = $1`, [empNum])
+      await queryRunner.query(
+        `DELETE FROM employees WHERE employee_number = $1`,
+        [empNum],
+      );
     }
 
     // Remove role-permission mappings for employee and supervisor roles
-    const roleNames = ['employee', 'supervisor']
+    const roleNames = ['employee', 'supervisor'];
     for (const name of roleNames) {
       await queryRunner.query(
         `DELETE FROM role_permissions WHERE role_id = (SELECT id FROM roles WHERE name = $1)`,
         [name],
-      )
-      await queryRunner.query(`DELETE FROM roles WHERE name = $1`, [name])
+      );
+      await queryRunner.query(`DELETE FROM roles WHERE name = $1`, [name]);
     }
 
     // Remove self-service permissions from admin and hr_manager roles
@@ -480,12 +563,11 @@ export class SeedSelfServicePermissions20250523000004 implements MigrationInterf
         SELECT id FROM permissions WHERE name = ANY($1)
       )`,
       [permissionNames],
-    )
+    );
 
     // Remove permissions
-    await queryRunner.query(
-      `DELETE FROM permissions WHERE name = ANY($1)`,
-      [permissionNames],
-    )
+    await queryRunner.query(`DELETE FROM permissions WHERE name = ANY($1)`, [
+      permissionNames,
+    ]);
   }
 }

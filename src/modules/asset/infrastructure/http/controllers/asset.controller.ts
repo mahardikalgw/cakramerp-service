@@ -9,13 +9,17 @@ import {
   Param,
   UseGuards,
   Inject,
-} from '@nestjs/common'
-import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard'
-import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard'
-import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator'
-import { ASSET_SERVICE } from '../../../application/ports/asset-service.port'
-import type { AssetServicePort } from '../../../application/ports/asset-service.port'
-import { CreateAssetHttpDto, UpdateAssetHttpDto, CalculateDepreciationHttpDto } from '../dtos/asset.dto'
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
+import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
+import { ASSET_SERVICE } from '../../../application/ports/asset-service.port';
+import type { AssetServicePort } from '../../../application/ports/asset-service.port';
+import {
+  CreateAssetHttpDto,
+  UpdateAssetHttpDto,
+  CalculateDepreciationHttpDto,
+} from '../dtos/asset.dto';
 
 @Controller('assets')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -42,37 +46,37 @@ export class AssetController {
       depreciationMethod,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
   }
 
   @Get(':id')
   @RequirePermissions('assets:read')
   async findById(@Param('id') id: string) {
-    return this.assetService.findById(id)
+    return this.assetService.findById(id);
   }
 
   @Post()
   @RequirePermissions('assets:create')
   async create(@Body() dto: CreateAssetHttpDto) {
-    return this.assetService.create(dto)
+    return this.assetService.create(dto);
   }
 
   @Put(':id')
   @RequirePermissions('assets:update')
   async update(@Param('id') id: string, @Body() dto: UpdateAssetHttpDto) {
-    return this.assetService.update(id, dto)
+    return this.assetService.update(id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('assets:delete')
   async delete(@Param('id') id: string) {
-    return this.assetService.delete(id)
+    return this.assetService.delete(id);
   }
 
   @Get(':id/depreciations')
   @RequirePermissions('assets:read')
   async getDepreciationHistory(@Param('id') id: string) {
-    return this.assetService.getDepreciationHistory(id)
+    return this.assetService.getDepreciationHistory(id);
   }
 
   @Post(':id/depreciate')
@@ -81,13 +85,13 @@ export class AssetController {
     @Param('id') id: string,
     @Body() dto: CalculateDepreciationHttpDto,
   ) {
-    return this.assetService.calculateDepreciation(id, dto.unitsProduced)
+    return this.assetService.calculateDepreciation(id, dto.unitsProduced);
   }
 
   @Post('run-depreciation')
   @RequirePermissions('assets:update')
   async runScheduledDepreciation(@Query('schedule') schedule?: string) {
-    const s = schedule || 'monthly'
-    return this.assetService.runScheduledDepreciation(s)
+    const s = schedule || 'monthly';
+    return this.assetService.runScheduledDepreciation(s);
   }
 }

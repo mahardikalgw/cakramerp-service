@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common'
-import { Repository, DataSource } from 'typeorm'
-import { JournalEntryLineTypeOrmEntity } from '../entities/journal-entry-line-typeorm.entity'
-import { JournalEntryTypeOrmEntity } from '../entities/journal-entry-typeorm.entity'
-import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
-import { JournalEntryLineRepositoryPort } from '../../domain/repositories/finance-repository.port'
-import { Decimal } from 'decimal.js'
+import { Injectable } from '@nestjs/common';
+import { Repository, DataSource } from 'typeorm';
+import { JournalEntryLineTypeOrmEntity } from '../entities/journal-entry-line-typeorm.entity';
+import { JournalEntryTypeOrmEntity } from '../entities/journal-entry-typeorm.entity';
+import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity';
+import { JournalEntryLineRepositoryPort } from '../../domain/repositories/finance-repository.port';
+import { Decimal } from 'decimal.js';
 
 @Injectable()
 export class JournalEntryLineTypeOrmRepository implements JournalEntryLineRepositoryPort {
-  private readonly repo: Repository<JournalEntryLineTypeOrmEntity>
+  private readonly repo: Repository<JournalEntryLineTypeOrmEntity>;
 
   constructor(private readonly dataSource: DataSource) {
-    this.repo = dataSource.getRepository(JournalEntryLineTypeOrmEntity)
+    this.repo = dataSource.getRepository(JournalEntryLineTypeOrmEntity);
   }
 
   async findByDateRange(
@@ -22,20 +22,26 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
     let query = this.repo
       .createQueryBuilder('line')
       .innerJoin(JournalEntryTypeOrmEntity, 'je', 'je.id = line.journalEntryId')
-      .where('je.date BETWEEN :start AND :end', { start, end })
+      .where('je.date BETWEEN :start AND :end', { start, end });
 
     if (filters?.segment) {
-      query = query.andWhere('je.segment = :segment', { segment: filters.segment })
+      query = query.andWhere('je.segment = :segment', {
+        segment: filters.segment,
+      });
     }
     if (filters?.projectId) {
-      query = query.andWhere('je.projectId = :projectId', { projectId: filters.projectId })
+      query = query.andWhere('je.projectId = :projectId', {
+        projectId: filters.projectId,
+      });
     }
     if (filters?.costCenter) {
-      query = query.andWhere('je.costCenter = :costCenter', { costCenter: filters.costCenter })
+      query = query.andWhere('je.costCenter = :costCenter', {
+        costCenter: filters.costCenter,
+      });
     }
 
-    const entities = await query.getMany()
-    return entities.map(this.toDomain)
+    const entities = await query.getMany();
+    return entities.map(this.toDomain);
   }
 
   async findByAccountIdsAndDateRange(
@@ -43,38 +49,40 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
     start: Date,
     end: Date,
   ): Promise<JournalEntryLine[]> {
-    if (accountIds.length === 0) return []
+    if (accountIds.length === 0) return [];
 
     const entities = await this.repo
       .createQueryBuilder('line')
       .innerJoin(JournalEntryTypeOrmEntity, 'je', 'je.id = line.journalEntryId')
       .where('line.accountId IN (:...accountIds)', { accountIds })
       .andWhere('je.date BETWEEN :start AND :end', { start, end })
-      .getMany()
+      .getMany();
 
-    return entities.map(this.toDomain)
+    return entities.map(this.toDomain);
   }
 
-  async findByJournalEntryId(journalEntryId: string): Promise<JournalEntryLine[]> {
+  async findByJournalEntryId(
+    journalEntryId: string,
+  ): Promise<JournalEntryLine[]> {
     const entities = await this.repo.find({
       where: { journalEntryId },
       order: { createdAt: 'ASC' },
-    })
-    return entities.map(this.toDomain)
+    });
+    return entities.map(this.toDomain);
   }
 
   async save(line: JournalEntryLine): Promise<JournalEntryLine> {
-    const saved = await this.repo.save(this.toEntity(line))
-    return this.toDomain(saved)
+    const saved = await this.repo.save(this.toEntity(line));
+    return this.toDomain(saved);
   }
 
   async saveMany(lines: JournalEntryLine[]): Promise<JournalEntryLine[]> {
-    const saved = await this.repo.save(lines.map(this.toEntity))
-    return saved.map(this.toDomain)
+    const saved = await this.repo.save(lines.map(this.toEntity));
+    return saved.map(this.toDomain);
   }
 
   async deleteByJournalEntryId(journalEntryId: string): Promise<void> {
-    await this.repo.delete({ journalEntryId })
+    await this.repo.delete({ journalEntryId });
   }
 
   private toDomain(entity: JournalEntryLineTypeOrmEntity): JournalEntryLine {
@@ -86,7 +94,7 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
       credit: new Decimal(entity.credit),
       description: entity.description ?? undefined,
       createdAt: entity.createdAt,
-    })
+    });
   }
 
   private toEntity(domain: JournalEntryLine): JournalEntryLineTypeOrmEntity {
@@ -98,6 +106,6 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
       credit: domain.credit.toNumber(),
       description: domain.description,
       createdAt: domain.createdAt,
-    })
+    });
   }
 }

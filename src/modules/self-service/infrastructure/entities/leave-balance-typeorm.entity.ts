@@ -1,25 +1,31 @@
-import { Entity, Column, Index } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column, Index } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('leave_balances')
 export class LeaveBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string
+  employeeId: string;
 
   @Column({ type: 'uuid', name: 'leave_type_id' })
   @Index()
-  leaveTypeId: string
+  leaveTypeId: string;
 
   @Column({ type: 'int' })
-  year: number
+  year: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, name: 'total_days' })
-  totalDays: number
+  totalDays: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 1, name: 'used_days', default: 0 })
-  usedDays: number
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 1,
+    name: 'used_days',
+    default: 0,
+  })
+  usedDays: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, name: 'remaining_days' })
-  remainingDays: number
+  remainingDays: number;
 }

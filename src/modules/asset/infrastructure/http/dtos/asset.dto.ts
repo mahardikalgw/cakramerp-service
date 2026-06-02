@@ -1,122 +1,129 @@
-import { IsString, IsOptional, IsNumber, IsIn, IsDateString, Min } from 'class-validator'
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsIn,
+  IsDateString,
+  Min,
+} from 'class-validator';
 
 export class CreateAssetHttpDto {
   @IsString()
-  name: string
+  name: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsString()
-  category?: string
+  category?: string;
 
   @IsDateString()
-  acquisitionDate: string
+  acquisitionDate: string;
 
   @IsNumber()
   @Min(0)
-  acquisitionCost: number
+  acquisitionCost: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salvageValue?: number
+  salvageValue?: number;
 
   @IsNumber()
   @Min(1)
-  usefulLifeMonths: number
+  usefulLifeMonths: number;
 
   @IsIn(['straight_line', 'declining_balance', 'unit_production'])
-  depreciationMethod: string
+  depreciationMethod: string;
 
   @IsOptional()
   @IsNumber()
-  decliningBalanceRate?: number
+  decliningBalanceRate?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  totalEstimatedUnits?: number
+  totalEstimatedUnits?: number;
 
   @IsOptional()
   @IsIn(['monthly', 'quarterly', 'yearly'])
-  depreciationSchedule?: string
+  depreciationSchedule?: string;
 
   @IsOptional()
   @IsString()
-  location?: string
+  location?: string;
 
   @IsOptional()
   @IsString()
-  assignedToEmployeeId?: string
+  assignedToEmployeeId?: string;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 }
 
 export class UpdateAssetHttpDto {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsString()
-  category?: string
+  category?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  salvageValue?: number
+  salvageValue?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  usefulLifeMonths?: number
+  usefulLifeMonths?: number;
 
   @IsOptional()
   @IsIn(['straight_line', 'declining_balance', 'unit_production'])
-  depreciationMethod?: string
+  depreciationMethod?: string;
 
   @IsOptional()
   @IsNumber()
-  decliningBalanceRate?: number
+  decliningBalanceRate?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  totalEstimatedUnits?: number
+  totalEstimatedUnits?: number;
 
   @IsOptional()
   @IsIn(['monthly', 'quarterly', 'yearly'])
-  depreciationSchedule?: string
+  depreciationSchedule?: string;
 
   @IsOptional()
   @IsIn(['active', 'disposed', 'fully_depreciated'])
-  status?: string
+  status?: string;
 
   @IsOptional()
   @IsString()
-  location?: string
+  location?: string;
 
   @IsOptional()
   @IsString()
-  assignedToEmployeeId?: string
+  assignedToEmployeeId?: string;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 }
 
 export class CalculateDepreciationHttpDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  unitsProduced?: number
+  unitsProduced?: number;
 }

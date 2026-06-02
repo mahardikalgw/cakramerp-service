@@ -1,29 +1,29 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('goods_receipt_lines')
 export class GoodsReceiptLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  goodsReceiptId: string
+  goodsReceiptId: string;
 
   @Column({ type: 'uuid' })
-  itemId: string
+  itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string
+  itemName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4 })
-  poQty: number
+  poQty: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4 })
-  receivedQty: number
+  receivedQty: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  discrepancyQty: number
+  discrepancyQty: number;
 
   @Column({ type: 'varchar', length: 50 })
-  uom: string
+  uom: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  remarks: string
+  remarks: string;
 }

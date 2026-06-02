@@ -76,15 +76,17 @@ export class AuditLogService implements AuditLogServicePort {
       log.createdAt?.toISOString?.() ?? String(log.createdAt),
     ]);
 
-    const header = 'ID\tUser\tAction\tModule\tRecord ID\tIP Address\tTimestamp\n';
+    const header =
+      'ID\tUser\tAction\tModule\tRecord ID\tIP Address\tTimestamp\n';
     const body = rows.map((r) => r.join('\t')).join('\n');
     return Buffer.from(header + body, 'utf-8');
   }
 
   async exportToPdf(filters?: any): Promise<Buffer> {
     const { data } = await this.findAll(filters);
-    const rows = data.map((log) =>
-      `${log.userName} | ${log.action} | ${log.module} | ${log.recordId ?? '-'} | ${log.createdAt?.toISOString?.() ?? String(log.createdAt)}`
+    const rows = data.map(
+      (log) =>
+        `${log.userName} | ${log.action} | ${log.module} | ${log.recordId ?? '-'} | ${log.createdAt?.toISOString?.() ?? String(log.createdAt)}`,
     );
 
     const content = [

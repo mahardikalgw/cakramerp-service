@@ -1,5 +1,3 @@
 export class CalculateThrCommand {
-  constructor(
-    public readonly year: number,
-  ) {}
+  constructor(public readonly year: number) {}
 }

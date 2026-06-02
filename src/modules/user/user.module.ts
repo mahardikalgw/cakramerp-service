@@ -13,7 +13,10 @@ import { USER_ROLE_ASSIGNER_PORT } from '../../shared/kernel/domain/ports/user-r
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserTypeOrmEntity]), forwardRef(() => AuditModule)],
+  imports: [
+    TypeOrmModule.forFeature([UserTypeOrmEntity]),
+    forwardRef(() => AuditModule),
+  ],
   controllers: [UserController],
   providers: [
     {

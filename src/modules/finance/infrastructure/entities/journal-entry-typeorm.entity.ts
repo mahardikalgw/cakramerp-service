@@ -1,62 +1,62 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('journal_entries')
 export class JournalEntryTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  entryNumber: string
+  entryNumber: string;
 
   @Column({ type: 'date' })
-  date: Date
+  date: Date;
 
   @Column({ type: 'text', nullable: true })
-  description: string
+  description: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reference: string
+  reference: string;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string
+  status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  projectId: string
+  projectId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string
+  segment: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  costCenter: string
+  costCenter: string;
 
   @Column({ type: 'uuid', nullable: true })
-  createdBy: string
+  createdBy: string;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string
+  approvedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date
+  approvedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  reversalOfId: string
+  reversalOfId: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  sourceType: string
+  sourceType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  sourceId: string
+  sourceId: string;
 
   @Column({ type: 'varchar', length: 20, default: 'cash' })
-  journalType: string
+  journalType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string
+  customerId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string
+  supplierId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  partyName: string
+  partyName: string;
 
   @Column({ type: 'boolean', default: false })
-  subsidiaryLedgerRecorded: boolean
+  subsidiaryLedgerRecorded: boolean;
 }

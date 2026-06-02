@@ -38,7 +38,15 @@ describe('AuditLogService', () => {
 
   describe('create', () => {
     it('should create an audit log entry', async () => {
-      const command = new CreateAuditLogCommand('user1', 'John Doe', 'create', 'customer', 'rec1', '127.0.0.1', { name: 'Test' });
+      const command = new CreateAuditLogCommand(
+        'user1',
+        'John Doe',
+        'create',
+        'customer',
+        'rec1',
+        '127.0.0.1',
+        { name: 'Test' },
+      );
       const saved = new AuditLog({
         id: '1',
         userId: 'user1',
@@ -67,7 +75,14 @@ describe('AuditLogService', () => {
     it('should return all audit logs', async () => {
       const expected = {
         data: [{ id: '1', action: 'create' }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findAll.mockResolvedValue(expected);
 
@@ -78,7 +93,17 @@ describe('AuditLogService', () => {
     });
 
     it('should call findAll without options', async () => {
-      const expected = { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false } };
+      const expected = {
+        data: [],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
       mockRepo.findAll.mockResolvedValue(expected);
 
       const result = await service.findAll();
@@ -92,7 +117,14 @@ describe('AuditLogService', () => {
     it('should return audit logs by user id', async () => {
       const expected = {
         data: [{ id: '1', userId: 'user1' }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findByUserId.mockResolvedValue(expected);
 
@@ -107,7 +139,14 @@ describe('AuditLogService', () => {
     it('should return audit logs by module', async () => {
       const expected = {
         data: [{ id: '1', module: 'customer' }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findByModule.mockResolvedValue(expected);
 
@@ -122,7 +161,14 @@ describe('AuditLogService', () => {
     it('should return audit logs by action', async () => {
       const expected = {
         data: [{ id: '1', action: 'create' }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findByAction.mockResolvedValue(expected);
 
@@ -139,14 +185,23 @@ describe('AuditLogService', () => {
       const end = new Date('2024-12-31');
       const expected = {
         data: [{ id: '1' }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findByDateRange.mockResolvedValue(expected);
 
       const result = await service.findByDateRange(start, end, { page: 1 });
 
       expect(result).toEqual(expected);
-      expect(mockRepo.findByDateRange).toHaveBeenCalledWith(start, end, { page: 1 });
+      expect(mockRepo.findByDateRange).toHaveBeenCalledWith(start, end, {
+        page: 1,
+      });
     });
   });
 
@@ -164,7 +219,14 @@ describe('AuditLogService', () => {
             createdAt: new Date('2024-06-01T10:00:00Z'),
           },
         ],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findAll.mockResolvedValue(logs);
 
@@ -172,14 +234,26 @@ describe('AuditLogService', () => {
 
       expect(Buffer.isBuffer(result)).toBe(true);
       const content = result.toString('utf-8');
-      expect(content).toContain('ID\tUser\tAction\tModule\tRecord ID\tIP Address\tTimestamp');
+      expect(content).toContain(
+        'ID\tUser\tAction\tModule\tRecord ID\tIP Address\tTimestamp',
+      );
       expect(content).toContain('John');
       expect(content).toContain('create');
       expect(content).toContain('customer');
     });
 
     it('should handle empty data', async () => {
-      mockRepo.findAll.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false } });
+      mockRepo.findAll.mockResolvedValue({
+        data: [],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      });
 
       const result = await service.exportToExcel();
 
@@ -190,16 +264,25 @@ describe('AuditLogService', () => {
 
     it('should handle null recordId and ipAddress', async () => {
       const logs = {
-        data: [{
-          id: '1',
-          userName: 'John',
-          action: 'login',
-          module: 'auth',
-          recordId: null,
-          ipAddress: null,
-          createdAt: new Date('2024-06-01T10:00:00Z'),
-        }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        data: [
+          {
+            id: '1',
+            userName: 'John',
+            action: 'login',
+            module: 'auth',
+            recordId: null,
+            ipAddress: null,
+            createdAt: new Date('2024-06-01T10:00:00Z'),
+          },
+        ],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findAll.mockResolvedValue(logs);
 
@@ -222,7 +305,14 @@ describe('AuditLogService', () => {
             createdAt: new Date('2024-06-01T10:00:00Z'),
           },
         ],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findAll.mockResolvedValue(logs);
 
@@ -237,7 +327,17 @@ describe('AuditLogService', () => {
     });
 
     it('should handle empty data in pdf export', async () => {
-      mockRepo.findAll.mockResolvedValue({ data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false } });
+      mockRepo.findAll.mockResolvedValue({
+        data: [],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      });
 
       const result = await service.exportToPdf();
 
@@ -249,15 +349,24 @@ describe('AuditLogService', () => {
 
     it('should handle null recordId in pdf export', async () => {
       const logs = {
-        data: [{
-          id: '1',
-          userName: 'John',
-          action: 'login',
-          module: 'auth',
-          recordId: null,
-          createdAt: new Date('2024-06-01T10:00:00Z'),
-        }],
-        meta: { page: 1, limit: 10, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        data: [
+          {
+            id: '1',
+            userName: 'John',
+            action: 'login',
+            module: 'auth',
+            recordId: null,
+            createdAt: new Date('2024-06-01T10:00:00Z'),
+          },
+        ],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
       mockRepo.findAll.mockResolvedValue(logs);
 

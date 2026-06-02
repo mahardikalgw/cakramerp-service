@@ -9,7 +9,10 @@ import { AUDIT_LOG_SERVICE } from './application/ports/audit-log-service.port';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AuditLogTypeOrmEntity]), forwardRef(() => UserModule)],
+  imports: [
+    TypeOrmModule.forFeature([AuditLogTypeOrmEntity]),
+    forwardRef(() => UserModule),
+  ],
   controllers: [AdminAuditLogController],
   providers: [
     {

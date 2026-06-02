@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class SeedDepartmentsAndPositions20250527000003 implements MigrationInterface {
-  name = 'SeedDepartmentsAndPositions20250527000003'
+  name = 'SeedDepartmentsAndPositions20250527000003';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Seed departments
@@ -17,7 +17,7 @@ export class SeedDepartmentsAndPositions20250527000003 implements MigrationInter
         ('Legal', 'Legal and compliance', true),
         ('IT Support', 'IT infrastructure and support', true)
       ON CONFLICT (name) DO NOTHING;
-    `)
+    `);
 
     // Seed positions linked to departments
     await queryRunner.query(`
@@ -47,11 +47,11 @@ export class SeedDepartmentsAndPositions20250527000003 implements MigrationInter
         ('IT Support Specialist', (SELECT id FROM departments WHERE name = 'IT Support'), 'Technical support and helpdesk', true),
         ('System Administrator', (SELECT id FROM departments WHERE name = 'IT Support'), 'Server and infrastructure management', true)
       ON CONFLICT (name, department_id) DO NOTHING;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DELETE FROM positions;`)
-    await queryRunner.query(`DELETE FROM departments;`)
+    await queryRunner.query(`DELETE FROM positions;`);
+    await queryRunner.query(`DELETE FROM departments;`);
   }
 }

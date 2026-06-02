@@ -1,9 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddGlPostingQueueAndSourceLinks20250527000001
-  implements MigrationInterface
-{
-  name = 'AddGlPostingQueueAndSourceLinks20250527000001'
+export class AddGlPostingQueueAndSourceLinks20250527000001 implements MigrationInterface {
+  name = 'AddGlPostingQueueAndSourceLinks20250527000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create gl_posting_queue table
@@ -25,39 +23,59 @@ export class AddGlPostingQueueAndSourceLinks20250527000001
         "posted_at" TIMESTAMPTZ,
         CONSTRAINT "PK_gl_posting_queue" PRIMARY KEY ("id")
       )
-    `)
+    `);
 
     // Add indexes for common queries
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_status" ON "gl_posting_queue" ("status")`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_source_type" ON "gl_posting_queue" ("source_type")`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_source_id" ON "gl_posting_queue" ("source_id")`)
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_status" ON "gl_posting_queue" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_source_type" ON "gl_posting_queue" ("source_type")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IX_gl_posting_queue_source_id" ON "gl_posting_queue" ("source_id")`,
+    );
 
     // Add source_type and source_id to journal_entries (for bidirectional linking)
-    await queryRunner.query(`ALTER TABLE "journal_entries" ADD COLUMN IF NOT EXISTS "source_type" varchar(50)`)
-    await queryRunner.query(`ALTER TABLE "journal_entries" ADD COLUMN IF NOT EXISTS "source_id" uuid`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "IX_journal_entries_source" ON "journal_entries" ("source_type", "source_id")`)
+    await queryRunner.query(
+      `ALTER TABLE "journal_entries" ADD COLUMN IF NOT EXISTS "source_type" varchar(50)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "journal_entries" ADD COLUMN IF NOT EXISTS "source_id" uuid`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "IX_journal_entries_source" ON "journal_entries" ("source_type", "source_id")`,
+    );
 
     // Add journal_entry_id to ar_invoices (for bidirectional linking from invoice → journal)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "journal_entry_id" uuid`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD CONSTRAINT "FK_ar_invoices_journal_entry" FOREIGN KEY ("journal_entry_id") REFERENCES "journal_entries"("id") ON DELETE SET NULL`)
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "journal_entry_id" uuid`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD CONSTRAINT "FK_ar_invoices_journal_entry" FOREIGN KEY ("journal_entry_id") REFERENCES "journal_entries"("id") ON DELETE SET NULL`,
+    );
 
     // Add journal_entry_id to ap_invoices (for bidirectional linking from invoice → journal)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "journal_entry_id" uuid`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD CONSTRAINT "FK_ap_invoices_journal_entry" FOREIGN KEY ("journal_entry_id") REFERENCES "journal_entries"("id") ON DELETE SET NULL`)
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "journal_entry_id" uuid`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD CONSTRAINT "FK_ap_invoices_journal_entry" FOREIGN KEY ("journal_entry_id") REFERENCES "journal_entries"("id") ON DELETE SET NULL`,
+    );
 
     // Add FK from gl_posting_queue to journal_entries
     await queryRunner.query(`
       ALTER TABLE "gl_posting_queue"
       ADD CONSTRAINT "FK_gl_posting_queue_journal_entry"
       FOREIGN KEY ("journal_entry_id") REFERENCES "journal_entries"("id") ON DELETE SET NULL
-    `)
+    `);
 
     // Add FK from gl_posting_queue to users (posted_by)
     await queryRunner.query(`
       ALTER TABLE "gl_posting_queue"
       ADD CONSTRAINT "FK_gl_posting_queue_posted_by"
       FOREIGN KEY ("posted_by") REFERENCES "users"("id") ON DELETE SET NULL
-    `)
+    `);
 
     // Seed gl_posting_queue permissions
     await queryRunner.query(`
@@ -66,7 +84,7 @@ export class AddGlPostingQueueAndSourceLinks20250527000001
         (gen_random_uuid(), 'gl-posting-queue:read', 'gl-posting-queue', 'read', now(), now()),
         (gen_random_uuid(), 'gl-posting-queue:create', 'gl-posting-queue', 'create', now(), now())
       ON CONFLICT (name) DO NOTHING
-    `)
+    `);
 
     // Assign new permissions to admin and finance roles
     await queryRunner.query(`
@@ -77,7 +95,7 @@ export class AddGlPostingQueueAndSourceLinks20250527000001
       WHERE r.name IN ('admin', 'finance_manager', 'accountant')
         AND p.name IN ('gl-posting-queue:read', 'gl-posting-queue:create')
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // Seed sample gl_posting_queue entries from existing invoices
     await queryRunner.query(`
@@ -114,7 +132,7 @@ export class AddGlPostingQueueAndSourceLinks20250527000001
           SELECT 1 FROM "gl_posting_queue" q
           WHERE q."source_type" = 'sales_invoice' AND q."source_id" = inv."id"
         )
-    `)
+    `);
 
     await queryRunner.query(`
       INSERT INTO "gl_posting_queue" ("id", "source_type", "source_id", "source_number", "event_type", "amount", "description", "suggested_lines", "status", "created_at", "updated_at")
@@ -149,31 +167,49 @@ export class AddGlPostingQueueAndSourceLinks20250527000001
           SELECT 1 FROM "gl_posting_queue" q
           WHERE q."source_type" = 'supplier_invoice' AND q."source_id" = inv."id"
         )
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Remove FK constraints
-    await queryRunner.query(`ALTER TABLE "gl_posting_queue" DROP CONSTRAINT IF EXISTS "FK_gl_posting_queue_journal_entry"`)
-    await queryRunner.query(`ALTER TABLE "gl_posting_queue" DROP CONSTRAINT IF EXISTS "FK_gl_posting_queue_posted_by"`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP CONSTRAINT IF EXISTS "FK_ar_invoices_journal_entry"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP CONSTRAINT IF EXISTS "FK_ap_invoices_journal_entry"`)
+    await queryRunner.query(
+      `ALTER TABLE "gl_posting_queue" DROP CONSTRAINT IF EXISTS "FK_gl_posting_queue_journal_entry"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "gl_posting_queue" DROP CONSTRAINT IF EXISTS "FK_gl_posting_queue_posted_by"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP CONSTRAINT IF EXISTS "FK_ar_invoices_journal_entry"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP CONSTRAINT IF EXISTS "FK_ap_invoices_journal_entry"`,
+    );
 
     // Remove columns
-    await queryRunner.query(`ALTER TABLE "journal_entries" DROP COLUMN IF EXISTS "source_type"`)
-    await queryRunner.query(`ALTER TABLE "journal_entries" DROP COLUMN IF EXISTS "source_id"`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "journal_entry_id"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "journal_entry_id"`)
+    await queryRunner.query(
+      `ALTER TABLE "journal_entries" DROP COLUMN IF EXISTS "source_type"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "journal_entries" DROP COLUMN IF EXISTS "source_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "journal_entry_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "journal_entry_id"`,
+    );
 
     // Remove permissions
     await queryRunner.query(`
       DELETE FROM "role_permissions" WHERE "permission_id" IN (
         SELECT id FROM "permissions" WHERE name IN ('gl-posting-queue:read', 'gl-posting-queue:create')
       )
-    `)
-    await queryRunner.query(`DELETE FROM "permissions" WHERE name IN ('gl-posting-queue:read', 'gl-posting-queue:create')`)
+    `);
+    await queryRunner.query(
+      `DELETE FROM "permissions" WHERE name IN ('gl-posting-queue:read', 'gl-posting-queue:create')`,
+    );
 
     // Drop table
-    await queryRunner.query(`DROP TABLE IF EXISTS "gl_posting_queue"`)
+    await queryRunner.query(`DROP TABLE IF EXISTS "gl_posting_queue"`);
   }
 }

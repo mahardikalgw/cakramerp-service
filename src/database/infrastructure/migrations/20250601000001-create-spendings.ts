@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateSpendings20250601000001 implements MigrationInterface {
-  name = 'CreateSpendings20250601000001'
+  name = 'CreateSpendings20250601000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -21,7 +21,7 @@ export class CreateSpendings20250601000001 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS idx_spendings_status ON spendings(status);
@@ -29,7 +29,7 @@ export class CreateSpendings20250601000001 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_spendings_date ON spendings(date);
       CREATE INDEX IF NOT EXISTS idx_spendings_gl_queue ON spendings(gl_posting_queue_id);
       CREATE INDEX IF NOT EXISTS idx_spendings_journal ON spendings(journal_entry_id);
-    `)
+    `);
 
     // Permissions
     await queryRunner.query(`
@@ -40,7 +40,7 @@ export class CreateSpendings20250601000001 implements MigrationInterface {
         ('spendings:update', 'spendings', 'update'),
         ('spendings:delete', 'spendings', 'delete')
       ON CONFLICT (name) DO NOTHING;
-    `)
+    `);
 
     await queryRunner.query(`
       INSERT INTO role_permissions (role_id, permission_id)
@@ -50,7 +50,7 @@ export class CreateSpendings20250601000001 implements MigrationInterface {
       WHERE r.name IN ('admin', 'finance_manager', 'accountant')
         AND p.name IN ('spendings:read', 'spendings:create', 'spendings:update', 'spendings:delete')
       ON CONFLICT DO NOTHING;
-    `)
+    `);
 
     // Seed spending categories
     await queryRunner.query(`
@@ -63,26 +63,26 @@ export class CreateSpendings20250601000001 implements MigrationInterface {
         ('6500', 'Biaya Pemeliharaan', 'expense', true),
         ('6600', 'Biaya Lain-lain', 'expense', true)
       ON CONFLICT (code) DO NOTHING;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_journal;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_gl_queue;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_date;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_category;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_status;`)
-    await queryRunner.query(`DROP TABLE IF EXISTS spendings;`)
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_journal;`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_gl_queue;`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_date;`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_category;`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_spendings_status;`);
+    await queryRunner.query(`DROP TABLE IF EXISTS spendings;`);
     await queryRunner.query(`
       DELETE FROM role_permissions WHERE permission_id IN (
         SELECT id FROM permissions WHERE name IN ('spendings:read', 'spendings:create', 'spendings:update', 'spendings:delete')
       );
-    `)
+    `);
     await queryRunner.query(`
       DELETE FROM permissions WHERE name IN ('spendings:read', 'spendings:create', 'spendings:update', 'spendings:delete');
-    `)
+    `);
     await queryRunner.query(`
       DELETE FROM accounts WHERE code IN ('6100', '6200', '6300', '6400', '6500', '6600');
-    `)
+    `);
   }
 }

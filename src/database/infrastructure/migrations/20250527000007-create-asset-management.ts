@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateAssetManagement20250527000007 implements MigrationInterface {
-  name = 'CreateAssetManagement20250527000007'
+  name = 'CreateAssetManagement20250527000007';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -30,7 +30,7 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS asset_depreciations (
@@ -45,7 +45,7 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS idx_assets_status ON assets(status);
@@ -53,7 +53,7 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_assets_depreciation_method ON assets(depreciation_method);
       CREATE INDEX IF NOT EXISTS idx_asset_depreciations_asset ON asset_depreciations(asset_id);
       CREATE INDEX IF NOT EXISTS idx_asset_depreciations_period ON asset_depreciations(period_date);
-    `)
+    `);
 
     // Seed permissions
     await queryRunner.query(`
@@ -64,7 +64,7 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
         ('assets:update', 'assets', 'update'),
         ('assets:delete', 'assets', 'delete')
       ON CONFLICT (name) DO NOTHING;
-    `)
+    `);
 
     // Assign to admin role
     await queryRunner.query(`
@@ -75,7 +75,7 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
       WHERE r.name = 'admin'
         AND p.name IN ('assets:read', 'assets:create', 'assets:update', 'assets:delete')
       ON CONFLICT DO NOTHING;
-    `)
+    `);
 
     // Assign to finance_manager role
     await queryRunner.query(`
@@ -86,24 +86,30 @@ export class CreateAssetManagement20250527000007 implements MigrationInterface {
       WHERE r.name = 'finance_manager'
         AND p.name IN ('assets:read', 'assets:create', 'assets:update', 'assets:delete')
       ON CONFLICT DO NOTHING;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_asset_depreciations_period;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_asset_depreciations_asset;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_assets_depreciation_method;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_assets_category;`)
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_assets_status;`)
-    await queryRunner.query(`DROP TABLE IF EXISTS asset_depreciations;`)
-    await queryRunner.query(`DROP TABLE IF EXISTS assets;`)
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_asset_depreciations_period;`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_asset_depreciations_asset;`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_assets_depreciation_method;`,
+    );
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_assets_category;`);
+    await queryRunner.query(`DROP INDEX IF EXISTS idx_assets_status;`);
+    await queryRunner.query(`DROP TABLE IF EXISTS asset_depreciations;`);
+    await queryRunner.query(`DROP TABLE IF EXISTS assets;`);
     await queryRunner.query(`
       DELETE FROM role_permissions WHERE permission_id IN (
         SELECT id FROM permissions WHERE name IN ('assets:read', 'assets:create', 'assets:update', 'assets:delete')
       );
-    `)
+    `);
     await queryRunner.query(`
       DELETE FROM permissions WHERE name IN ('assets:read', 'assets:create', 'assets:update', 'assets:delete');
-    `)
+    `);
   }
 }

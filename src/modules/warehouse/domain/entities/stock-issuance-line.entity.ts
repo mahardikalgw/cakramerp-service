@@ -1,30 +1,30 @@
 export class StockIssuanceLine {
   constructor(
     public readonly props: {
-      id?: string
-      issuanceId: string
-      itemId: string
-      itemName: string
-      quantity: number
-      uom: string
+      id?: string;
+      issuanceId: string;
+      itemId: string;
+      itemName: string;
+      quantity: number;
+      uom: string;
     },
   ) {}
   get id() {
-    return this.props.id
+    return this.props.id;
   }
   get issuanceId() {
-    return this.props.issuanceId
+    return this.props.issuanceId;
   }
   get itemId() {
-    return this.props.itemId
+    return this.props.itemId;
   }
   get itemName() {
-    return this.props.itemName
+    return this.props.itemName;
   }
   get quantity() {
-    return this.props.quantity
+    return this.props.quantity;
   }
   get uom() {
-    return this.props.uom
+    return this.props.uom;
   }
 }

@@ -1,105 +1,113 @@
-import { IsString, IsOptional, IsEmail, IsNumber, IsIn, IsUUID, Min } from 'class-validator'
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsNumber,
+  IsIn,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateEmployeeHttpDto {
   @IsString()
-  firstName: string
+  firstName: string;
 
   @IsString()
-  lastName: string
+  lastName: string;
 
   @IsOptional()
   @IsEmail()
-  email?: string
+  email?: string;
 
   @IsOptional()
   @IsString()
-  phone?: string
+  phone?: string;
 
   @IsOptional()
   @IsString()
-  employmentType?: string
+  employmentType?: string;
 
   @IsOptional()
   @IsUUID()
-  departmentId?: string
+  departmentId?: string;
 
   @IsOptional()
   @IsUUID()
-  positionId?: string
+  positionId?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  baseSalary?: number
+  baseSalary?: number;
 
   @IsOptional()
   @IsString()
-  hireDate?: string
+  hireDate?: string;
 
   @IsOptional()
   @IsString()
-  workStartTime?: string
+  workStartTime?: string;
 
   @IsOptional()
   @IsString()
-  workEndTime?: string
+  workEndTime?: string;
 
   @IsOptional()
   @IsNumber()
-  breakDurationMinutes?: number
+  breakDurationMinutes?: number;
 }
 
 export class UpdateEmployeeHttpDto {
   @IsOptional()
   @IsString()
-  firstName?: string
+  firstName?: string;
 
   @IsOptional()
   @IsString()
-  lastName?: string
+  lastName?: string;
 
   @IsOptional()
   @IsEmail()
-  email?: string
+  email?: string;
 
   @IsOptional()
   @IsString()
-  phone?: string
+  phone?: string;
 
   @IsOptional()
   @IsString()
-  employmentType?: string
+  employmentType?: string;
 
   @IsOptional()
   @IsUUID()
-  departmentId?: string
+  departmentId?: string;
 
   @IsOptional()
   @IsUUID()
-  positionId?: string
+  positionId?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  baseSalary?: number
+  baseSalary?: number;
 
   @IsOptional()
   @IsString()
-  hireDate?: string
+  hireDate?: string;
 
   @IsOptional()
   @IsIn(['active', 'inactive', 'terminated'])
-  status?: string
+  status?: string;
 
   @IsOptional()
   @IsString()
-  workStartTime?: string
+  workStartTime?: string;
 
   @IsOptional()
   @IsString()
-  workEndTime?: string
+  workEndTime?: string;
 
   @IsOptional()
   @IsNumber()
-  breakDurationMinutes?: number
+  breakDurationMinutes?: number;
 }

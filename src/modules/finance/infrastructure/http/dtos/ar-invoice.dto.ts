@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ARInvoiceLineDto {

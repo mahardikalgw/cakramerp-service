@@ -1,29 +1,29 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('stock_opname_sessions')
 export class StockOpnameSessionTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  warehouseId: string
+  warehouseId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  warehouseName: string
+  warehouseName: string;
 
   @Column({ type: 'uuid' })
-  conductedBy: string
+  conductedBy: string;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string
+  status: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  submittedAt: Date
+  submittedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string
+  approvedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date
+  approvedAt: Date;
 
   @Column({ type: 'text', nullable: true })
-  notes: string
+  notes: string;
 }

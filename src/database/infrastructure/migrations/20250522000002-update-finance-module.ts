@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class UpdateFinanceModule20250522000002 implements MigrationInterface {
-  name = 'UpdateFinanceModule20250522000002'
+  name = 'UpdateFinanceModule20250522000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== Alter existing tables ====================
@@ -10,7 +10,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
     await queryRunner.query(`
       ALTER TABLE accounts ADD COLUMN IF NOT EXISTS tax_category VARCHAR(100);
       ALTER TABLE accounts ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
-    `)
+    `);
 
     // Add new columns to journal_entries table
     await queryRunner.query(`
@@ -20,7 +20,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
       ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS approved_by UUID;
       ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
       ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS reversal_of_id UUID;
-    `)
+    `);
 
     // ==================== AR Invoice Lines ====================
 
@@ -36,7 +36,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== AP Invoices ====================
 
@@ -60,7 +60,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Bank Accounts ====================
 
@@ -76,7 +76,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Reconciliation Sessions ====================
 
@@ -97,7 +97,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Bank Statement Lines ====================
 
@@ -116,7 +116,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Tax Invoices (e-Faktur) ====================
 
@@ -136,7 +136,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Indexes ====================
 
@@ -155,7 +155,7 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_bank_statement_lines_session ON bank_statement_lines(reconciliation_session_id);
       CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(type);
       CREATE INDEX IF NOT EXISTS idx_accounts_is_active ON accounts(is_active);
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -190,6 +190,6 @@ export class UpdateFinanceModule20250522000002 implements MigrationInterface {
       ALTER TABLE journal_entries DROP COLUMN IF EXISTS reversal_of_id;
       ALTER TABLE accounts DROP COLUMN IF EXISTS tax_category;
       ALTER TABLE accounts DROP COLUMN IF EXISTS is_active;
-    `)
+    `);
   }
 }

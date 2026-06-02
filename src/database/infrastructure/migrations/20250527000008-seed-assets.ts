@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class SeedAssets20250527000008 implements MigrationInterface {
-  name = 'SeedAssets20250527000008'
+  name = 'SeedAssets20250527000008';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -18,7 +18,7 @@ export class SeedAssets20250527000008 implements MigrationInterface {
         ('AST-2025-0004', 'Genset Cummins 100kVA', 'Backup power generator', 'Building Equipment', '2025-01-20', 200000000, 20000000, 120, 'declining_balance', 0.2, NULL, 0, 200000000, 0, 'quarterly', 'active', 'Utility Room'),
         ('AST-2025-0005', 'Conveyor Belt System', 'Automated conveyor for production line', 'Machinery', '2025-04-01', 450000000, 45000000, 96, 'unit_production', NULL, 1000000, 0, 450000000, 0, 'monthly', 'active', 'Production Line 1')
       ON CONFLICT (asset_number) DO NOTHING;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -27,6 +27,6 @@ export class SeedAssets20250527000008 implements MigrationInterface {
         'AST-2024-0001', 'AST-2024-0002', 'AST-2024-0003', 'AST-2024-0004', 'AST-2024-0005',
         'AST-2025-0001', 'AST-2025-0002', 'AST-2025-0003', 'AST-2025-0004', 'AST-2025-0005'
       );
-    `)
+    `);
   }
 }

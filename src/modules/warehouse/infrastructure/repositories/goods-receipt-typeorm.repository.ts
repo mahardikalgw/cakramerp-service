@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common'
-import { DataSource, Repository } from 'typeorm'
-import { GoodsReceiptRepositoryPort } from '../../domain/repositories/goods-receipt-repository.port'
-import { GoodsReceipt } from '../../domain/entities/goods-receipt.entity'
-import { GoodsReceiptLine } from '../../domain/entities/goods-receipt-line.entity'
-import { GoodsReceiptTypeOrmEntity } from '../entities/goods-receipt-typeorm.entity'
-import { GoodsReceiptLineTypeOrmEntity } from '../entities/goods-receipt-line-typeorm.entity'
+import { Injectable } from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
+import { GoodsReceiptRepositoryPort } from '../../domain/repositories/goods-receipt-repository.port';
+import { GoodsReceipt } from '../../domain/entities/goods-receipt.entity';
+import { GoodsReceiptLine } from '../../domain/entities/goods-receipt-line.entity';
+import { GoodsReceiptTypeOrmEntity } from '../entities/goods-receipt-typeorm.entity';
+import { GoodsReceiptLineTypeOrmEntity } from '../entities/goods-receipt-line-typeorm.entity';
 
 @Injectable()
 export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort {
-  private readonly receiptRepo: Repository<GoodsReceiptTypeOrmEntity>
-  private readonly lineRepo: Repository<GoodsReceiptLineTypeOrmEntity>
+  private readonly receiptRepo: Repository<GoodsReceiptTypeOrmEntity>;
+  private readonly lineRepo: Repository<GoodsReceiptLineTypeOrmEntity>;
 
   constructor(private readonly dataSource: DataSource) {
-    this.receiptRepo = dataSource.getRepository(GoodsReceiptTypeOrmEntity)
-    this.lineRepo = dataSource.getRepository(GoodsReceiptLineTypeOrmEntity)
+    this.receiptRepo = dataSource.getRepository(GoodsReceiptTypeOrmEntity);
+    this.lineRepo = dataSource.getRepository(GoodsReceiptLineTypeOrmEntity);
   }
 
   async create(receipt: Partial<GoodsReceipt>): Promise<GoodsReceipt> {
@@ -27,10 +27,10 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
       notes: receipt.notes,
       status: receipt.status,
       createdBy: receipt.createdBy,
-    })
+    });
 
-    const saved = await this.receiptRepo.save(entity)
-    return this.mapToGoodsReceipt(saved)
+    const saved = await this.receiptRepo.save(entity);
+    return this.mapToGoodsReceipt(saved);
   }
 
   async createLine(line: Partial<GoodsReceiptLine>): Promise<GoodsReceiptLine> {
@@ -43,49 +43,49 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
       discrepancyQty: line.discrepancyQty,
       uom: line.uom,
       remarks: line.remarks,
-    })
+    });
 
-    const saved = await this.lineRepo.save(entity)
-    return this.mapToGoodsReceiptLine(saved)
+    const saved = await this.lineRepo.save(entity);
+    return this.mapToGoodsReceiptLine(saved);
   }
 
   async findAll(filters?: {
-    warehouseId?: string
-    page?: number
-    limit?: number
+    warehouseId?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: GoodsReceipt[]; total: number }> {
-    const qb = this.receiptRepo.createQueryBuilder('gr')
+    const qb = this.receiptRepo.createQueryBuilder('gr');
 
     if (filters?.warehouseId) {
       qb.andWhere('gr.warehouseId = :warehouseId', {
         warehouseId: filters.warehouseId,
-      })
+      });
     }
 
-    const page = filters?.page ?? 1
-    const limit = filters?.limit ?? 20
-    qb.orderBy('gr.createdAt', 'DESC')
-    qb.skip((page - 1) * limit).take(limit)
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
+    qb.orderBy('gr.createdAt', 'DESC');
+    qb.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await qb.getManyAndCount()
-    return { data: data.map(this.mapToGoodsReceipt), total }
+    const [data, total] = await qb.getManyAndCount();
+    return { data: data.map(this.mapToGoodsReceipt), total };
   }
 
   async findById(
     id: string,
   ): Promise<{ receipt: GoodsReceipt; lines: GoodsReceiptLine[] } | null> {
-    const receipt = await this.receiptRepo.findOne({ where: { id } })
-    if (!receipt) return null
+    const receipt = await this.receiptRepo.findOne({ where: { id } });
+    if (!receipt) return null;
 
     const lines = await this.lineRepo.find({
       where: { goodsReceiptId: id },
       order: { createdAt: 'ASC' },
-    })
+    });
 
     return {
       receipt: this.mapToGoodsReceipt(receipt),
       lines: lines.map(this.mapToGoodsReceiptLine),
-    }
+    };
   }
 
   async getLastGrnNumber(prefix: string): Promise<string | null> {
@@ -93,9 +93,9 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
       .createQueryBuilder('gr')
       .where('gr.grnNumber LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('gr.grnNumber', 'DESC')
-      .getOne()
+      .getOne();
 
-    return last?.grnNumber ?? null
+    return last?.grnNumber ?? null;
   }
 
   private mapToGoodsReceipt(entity: GoodsReceiptTypeOrmEntity): GoodsReceipt {
@@ -111,7 +111,7 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
       status: entity.status,
       createdBy: entity.createdBy,
       createdAt: entity.createdAt,
-    })
+    });
   }
 
   private mapToGoodsReceiptLine(
@@ -127,6 +127,6 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
       discrepancyQty: Number(entity.discrepancyQty),
       uom: entity.uom,
       remarks: entity.remarks,
-    })
+    });
   }
 }

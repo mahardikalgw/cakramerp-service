@@ -37,8 +37,18 @@ describe('SettingsService', () => {
   describe('getSettingsByCategory', () => {
     it('should return settings as key-value record', async () => {
       const settings = [
-        new Settings({ id: '1', key: 'site_name', value: 'My App', category: 'general' }),
-        new Settings({ id: '2', key: 'site_url', value: 'https://example.com', category: 'general' }),
+        new Settings({
+          id: '1',
+          key: 'site_name',
+          value: 'My App',
+          category: 'general',
+        }),
+        new Settings({
+          id: '2',
+          key: 'site_url',
+          value: 'https://example.com',
+          category: 'general',
+        }),
       ];
       mockRepo.findByCategory.mockResolvedValue(settings);
 
@@ -62,7 +72,12 @@ describe('SettingsService', () => {
 
   describe('getSettingByKey', () => {
     it('should return setting value by key', async () => {
-      const setting = new Settings({ id: '1', key: 'site_name', value: 'My App', category: 'general' });
+      const setting = new Settings({
+        id: '1',
+        key: 'site_name',
+        value: 'My App',
+        category: 'general',
+      });
       mockRepo.findByKey.mockResolvedValue(setting);
 
       const result = await service.getSettingByKey('site_name');
@@ -82,7 +97,12 @@ describe('SettingsService', () => {
 
   describe('updateSettings', () => {
     it('should update existing settings', async () => {
-      const existing = new Settings({ id: '1', key: 'site_name', value: 'Old Name', category: 'general' });
+      const existing = new Settings({
+        id: '1',
+        key: 'site_name',
+        value: 'Old Name',
+        category: 'general',
+      });
       const command = new UpdateSettingsCommand({
         site_name: { value: 'New Name', category: 'general' },
       });
@@ -115,7 +135,12 @@ describe('SettingsService', () => {
     });
 
     it('should handle multiple settings at once', async () => {
-      const existing1 = new Settings({ id: '1', key: 'key1', value: 'old1', category: 'cat1' });
+      const existing1 = new Settings({
+        id: '1',
+        key: 'key1',
+        value: 'old1',
+        category: 'cat1',
+      });
       const command = new UpdateSettingsCommand({
         key1: { value: 'new1', category: 'cat1' },
         key2: { value: 'val2', category: 'cat2' },

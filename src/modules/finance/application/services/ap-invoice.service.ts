@@ -1,58 +1,58 @@
-import { APInvoiceServicePort } from '../ports/ap-invoice-service.port'
-import { Injectable, Inject, BadRequestException } from '@nestjs/common'
-import { Decimal } from 'decimal.js'
+import { APInvoiceServicePort } from '../ports/ap-invoice-service.port';
+import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { Decimal } from 'decimal.js';
 import {
   AP_INVOICE_REPOSITORY,
   JOURNAL_ENTRY_REPOSITORY,
   JOURNAL_ENTRY_LINE_REPOSITORY,
   ACCOUNT_REPOSITORY,
-} from '../../domain/repositories/finance-repository.port'
+} from '../../domain/repositories/finance-repository.port';
 import type {
   APInvoiceRepositoryPort,
   JournalEntryRepositoryPort,
   JournalEntryLineRepositoryPort,
   AccountRepositoryPort,
-} from '../../domain/repositories/finance-repository.port'
-import { APInvoiceTypeOrmEntity } from '../../infrastructure/entities/ap-invoice-typeorm.entity'
-import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-posting-queue-typeorm.entity'
-import { JournalEntry } from '../../domain/entities/journal-entry.entity'
-import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity'
-import { Repository, DataSource } from 'typeorm'
-import { CreateAPInvoiceCommand } from '../commands/create-ap-invoice.command'
-import { SchedulePaymentCommand } from '../commands/schedule-payment.command'
-import { BulkPaymentCommand } from '../commands/bulk-payment.command'
+} from '../../domain/repositories/finance-repository.port';
+import { APInvoiceTypeOrmEntity } from '../../infrastructure/entities/ap-invoice-typeorm.entity';
+import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-posting-queue-typeorm.entity';
+import { JournalEntry } from '../../domain/entities/journal-entry.entity';
+import { JournalEntryLine } from '../../domain/entities/journal-entry-line.entity';
+import { Repository, DataSource } from 'typeorm';
+import { CreateAPInvoiceCommand } from '../commands/create-ap-invoice.command';
+import { SchedulePaymentCommand } from '../commands/schedule-payment.command';
+import { BulkPaymentCommand } from '../commands/bulk-payment.command';
 
 export interface APInvoiceResponse {
-  id: string
-  invoiceNumber: string
-  vendorId: string
-  vendorName: string
-  supplierId?: string
-  supplierInvoiceNumber?: string
-  poReferenceId?: string
-  grnReferenceId?: string
-  amount: number
-  paidAmount: number
-  balance: number
-  additionalDiscount: number
-  invoiceDate: string
-  dueDate: string
-  status: string
-  threeWayMatchStatus: string
-  scheduledPaymentDate?: string
-  bankAccountId?: string
-  paymentTermDays?: number
-  paymentTermLabel?: string
-  glPostingQueueId: string | null
-  glPostingQueueStatus: string | null
-  journalEntryId: string | null
-  journalEntryNumber: string | null
-  journalEntryStatus: string | null
+  id: string;
+  invoiceNumber: string;
+  vendorId: string;
+  vendorName: string;
+  supplierId?: string;
+  supplierInvoiceNumber?: string;
+  poReferenceId?: string;
+  grnReferenceId?: string;
+  amount: number;
+  paidAmount: number;
+  balance: number;
+  additionalDiscount: number;
+  invoiceDate: string;
+  dueDate: string;
+  status: string;
+  threeWayMatchStatus: string;
+  scheduledPaymentDate?: string;
+  bankAccountId?: string;
+  paymentTermDays?: number;
+  paymentTermLabel?: string;
+  glPostingQueueId: string | null;
+  glPostingQueueStatus: string | null;
+  journalEntryId: string | null;
+  journalEntryNumber: string | null;
+  journalEntryStatus: string | null;
 }
 
 @Injectable()
 export class APInvoiceService implements APInvoiceServicePort {
-  private readonly queueRepo: Repository<GlPostingQueueTypeOrmEntity>
+  private readonly queueRepo: Repository<GlPostingQueueTypeOrmEntity>;
 
   constructor(
     @Inject(AP_INVOICE_REPOSITORY)
@@ -65,39 +65,41 @@ export class APInvoiceService implements APInvoiceServicePort {
     private readonly accountRepo: AccountRepositoryPort,
     private readonly dataSource: DataSource,
   ) {
-    this.queueRepo = dataSource.getRepository(GlPostingQueueTypeOrmEntity)
+    this.queueRepo = dataSource.getRepository(GlPostingQueueTypeOrmEntity);
   }
 
   async findAll(filters?: {
-    vendorId?: string
-    status?: string
-    dueDateFrom?: string
-    dueDateTo?: string
-    page?: number
-    limit?: number
+    vendorId?: string;
+    status?: string;
+    dueDateFrom?: string;
+    dueDateTo?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: APInvoiceResponse[]; total: number }> {
-    const { data: entities, total } = await this.repo.findAll(filters)
-    const data = await Promise.all(entities.map((e: any) => this.toResponse(e)))
-    return { data, total }
+    const { data: entities, total } = await this.repo.findAll(filters);
+    const data = await Promise.all(
+      entities.map((e: any) => this.toResponse(e)),
+    );
+    return { data, total };
   }
 
   async findById(id: string): Promise<APInvoiceResponse | null> {
-    const entity = await this.repo.findById(id)
-    return entity ? await this.toResponse(entity) : null
+    const entity = await this.repo.findById(id);
+    return entity ? await this.toResponse(entity) : null;
   }
 
   async create(command: CreateAPInvoiceCommand): Promise<APInvoiceResponse> {
-    const invoiceNumber = await this.repo.getNextInvoiceNumber()
+    const invoiceNumber = await this.repo.getNextInvoiceNumber();
 
-    let threeWayMatchStatus = 'pending'
+    let threeWayMatchStatus = 'pending';
     if (command.poReferenceId && command.grnReferenceId) {
-      threeWayMatchStatus = 'matched'
+      threeWayMatchStatus = 'matched';
     } else if (command.poReferenceId || command.grnReferenceId) {
-      threeWayMatchStatus = 'partial'
+      threeWayMatchStatus = 'partial';
     }
 
-    const additionalDiscount = command.additionalDiscount ?? 0
-    const finalAmount = command.amount - additionalDiscount
+    const additionalDiscount = command.additionalDiscount ?? 0;
+    const finalAmount = command.amount - additionalDiscount;
 
     const entity = await this.repo.save(
       this.repo.create({
@@ -118,66 +120,77 @@ export class APInvoiceService implements APInvoiceServicePort {
         paymentTermLabel: command.paymentTermLabel,
         additionalDiscount,
       }),
-    )
+    );
 
-    await this.enqueueGlPosting(entity, 'invoice_recorded')
+    await this.enqueueGlPosting(entity, 'invoice_recorded');
 
-    return await this.toResponse(entity)
+    return await this.toResponse(entity);
   }
 
-  async schedulePayment(id: string, command: SchedulePaymentCommand): Promise<APInvoiceResponse> {
-    const entity = await this.repo.findById(id)
-    if (!entity) throw new BadRequestException('AP Invoice not found')
+  async schedulePayment(
+    id: string,
+    command: SchedulePaymentCommand,
+  ): Promise<APInvoiceResponse> {
+    const entity = await this.repo.findById(id);
+    if (!entity) throw new BadRequestException('AP Invoice not found');
 
-    entity.scheduledPaymentDate = new Date(command.dueDate)
-    entity.bankAccountId = command.bankAccountId
-    const saved = await this.repo.save(entity)
-    return await this.toResponse(saved)
+    entity.scheduledPaymentDate = new Date(command.dueDate);
+    entity.bankAccountId = command.bankAccountId;
+    const saved = await this.repo.save(entity);
+    return await this.toResponse(saved);
   }
 
-  async bulkPayment(command: BulkPaymentCommand): Promise<{ paid: number; totalAmount: number }> {
-    const invoices = await this.repo.findByIds(command.invoiceIds)
+  async bulkPayment(
+    command: BulkPaymentCommand,
+  ): Promise<{ paid: number; totalAmount: number }> {
+    const invoices = await this.repo.findByIds(command.invoiceIds);
 
     if (invoices.length === 0) {
-      throw new BadRequestException('No invoices found')
+      throw new BadRequestException('No invoices found');
     }
 
-    const vendorIds = new Set(invoices.map((i: APInvoiceTypeOrmEntity) => i.vendorId))
+    const vendorIds = new Set(
+      invoices.map((i: APInvoiceTypeOrmEntity) => i.vendorId),
+    );
     if (vendorIds.size > 1) {
-      throw new BadRequestException('Bulk payment only allowed for invoices from the same vendor')
+      throw new BadRequestException(
+        'Bulk payment only allowed for invoices from the same vendor',
+      );
     }
 
-    let totalAmount = 0
+    let totalAmount = 0;
 
     for (const inv of invoices) {
-      const balance = Number(inv.amount) - Number(inv.paidAmount)
-      inv.paidAmount = Number(inv.amount)
-      inv.status = 'paid'
-      totalAmount += balance
-      await this.repo.save(inv)
+      const balance = Number(inv.amount) - Number(inv.paidAmount);
+      inv.paidAmount = Number(inv.amount);
+      inv.status = 'paid';
+      totalAmount += balance;
+      await this.repo.save(inv);
 
-      await this.enqueueGlPosting(inv, 'payment_made')
+      await this.enqueueGlPosting(inv, 'payment_made');
     }
 
-    const entryNumber = await this.journalEntryRepo.getNextEntryNumber()
-    const invoiceNumbers = invoices.map((i: APInvoiceTypeOrmEntity) => i.invoiceNumber).join(', ')
+    const entryNumber = await this.journalEntryRepo.getNextEntryNumber();
+    const invoiceNumbers = invoices
+      .map((i: APInvoiceTypeOrmEntity) => i.invoiceNumber)
+      .join(', ');
     const entry = new JournalEntry({
       entryNumber,
       date: new Date(command.paymentDate),
       description: `Bulk payment to ${invoices[0].vendorName} (${invoices.length} invoices)`,
       reference: command.reference ?? `Supplier Invoice ${invoiceNumbers}`,
       status: 'approved',
-      createdBy: null as any,
-      approvedBy: null as any,
+      createdBy: null,
+      approvedBy: null,
       approvedAt: new Date(),
       sourceType: 'supplier_invoice',
       sourceId: invoices[0].id,
-    })
+    });
 
-    const savedEntry = await this.journalEntryRepo.save(entry)
+    const savedEntry = await this.journalEntryRepo.save(entry);
 
-    const apAccount = await this.accountRepo.findByCode('2100')
-    const apAccountId = apAccount?.id ?? command.bankAccountId
+    const apAccount = await this.accountRepo.findByCode('2100');
+    const apAccountId = apAccount?.id ?? command.bankAccountId;
 
     await this.journalLineRepo.save(
       new JournalEntryLine({
@@ -187,7 +200,7 @@ export class APInvoiceService implements APInvoiceServicePort {
         credit: new Decimal(0),
         description: `AP cleared for ${invoices[0].vendorName}`,
       }),
-    )
+    );
 
     await this.journalLineRepo.save(
       new JournalEntryLine({
@@ -197,41 +210,69 @@ export class APInvoiceService implements APInvoiceServicePort {
         credit: new Decimal(totalAmount),
         description: `Payment to ${invoices[0].vendorName}`,
       }),
-    )
+    );
 
     for (const inv of invoices) {
       await this.dataSource.query(
         `UPDATE "ap_invoices" SET "journal_entry_id" = $1 WHERE "id" = $2`,
         [savedEntry.id, inv.id],
-      )
+      );
     }
 
-    return { paid: invoices.length, totalAmount }
+    return { paid: invoices.length, totalAmount };
   }
 
   async enqueueGlPosting(
     inv: APInvoiceTypeOrmEntity,
     eventType: 'invoice_recorded' | 'payment_made',
   ): Promise<void> {
-    const amount = Number(inv.amount)
+    const amount = Number(inv.amount);
 
-    let suggestedLines: Record<string, unknown>[]
+    let suggestedLines: Record<string, unknown>[];
     if (eventType === 'payment_made') {
       suggestedLines = [
-        { accountId: '', accountCode: '2100', accountName: 'Accounts Payable', debit: amount, credit: 0, description: `Payment to ${inv.vendorName}` },
-        { accountId: '', accountCode: '1100', accountName: 'Bank / Cash', debit: 0, credit: amount, description: `Pay ${inv.invoiceNumber}` },
-      ]
+        {
+          accountId: '',
+          accountCode: '2100',
+          accountName: 'Accounts Payable',
+          debit: amount,
+          credit: 0,
+          description: `Payment to ${inv.vendorName}`,
+        },
+        {
+          accountId: '',
+          accountCode: '1100',
+          accountName: 'Bank / Cash',
+          debit: 0,
+          credit: amount,
+          description: `Pay ${inv.invoiceNumber}`,
+        },
+      ];
     } else {
       suggestedLines = [
-        { accountId: '', accountCode: '5100', accountName: 'Expense / Inventory', debit: amount, credit: 0, description: `Purchase - ${inv.invoiceNumber}` },
-        { accountId: '', accountCode: '2100', accountName: 'Accounts Payable', debit: 0, credit: amount, description: `Liability - ${inv.invoiceNumber}` },
-      ]
+        {
+          accountId: '',
+          accountCode: '5100',
+          accountName: 'Expense / Inventory',
+          debit: amount,
+          credit: 0,
+          description: `Purchase - ${inv.invoiceNumber}`,
+        },
+        {
+          accountId: '',
+          accountCode: '2100',
+          accountName: 'Accounts Payable',
+          debit: 0,
+          credit: amount,
+          description: `Liability - ${inv.invoiceNumber}`,
+        },
+      ];
     }
 
     const existing = await this.queueRepo.findOne({
       where: { sourceType: 'supplier_invoice', sourceId: inv.id, eventType },
-    })
-    if (existing) return
+    });
+    if (existing) return;
 
     await this.queueRepo.save(
       this.queueRepo.create({
@@ -246,24 +287,31 @@ export class APInvoiceService implements APInvoiceServicePort {
         supplierId: inv.supplierId || inv.vendorId,
         invoiceId: inv.id,
       }),
-    )
+    );
   }
 
-  private async toResponse(entity: APInvoiceTypeOrmEntity): Promise<APInvoiceResponse> {
-    let glPostingQueueId: string | null = null
-    let glPostingQueueStatus: string | null = null
-    let journalEntryId: string | null = (entity as any).journalEntryId ?? null
-    let journalEntryNumber: string | null = null
-    let journalEntryStatus: string | null = null
+  private async toResponse(
+    entity: APInvoiceTypeOrmEntity,
+  ): Promise<APInvoiceResponse> {
+    let glPostingQueueId: string | null = null;
+    let glPostingQueueStatus: string | null = null;
+    const journalEntryId: string | null =
+      (entity as any).journalEntryId ?? null;
+    let journalEntryNumber: string | null = null;
+    let journalEntryStatus: string | null = null;
 
     try {
       const pq = await this.queueRepo.findOne({
-        where: { sourceType: 'supplier_invoice', sourceId: entity.id, status: 'pending' },
+        where: {
+          sourceType: 'supplier_invoice',
+          sourceId: entity.id,
+          status: 'pending',
+        },
         order: { createdAt: 'DESC' },
-      })
+      });
       if (pq) {
-        glPostingQueueId = pq.id
-        glPostingQueueStatus = pq.status
+        glPostingQueueId = pq.id;
+        glPostingQueueStatus = pq.status;
       }
     } catch {}
 
@@ -272,10 +320,10 @@ export class APInvoiceService implements APInvoiceServicePort {
         const rows = await this.dataSource.query(
           `SELECT entry_number, status FROM journal_entries WHERE id = $1 LIMIT 1`,
           [journalEntryId],
-        )
+        );
         if (rows.length > 0) {
-          journalEntryNumber = rows[0].entry_number
-          journalEntryStatus = rows[0].status
+          journalEntryNumber = rows[0].entry_number;
+          journalEntryStatus = rows[0].status;
         }
       } catch {}
     }
@@ -293,11 +341,13 @@ export class APInvoiceService implements APInvoiceServicePort {
       paidAmount: Number(entity.paidAmount),
       balance: Number(entity.amount) - Number(entity.paidAmount),
       additionalDiscount: Number(entity.additionalDiscount ?? 0),
-      invoiceDate: entity.invoiceDate?.toISOString?.() ?? String(entity.invoiceDate),
+      invoiceDate:
+        entity.invoiceDate?.toISOString?.() ?? String(entity.invoiceDate),
       dueDate: entity.dueDate?.toISOString?.() ?? String(entity.dueDate),
       status: entity.status,
       threeWayMatchStatus: entity.threeWayMatchStatus,
-      scheduledPaymentDate: entity.scheduledPaymentDate?.toISOString?.() ?? undefined,
+      scheduledPaymentDate:
+        entity.scheduledPaymentDate?.toISOString?.() ?? undefined,
       bankAccountId: entity.bankAccountId ?? undefined,
       paymentTermDays: entity.paymentTermDays ?? undefined,
       paymentTermLabel: entity.paymentTermLabel ?? undefined,
@@ -306,6 +356,6 @@ export class APInvoiceService implements APInvoiceServicePort {
       journalEntryId,
       journalEntryNumber,
       journalEntryStatus,
-    }
+    };
   }
 }

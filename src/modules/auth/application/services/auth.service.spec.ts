@@ -54,7 +54,12 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register a new user and return tokens', async () => {
-      const command = new RegisterCommand('test@example.com', 'Pass123!', 'John', 'Doe');
+      const command = new RegisterCommand(
+        'test@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(false);
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-password');
       const savedUser = new User({
@@ -65,13 +70,17 @@ describe('AuthService', () => {
         lastName: command.lastName,
       });
       mockUserRepository.save.mockResolvedValue(savedUser);
-      mockJwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
+      mockJwtService.sign
+        .mockReturnValueOnce('access-token')
+        .mockReturnValueOnce('refresh-token');
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-refresh-token');
       mockAuthRepository.save.mockResolvedValue({});
 
       const result = await service.register(command);
 
-      expect(mockUserRepository.existsByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(mockUserRepository.existsByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
       expect(mockUserRepository.save).toHaveBeenCalled();
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
@@ -79,10 +88,17 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException if email already exists', async () => {
-      const command = new RegisterCommand('existing@example.com', 'Pass123!', 'John', 'Doe');
+      const command = new RegisterCommand(
+        'existing@example.com',
+        'Pass123!',
+        'John',
+        'Doe',
+      );
       mockUserRepository.existsByEmail.mockResolvedValue(true);
 
-      await expect(service.register(command)).rejects.toThrow(ConflictException);
+      await expect(service.register(command)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -99,14 +115,21 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(user);
       (bcryptjs.compare as jest.Mock).mockResolvedValue(true);
       mockUserRepository.findById.mockResolvedValue(user);
-      mockJwtService.sign.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
+      mockJwtService.sign
+        .mockReturnValueOnce('access-token')
+        .mockReturnValueOnce('refresh-token');
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-refresh-token');
       mockAuthRepository.save.mockResolvedValue({});
 
       const result = await service.login(command);
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
-      expect(bcryptjs.compare).toHaveBeenCalledWith('Pass123!', 'hashed-password');
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(bcryptjs.compare).toHaveBeenCalledWith(
+        'Pass123!',
+        'hashed-password',
+      );
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
     });
@@ -115,7 +138,9 @@ describe('AuthService', () => {
       const command = new LoginCommand('unknown@example.com', 'Pass123!');
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(service.login(command)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(command)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
@@ -130,7 +155,9 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(user);
       (bcryptjs.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login(command)).rejects.toThrow(UnauthorizedException);
+      await expect(service.login(command)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -155,7 +182,9 @@ describe('AuthService', () => {
       });
       mockUserRepository.findById.mockResolvedValue(user);
       mockAuthRepository.delete.mockResolvedValue(true);
-      mockJwtService.sign.mockReturnValueOnce('new-access').mockReturnValueOnce('new-refresh');
+      mockJwtService.sign
+        .mockReturnValueOnce('new-access')
+        .mockReturnValueOnce('new-refresh');
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-new-refresh');
       mockAuthRepository.save.mockResolvedValue({});
 
@@ -171,7 +200,9 @@ describe('AuthService', () => {
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-token');
       mockAuthRepository.findByTokenHash.mockResolvedValue(null);
 
-      await expect(service.refresh('invalid-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('invalid-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException if refresh token is expired', async () => {
@@ -186,7 +217,9 @@ describe('AuthService', () => {
       (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-token');
       mockAuthRepository.findByTokenHash.mockResolvedValue(storedToken);
 
-      await expect(service.refresh('expired-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('expired-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException if user not found during refresh', async () => {
@@ -202,7 +235,9 @@ describe('AuthService', () => {
       mockAuthRepository.findByTokenHash.mockResolvedValue(storedToken);
       mockUserRepository.findById.mockResolvedValue(null);
 
-      await expect(service.refresh('valid-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refresh('valid-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 

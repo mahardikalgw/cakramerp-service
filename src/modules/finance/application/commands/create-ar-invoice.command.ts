@@ -5,10 +5,10 @@ export class CreateARInvoiceCommand {
     public readonly invoiceDate: string,
     public readonly dueDate: string,
     public readonly lines: {
-      description: string
-      quantity: number
-      unitPrice: number
-      taxPercent: number
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      taxPercent: number;
     }[],
     public readonly customerId?: string,
     public readonly segment?: string,

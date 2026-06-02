@@ -1,5 +1,5 @@
-export const MY_SCHEDULE_SERVICE = Symbol('MY_SCHEDULE_SERVICE')
+export const MY_SCHEDULE_SERVICE = Symbol('MY_SCHEDULE_SERVICE');
 
 export interface MyScheduleServicePort {
-  getSchedule(employeeId: string, weeks?: number): Promise<any[]>
+  getSchedule(employeeId: string, weeks?: number): Promise<{ data: any[] }>;
 }

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateWarehouseModule20250522000004 implements MigrationInterface {
-  name = 'CreateWarehouseModule20250522000004'
+  name = 'CreateWarehouseModule20250522000004';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ==================== Items ====================
@@ -18,7 +18,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Warehouses ====================
 
@@ -32,7 +32,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Stock Ledger ====================
 
@@ -51,7 +51,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Item Stock Balances (materialized) ====================
 
@@ -66,7 +66,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(item_id, warehouse_id)
       );
-    `)
+    `);
 
     // ==================== Goods Receipts ====================
 
@@ -84,7 +84,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Goods Receipt Lines ====================
 
@@ -102,7 +102,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Stock Issuances ====================
 
@@ -122,7 +122,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Stock Issuance Lines ====================
 
@@ -137,7 +137,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Stock Opname Sessions ====================
 
@@ -155,7 +155,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Stock Opname Lines ====================
 
@@ -172,7 +172,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Equipment Units ====================
 
@@ -191,7 +191,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Maintenance Schedules ====================
 
@@ -209,7 +209,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Maintenance Logs ====================
 
@@ -227,7 +227,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
 
     // ==================== Indexes ====================
 
@@ -253,7 +253,7 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_equipment ON maintenance_schedules(equipment_id);
       CREATE INDEX IF NOT EXISTS idx_maintenance_schedules_next_due ON maintenance_schedules(next_due_date);
       CREATE INDEX IF NOT EXISTS idx_maintenance_logs_equipment ON maintenance_logs(equipment_id);
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -293,6 +293,6 @@ export class CreateWarehouseModule20250522000004 implements MigrationInterface {
       DROP TABLE IF EXISTS stock_ledger;
       DROP TABLE IF EXISTS warehouses;
       DROP TABLE IF EXISTS items;
-    `)
+    `);
   }
 }

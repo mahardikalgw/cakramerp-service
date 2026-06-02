@@ -1,9 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MigrateToEntityLevelPermissions20250526000001
-  implements MigrationInterface
-{
-  name = 'MigrateToEntityLevelPermissions20250526000001'
+export class MigrateToEntityLevelPermissions20250526000001 implements MigrationInterface {
+  name = 'MigrateToEntityLevelPermissions20250526000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ─── Step 1: Insert all new entity-level permissions ───────────────
@@ -66,7 +64,7 @@ export class MigrateToEntityLevelPermissions20250526000001
         -- Admin: Backups create (separate from read)
         (gen_random_uuid(), 'backups:create', 'backups', 'create', now(), now())
       ON CONFLICT (name) DO NOTHING
-    `)
+    `);
 
     // ─── Step 2: Assign entity-level permissions to roles ──────────────
 
@@ -96,7 +94,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'backups:create'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // Finance Manager: all finance entity permissions + approve
     await queryRunner.query(`
@@ -114,7 +112,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'financial-statements:read'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // Accountant: finance entity read/create/update (no approve, no delete)
     await queryRunner.query(`
@@ -132,7 +130,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'financial-statements:read'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // HR Manager: THR/BPJS permissions
     await queryRunner.query(`
@@ -146,7 +144,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'bpjs-report:read'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // Warehouse Manager: all warehouse entity permissions
     await queryRunner.query(`
@@ -163,7 +161,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'stock-opname:read', 'stock-opname:create', 'stock-opname:update', 'stock-opname:approve'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // Site Manager: read-only for warehouse and HR entities
     await queryRunner.query(`
@@ -177,7 +175,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'thr:read', 'bpjs-report:read'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // HR Staff: THR/BPJS read
     await queryRunner.query(`
@@ -190,7 +188,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'thr:read', 'bpjs-report:read'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
 
     // ─── Step 3: Remove old module-level permissions ───────────────────
     // Remove role_permissions referencing old module-level permissions
@@ -210,7 +208,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'users:write'
         )
       )
-    `)
+    `);
 
     // Delete old module-level permissions
     await queryRunner.query(`
@@ -227,7 +225,7 @@ export class MigrateToEntityLevelPermissions20250526000001
         'roles:write',
         'users:write'
       )
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -253,7 +251,7 @@ export class MigrateToEntityLevelPermissions20250526000001
           'backups:create'
         )
       )
-    `)
+    `);
 
     // Delete new entity-level permissions
     await queryRunner.query(`
@@ -275,7 +273,7 @@ export class MigrateToEntityLevelPermissions20250526000001
         'settings:update',
         'backups:create'
       )
-    `)
+    `);
 
     // Re-insert old module-level permissions (would need full re-seed to restore role mappings)
     await queryRunner.query(`
@@ -313,6 +311,6 @@ export class MigrateToEntityLevelPermissions20250526000001
         (gen_random_uuid(), 'roles:write', 'roles', 'write', now(), now()),
         (gen_random_uuid(), 'users:write', 'users', 'write', now(), now())
       ON CONFLICT (name) DO NOTHING
-    `)
+    `);
   }
 }

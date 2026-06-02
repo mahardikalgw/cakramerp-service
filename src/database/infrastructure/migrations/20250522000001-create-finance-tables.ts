@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateFinanceTables20250522000001 implements MigrationInterface {
-  name = 'CreateFinanceTables20250522000001'
+  name = 'CreateFinanceTables20250522000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -104,7 +104,7 @@ export class CreateFinanceTables20250522000001 implements MigrationInterface {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -117,6 +117,6 @@ export class CreateFinanceTables20250522000001 implements MigrationInterface {
       DROP TABLE IF EXISTS journal_entry_lines;
       DROP TABLE IF EXISTS journal_entries;
       DROP TABLE IF EXISTS accounts;
-    `)
+    `);
   }
 }

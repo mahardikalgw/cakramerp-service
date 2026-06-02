@@ -1,35 +1,35 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('tax_invoices')
 export class TaxInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  taxInvoiceNumber: string
+  taxInvoiceNumber: string;
 
   @Column({ type: 'uuid' })
-  arInvoiceId: string
+  arInvoiceId: string;
 
   @Column({ type: 'date' })
-  transactionDate: Date
+  transactionDate: Date;
 
   @Column({ type: 'varchar', length: 20 })
-  clientNpwp: string
+  clientNpwp: string;
 
   @Column({ type: 'varchar', length: 255 })
-  clientName: string
+  clientName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  dpp: number
+  dpp: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  ppnAmount: number
+  ppnAmount: number;
 
   @Column({ type: 'varchar', length: 50, default: 'created' })
-  status: string
+  status: string;
 
   @Column({ type: 'integer' })
-  month: number
+  month: number;
 
   @Column({ type: 'integer' })
-  year: number
+  year: number;
 }

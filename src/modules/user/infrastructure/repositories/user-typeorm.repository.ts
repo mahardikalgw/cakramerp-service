@@ -22,8 +22,10 @@ export class UserTypeOrmRepository
 
   toDomain(entity: UserTypeOrmEntity): User {
     const roles = entity.roles?.map((r) => r.name) ?? [];
-    const permissions = entity.roles?.flatMap((r) => r.permissions?.map((p) => p.name) ?? []) ?? [];
-    
+    const permissions =
+      entity.roles?.flatMap((r) => r.permissions?.map((p) => p.name) ?? []) ??
+      [];
+
     return new User({
       id: entity.id,
       email: entity.email,

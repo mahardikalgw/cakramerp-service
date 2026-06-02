@@ -70,11 +70,17 @@ describe('SubsidiaryLedgerService', () => {
       qb.getManyAndCount.mockResolvedValue([mockData, 1]);
       arRepoMock.createQueryBuilder.mockReturnValue(qb);
 
-      const result = await service.getArLedger({ customerId: 'c1', page: 1, limit: 10 });
+      const result = await service.getArLedger({
+        customerId: 'c1',
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.data).toEqual(mockData);
       expect(result.total).toBe(1);
-      expect(qb.andWhere).toHaveBeenCalledWith('ar.customerId = :customerId', { customerId: 'c1' });
+      expect(qb.andWhere).toHaveBeenCalledWith('ar.customerId = :customerId', {
+        customerId: 'c1',
+      });
     });
 
     it('should apply date filters', async () => {
@@ -82,10 +88,17 @@ describe('SubsidiaryLedgerService', () => {
       qb.getManyAndCount.mockResolvedValue([[], 0]);
       arRepoMock.createQueryBuilder.mockReturnValue(qb);
 
-      await service.getArLedger({ startDate: '2024-01-01', endDate: '2024-12-31' });
+      await service.getArLedger({
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('ar.date >= :startDate', { startDate: '2024-01-01' });
-      expect(qb.andWhere).toHaveBeenCalledWith('ar.date <= :endDate', { endDate: '2024-12-31' });
+      expect(qb.andWhere).toHaveBeenCalledWith('ar.date >= :startDate', {
+        startDate: '2024-01-01',
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith('ar.date <= :endDate', {
+        endDate: '2024-12-31',
+      });
     });
 
     it('should use default pagination', async () => {
@@ -107,11 +120,17 @@ describe('SubsidiaryLedgerService', () => {
       qb.getManyAndCount.mockResolvedValue([mockData, 1]);
       apRepoMock.createQueryBuilder.mockReturnValue(qb);
 
-      const result = await service.getApLedger({ supplierId: 's1', page: 1, limit: 10 });
+      const result = await service.getApLedger({
+        supplierId: 's1',
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.data).toEqual(mockData);
       expect(result.total).toBe(1);
-      expect(qb.andWhere).toHaveBeenCalledWith('ap.supplierId = :supplierId', { supplierId: 's1' });
+      expect(qb.andWhere).toHaveBeenCalledWith('ap.supplierId = :supplierId', {
+        supplierId: 's1',
+      });
     });
 
     it('should apply invoice filter', async () => {
@@ -121,41 +140,63 @@ describe('SubsidiaryLedgerService', () => {
 
       await service.getApLedger({ invoiceId: 'inv1' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('ap.invoiceId = :invoiceId', { invoiceId: 'inv1' });
+      expect(qb.andWhere).toHaveBeenCalledWith('ap.invoiceId = :invoiceId', {
+        invoiceId: 'inv1',
+      });
     });
   });
 
   describe('getArCustomerSummary', () => {
     it('should return customer summary', async () => {
       const summary = [
-        { customerId: 'c1', customerName: 'Customer A', totalDebit: 500, totalCredit: 200, outstandingBalance: 300, transactionCount: 3 },
+        {
+          customerId: 'c1',
+          customerName: 'Customer A',
+          totalDebit: 500,
+          totalCredit: 200,
+          outstandingBalance: 300,
+          transactionCount: 3,
+        },
       ];
       mockDataSource.query.mockResolvedValue(summary);
 
       const result = await service.getArCustomerSummary();
 
       expect(result).toEqual(summary);
-      expect(mockDataSource.query).toHaveBeenCalledWith(expect.stringContaining('ar_subsidiary_ledger'));
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining('ar_subsidiary_ledger'),
+      );
     });
   });
 
   describe('getApSupplierSummary', () => {
     it('should return supplier summary', async () => {
       const summary = [
-        { supplierId: 's1', supplierName: 'Supplier A', totalCredit: 400, totalDebit: 100, outstandingBalance: 300, transactionCount: 2 },
+        {
+          supplierId: 's1',
+          supplierName: 'Supplier A',
+          totalCredit: 400,
+          totalDebit: 100,
+          outstandingBalance: 300,
+          transactionCount: 2,
+        },
       ];
       mockDataSource.query.mockResolvedValue(summary);
 
       const result = await service.getApSupplierSummary();
 
       expect(result).toEqual(summary);
-      expect(mockDataSource.query).toHaveBeenCalledWith(expect.stringContaining('ap_subsidiary_ledger'));
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        expect.stringContaining('ap_subsidiary_ledger'),
+      );
     });
   });
 
   describe('getArInvoiceBalance', () => {
     it('should return invoice balance', async () => {
-      mockDataSource.query.mockResolvedValue([{ debit: 1000, credit: 400, balance: 600 }]);
+      mockDataSource.query.mockResolvedValue([
+        { debit: 1000, credit: 400, balance: 600 },
+      ]);
 
       const result = await service.getArInvoiceBalance('inv1');
 
@@ -173,7 +214,9 @@ describe('SubsidiaryLedgerService', () => {
 
   describe('getApInvoiceBalance', () => {
     it('should return invoice balance', async () => {
-      mockDataSource.query.mockResolvedValue([{ debit: 100, credit: 800, balance: 700 }]);
+      mockDataSource.query.mockResolvedValue([
+        { debit: 100, credit: 800, balance: 700 },
+      ]);
 
       const result = await service.getApInvoiceBalance('inv1');
 
@@ -211,13 +254,15 @@ describe('SubsidiaryLedgerService', () => {
       });
 
       expect(result).toEqual(savedEntry);
-      expect(arRepoMock.create).toHaveBeenCalledWith(expect.objectContaining({
-        customerId: 'c1',
-        customerName: 'Customer A',
-        debit: 200,
-        credit: 0,
-        balance: 700,
-      }));
+      expect(arRepoMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customerId: 'c1',
+          customerName: 'Customer A',
+          debit: 200,
+          credit: 0,
+          balance: 700,
+        }),
+      );
     });
 
     it('should record AR entry with zero initial balance when no prior entries', async () => {
@@ -236,7 +281,9 @@ describe('SubsidiaryLedgerService', () => {
         credit: 0,
       });
 
-      expect(arRepoMock.create).toHaveBeenCalledWith(expect.objectContaining({ balance: 100 }));
+      expect(arRepoMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({ balance: 100 }),
+      );
     });
   });
 
@@ -261,10 +308,12 @@ describe('SubsidiaryLedgerService', () => {
       });
 
       expect(result).toEqual(savedEntry);
-      expect(apRepoMock.create).toHaveBeenCalledWith(expect.objectContaining({
-        supplierId: 's1',
-        balance: 500,
-      }));
+      expect(apRepoMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 's1',
+          balance: 500,
+        }),
+      );
     });
 
     it('should record AP entry with zero initial balance', async () => {
@@ -283,9 +332,11 @@ describe('SubsidiaryLedgerService', () => {
         credit: 0,
       });
 
-      expect(apRepoMock.create).toHaveBeenCalledWith(expect.objectContaining({
-        balance: -50,
-      }));
+      expect(apRepoMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          balance: -50,
+        }),
+      );
     });
   });
 });

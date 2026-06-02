@@ -1,23 +1,23 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('ar_invoice_lines')
 export class ARInvoiceLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  invoiceId: string
+  invoiceId: string;
 
   @Column({ type: 'varchar', length: 500 })
-  description: string
+  description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 1 })
-  quantity: number
+  quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  unitPrice: number
+  unitPrice: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  taxPercent: number
+  taxPercent: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number
+  amount: number;
 }

@@ -32,7 +32,8 @@ describe('MyAttendanceService', () => {
 
   beforeEach(async () => {
     mockDataSource.getRepository.mockImplementation((entity: any) => {
-      if (entity.name === 'AttendanceRecordTypeOrmEntity') return mockAttendanceRepo;
+      if (entity.name === 'AttendanceRecordTypeOrmEntity')
+        return mockAttendanceRepo;
       if (entity.name === 'EmployeeTypeOrmEntity') return mockEmployeeRepo;
       return {};
     });
@@ -41,7 +42,10 @@ describe('MyAttendanceService', () => {
       providers: [
         MyAttendanceService,
         { provide: DataSource, useValue: mockDataSource },
-        { provide: DISCREPANCY_REPORT_REPOSITORY, useValue: mockDiscrepancyReportRepo },
+        {
+          provide: DISCREPANCY_REPORT_REPOSITORY,
+          useValue: mockDiscrepancyReportRepo,
+        },
       ],
     }).compile();
 
@@ -56,10 +60,30 @@ describe('MyAttendanceService', () => {
   describe('getMonthlyAttendance', () => {
     it('should return monthly attendance with summary', async () => {
       const records = [
-        { id: 'r1', status: 'present', overtimeHours: 0, date: new Date('2024-07-01') },
-        { id: 'r2', status: 'late', overtimeHours: 1, date: new Date('2024-07-02') },
-        { id: 'r3', status: 'absent', overtimeHours: 0, date: new Date('2024-07-03') },
-        { id: 'r4', status: 'present', overtimeHours: 2, date: new Date('2024-07-04') },
+        {
+          id: 'r1',
+          status: 'present',
+          overtimeHours: 0,
+          date: new Date('2024-07-01'),
+        },
+        {
+          id: 'r2',
+          status: 'late',
+          overtimeHours: 1,
+          date: new Date('2024-07-02'),
+        },
+        {
+          id: 'r3',
+          status: 'absent',
+          overtimeHours: 0,
+          date: new Date('2024-07-03'),
+        },
+        {
+          id: 'r4',
+          status: 'present',
+          overtimeHours: 2,
+          date: new Date('2024-07-04'),
+        },
       ];
       mockAttendanceRepo.find.mockResolvedValue(records);
 
@@ -129,7 +153,12 @@ describe('MyAttendanceService', () => {
       mockAttendanceRepo.findOne.mockResolvedValue(null);
       mockEmployeeRepo.findOne.mockResolvedValue({ workStartTime: '08:00' });
 
-      const newRecord = { id: 'r1', employeeId: 'emp-1', clockIn: new Date(), status: 'present' };
+      const newRecord = {
+        id: 'r1',
+        employeeId: 'emp-1',
+        clockIn: new Date(),
+        status: 'present',
+      };
       mockAttendanceRepo.create.mockReturnValue(newRecord);
       mockAttendanceRepo.save.mockResolvedValue(newRecord);
 
@@ -144,7 +173,10 @@ describe('MyAttendanceService', () => {
       const existingRecord = { id: 'r1', employeeId: 'emp-1', clockIn: null };
       mockAttendanceRepo.findOne.mockResolvedValue(existingRecord);
       mockEmployeeRepo.findOne.mockResolvedValue({ workStartTime: '08:00' });
-      mockAttendanceRepo.save.mockResolvedValue({ ...existingRecord, clockIn: new Date() });
+      mockAttendanceRepo.save.mockResolvedValue({
+        ...existingRecord,
+        clockIn: new Date(),
+      });
 
       await service.clockIn('emp-1');
 
@@ -152,10 +184,16 @@ describe('MyAttendanceService', () => {
     });
 
     it('should throw BadRequestException if already clocked in', async () => {
-      const existingRecord = { id: 'r1', employeeId: 'emp-1', clockIn: new Date() };
+      const existingRecord = {
+        id: 'r1',
+        employeeId: 'emp-1',
+        clockIn: new Date(),
+      };
       mockAttendanceRepo.findOne.mockResolvedValue(existingRecord);
 
-      await expect(service.clockIn('emp-1')).rejects.toThrow(BadRequestException);
+      await expect(service.clockIn('emp-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should mark as late when clocking in after work start time', async () => {
@@ -200,13 +238,17 @@ describe('MyAttendanceService', () => {
     it('should throw BadRequestException if not clocked in', async () => {
       mockAttendanceRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.clockOut('emp-1')).rejects.toThrow(BadRequestException);
+      await expect(service.clockOut('emp-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if record has no clockIn', async () => {
       mockAttendanceRepo.findOne.mockResolvedValue({ id: 'r1', clockIn: null });
 
-      await expect(service.clockOut('emp-1')).rejects.toThrow(BadRequestException);
+      await expect(service.clockOut('emp-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if already clocked out', async () => {
@@ -217,7 +259,9 @@ describe('MyAttendanceService', () => {
       };
       mockAttendanceRepo.findOne.mockResolvedValue(record);
 
-      await expect(service.clockOut('emp-1')).rejects.toThrow(BadRequestException);
+      await expect(service.clockOut('emp-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -227,7 +271,12 @@ describe('MyAttendanceService', () => {
         attendanceDate: '2024-07-01',
         description: 'Missing clock out record',
       };
-      const created = { id: 'dr-1', employeeId: 'emp-1', ...data, status: 'pending' };
+      const created = {
+        id: 'dr-1',
+        employeeId: 'emp-1',
+        ...data,
+        status: 'pending',
+      };
       mockDiscrepancyReportRepo.create.mockResolvedValue(created);
 
       const result = await service.flagDiscrepancy('emp-1', data);

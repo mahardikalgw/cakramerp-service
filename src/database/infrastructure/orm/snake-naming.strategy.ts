@@ -1,13 +1,22 @@
 import { DefaultNamingStrategy, NamingStrategyInterface } from 'typeorm';
 
-export class SnakeNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
+export class SnakeNamingStrategy
+  extends DefaultNamingStrategy
+  implements NamingStrategyInterface
+{
   tableName(targetName: string, userSpecifiedName: string | undefined): string {
     return userSpecifiedName ?? this.toSnakeCase(targetName);
   }
 
-  columnName(propertyName: string, customName: string | undefined, embeddedPrefixes: string[]): string {
+  columnName(
+    propertyName: string,
+    customName: string | undefined,
+    embeddedPrefixes: string[],
+  ): string {
     const name = customName ?? this.toSnakeCase(propertyName);
-    return embeddedPrefixes.length ? embeddedPrefixes.join('_') + '_' + name : name;
+    return embeddedPrefixes.length
+      ? embeddedPrefixes.join('_') + '_' + name
+      : name;
   }
 
   relationName(propertyName: string): string {
@@ -18,11 +27,19 @@ export class SnakeNamingStrategy extends DefaultNamingStrategy implements Naming
     return this.toSnakeCase(relationName) + '_' + referencedColumnName;
   }
 
-  joinTableName(firstTableName: string, secondTableName: string, firstPropertyName: string): string {
+  joinTableName(
+    firstTableName: string,
+    secondTableName: string,
+    firstPropertyName: string,
+  ): string {
     return `${firstTableName}_${this.toSnakeCase(firstPropertyName)}_${secondTableName}`;
   }
 
-  joinTableColumnName(tableName: string, propertyName: string, columnName?: string): string {
+  joinTableColumnName(
+    tableName: string,
+    propertyName: string,
+    columnName?: string,
+  ): string {
     return `${tableName}_${columnName ?? this.toSnakeCase(propertyName)}`;
   }
 

@@ -1,9 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
-  implements MigrationInterface
-{
-  name = 'AddCustomerSupplierAndInvoiceUpgrades20250525000002'
+export class AddCustomerSupplierAndInvoiceUpgrades20250525000002 implements MigrationInterface {
+  name = 'AddCustomerSupplierAndInvoiceUpgrades20250525000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create customers table
@@ -23,7 +21,7 @@ export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
         "status" varchar(20) NOT NULL DEFAULT 'active',
         CONSTRAINT "PK_customers" PRIMARY KEY ("id")
       )
-    `)
+    `);
 
     // Create suppliers table
     await queryRunner.query(`
@@ -44,32 +42,48 @@ export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
         "status" varchar(20) NOT NULL DEFAULT 'active',
         CONSTRAINT "PK_suppliers" PRIMARY KEY ("id")
       )
-    `)
+    `);
 
     // Add customer_id, payment_term_days, payment_term_label, additional_discount to ar_invoices
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "customer_id" uuid`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "payment_term_days" integer`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "payment_term_label" varchar(255)`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "additional_discount" decimal(18,2) DEFAULT 0`)
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "customer_id" uuid`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "payment_term_days" integer`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "payment_term_label" varchar(255)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" ADD COLUMN IF NOT EXISTS "additional_discount" decimal(18,2) DEFAULT 0`,
+    );
 
     // Add supplier_id, payment_term_days, payment_term_label, additional_discount to ap_invoices
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "supplier_id" uuid`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "payment_term_days" integer`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "payment_term_label" varchar(255)`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "additional_discount" decimal(18,2) DEFAULT 0`)
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "supplier_id" uuid`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "payment_term_days" integer`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "payment_term_label" varchar(255)`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" ADD COLUMN IF NOT EXISTS "additional_discount" decimal(18,2) DEFAULT 0`,
+    );
 
     // Add foreign key constraints
     await queryRunner.query(`
       ALTER TABLE "ar_invoices"
       ADD CONSTRAINT "FK_ar_invoices_customer"
       FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE SET NULL
-    `)
+    `);
 
     await queryRunner.query(`
       ALTER TABLE "ap_invoices"
       ADD CONSTRAINT "FK_ap_invoices_supplier"
       FOREIGN KEY ("supplier_id") REFERENCES "suppliers"("id") ON DELETE SET NULL
-    `)
+    `);
 
     // Seed customer and supplier permissions
     await queryRunner.query(`
@@ -84,7 +98,7 @@ export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
         (gen_random_uuid(), 'suppliers:update', 'suppliers', 'update', now(), now()),
         (gen_random_uuid(), 'suppliers:delete', 'suppliers', 'delete', now(), now())
       ON CONFLICT (name) DO NOTHING
-    `)
+    `);
 
     // Assign new permissions to admin role
     await queryRunner.query(`
@@ -98,25 +112,45 @@ export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
           'suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete'
         )
       ON CONFLICT DO NOTHING
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Remove FK constraints
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP CONSTRAINT IF EXISTS "FK_ar_invoices_customer"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP CONSTRAINT IF EXISTS "FK_ap_invoices_supplier"`)
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP CONSTRAINT IF EXISTS "FK_ar_invoices_customer"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP CONSTRAINT IF EXISTS "FK_ap_invoices_supplier"`,
+    );
 
     // Remove columns from ar_invoices
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "customer_id"`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "payment_term_days"`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "payment_term_label"`)
-    await queryRunner.query(`ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "additional_discount"`)
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "customer_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "payment_term_days"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "payment_term_label"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ar_invoices" DROP COLUMN IF EXISTS "additional_discount"`,
+    );
 
     // Remove columns from ap_invoices
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "supplier_id"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "payment_term_days"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "payment_term_label"`)
-    await queryRunner.query(`ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "additional_discount"`)
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "supplier_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "payment_term_days"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "payment_term_label"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "ap_invoices" DROP COLUMN IF EXISTS "additional_discount"`,
+    );
 
     // Remove permissions
     await queryRunner.query(`
@@ -126,16 +160,16 @@ export class AddCustomerSupplierAndInvoiceUpgrades20250525000002
           'suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete'
         )
       )
-    `)
+    `);
     await queryRunner.query(`
       DELETE FROM "permissions" WHERE name IN (
         'customers:read', 'customers:create', 'customers:update', 'customers:delete',
         'suppliers:read', 'suppliers:create', 'suppliers:update', 'suppliers:delete'
       )
-    `)
+    `);
 
     // Drop tables
-    await queryRunner.query(`DROP TABLE IF EXISTS "suppliers"`)
-    await queryRunner.query(`DROP TABLE IF EXISTS "customers"`)
+    await queryRunner.query(`DROP TABLE IF EXISTS "suppliers"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "customers"`);
   }
 }

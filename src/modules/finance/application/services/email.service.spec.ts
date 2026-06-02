@@ -51,9 +51,7 @@ describe('EmailService', () => {
         body: longBody,
       });
 
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('...'),
-      );
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('...'));
     });
   });
 

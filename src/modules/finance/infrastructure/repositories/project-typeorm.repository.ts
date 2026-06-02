@@ -1,30 +1,33 @@
-import { Injectable } from '@nestjs/common'
-import { Repository, DataSource } from 'typeorm'
-import { ProjectTypeOrmEntity } from '../entities/project-typeorm.entity'
-import { Project } from '../../domain/entities/project.entity'
-import { ProjectRepositoryPort } from '../../domain/repositories/finance-repository.port'
-import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port'
-import { Decimal } from 'decimal.js'
+import { Injectable } from '@nestjs/common';
+import { Repository, DataSource } from 'typeorm';
+import { ProjectTypeOrmEntity } from '../entities/project-typeorm.entity';
+import { Project } from '../../domain/entities/project.entity';
+import { ProjectRepositoryPort } from '../../domain/repositories/finance-repository.port';
+import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import { Decimal } from 'decimal.js';
 
 @Injectable()
 export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
-  private readonly repo: Repository<ProjectTypeOrmEntity>
+  private readonly repo: Repository<ProjectTypeOrmEntity>;
 
   constructor(private readonly dataSource: DataSource) {
-    this.repo = dataSource.getRepository(ProjectTypeOrmEntity)
+    this.repo = dataSource.getRepository(ProjectTypeOrmEntity);
   }
 
   async findById(id: string): Promise<Project | null> {
-    const entity = await this.repo.findOne({ where: { id } })
-    return entity ? this.toDomain(entity) : null
+    const entity = await this.repo.findOne({ where: { id } });
+    return entity ? this.toDomain(entity) : null;
   }
 
-  async findAll(options?: { page?: number; limit?: number }): Promise<FindResult<Project>> {
+  async findAll(options?: {
+    page?: number;
+    limit?: number;
+  }): Promise<FindResult<Project>> {
     const [entities, total] = await this.repo.findAndCount({
       skip: ((options?.page ?? 1) - 1) * (options?.limit ?? 20),
       take: options?.limit ?? 20,
       order: { code: 'ASC' },
-    })
+    });
     return {
       data: entities.map(this.toDomain),
       meta: {
@@ -35,37 +38,43 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
         hasNextPage: (options?.page ?? 1) * (options?.limit ?? 20) < total,
         hasPrevPage: (options?.page ?? 1) > 1,
       },
-    }
+    };
   }
 
   async findActive(): Promise<Project[]> {
-    const entities = await this.repo.find({ where: { status: 'active' }, order: { code: 'ASC' } })
-    return entities.map(this.toDomain)
+    const entities = await this.repo.find({
+      where: { status: 'active' },
+      order: { code: 'ASC' },
+    });
+    return entities.map(this.toDomain);
   }
 
   async findBySegment(segment: string): Promise<Project[]> {
-    const entities = await this.repo.find({ where: { segment }, order: { code: 'ASC' } })
-    return entities.map(this.toDomain)
+    const entities = await this.repo.find({
+      where: { segment },
+      order: { code: 'ASC' },
+    });
+    return entities.map(this.toDomain);
   }
 
   async save(entity: Project): Promise<Project> {
-    const saved = await this.repo.save(this.toEntity(entity))
-    return this.toDomain(saved)
+    const saved = await this.repo.save(this.toEntity(entity));
+    return this.toDomain(saved);
   }
 
   async saveMany(entities: Project[]): Promise<Project[]> {
-    const saved = await this.repo.save(entities.map(this.toEntity))
-    return saved.map(this.toDomain)
+    const saved = await this.repo.save(entities.map(this.toEntity));
+    return saved.map(this.toDomain);
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repo.delete(id)
-    return (result.affected ?? 0) > 0
+    const result = await this.repo.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 
   async exists(id: string): Promise<boolean> {
-    const count = await this.repo.count({ where: { id } })
-    return count > 0
+    const count = await this.repo.count({ where: { id } });
+    return count > 0;
   }
 
   private toDomain(entity: ProjectTypeOrmEntity): Project {
@@ -82,7 +91,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
       endDate: entity.endDate ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
-    })
+    });
   }
 
   private toEntity(domain: Project): ProjectTypeOrmEntity {
@@ -99,6 +108,6 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
       endDate: domain.endDate,
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
-    })
+    });
   }
 }

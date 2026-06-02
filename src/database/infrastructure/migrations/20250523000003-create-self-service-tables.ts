@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateSelfServiceTables20250523000003 implements MigrationInterface {
-  name = 'CreateSelfServiceTables20250523000003'
+  name = 'CreateSelfServiceTables20250523000003';
 
   async up(queryRunner: QueryRunner): Promise<void> {
     // profile_change_requests
@@ -19,9 +19,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_pcr_employee ON profile_change_requests (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_pcr_status ON profile_change_requests (status)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_pcr_employee ON profile_change_requests (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_pcr_status ON profile_change_requests (status)`,
+    );
 
     // discrepancy_reports
     await queryRunner.query(`
@@ -37,9 +41,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_dr_employee ON discrepancy_reports (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_dr_status ON discrepancy_reports (status)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_dr_employee ON discrepancy_reports (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_dr_status ON discrepancy_reports (status)`,
+    );
 
     // leave_types
     await queryRunner.query(`
@@ -52,7 +60,7 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
+    `);
 
     // leave_balances
     await queryRunner.query(`
@@ -68,9 +76,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         UNIQUE(employee_id, leave_type_id, year)
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lb_employee ON leave_balances (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lb_leave_type ON leave_balances (leave_type_id)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lb_employee ON leave_balances (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lb_leave_type ON leave_balances (leave_type_id)`,
+    );
 
     // leave_requests
     await queryRunner.query(`
@@ -91,9 +103,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lr_employee ON leave_requests (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lr_status ON leave_requests (status)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lr_employee ON leave_requests (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lr_status ON leave_requests (status)`,
+    );
 
     // shift_schedules
     await queryRunner.query(`
@@ -110,9 +126,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_ss_employee ON shift_schedules (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_ss_date ON shift_schedules (date)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_ss_employee ON shift_schedules (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_ss_date ON shift_schedules (date)`,
+    );
 
     // overtime_requests
     await queryRunner.query(`
@@ -132,9 +152,13 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_or_employee ON overtime_requests (employee_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_or_status ON overtime_requests (status)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_or_employee ON overtime_requests (employee_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_or_status ON overtime_requests (status)`,
+    );
 
     // Seed default leave types
     await queryRunner.query(`
@@ -146,29 +170,35 @@ export class CreateSelfServiceTables20250523000003 implements MigrationInterface
         (gen_random_uuid(), 'Cuti Duka', 'bereavement', 3),
         (gen_random_uuid(), 'Izin Tidak Masuk', 'unpaid', 0)
       ON CONFLICT (code) DO NOTHING
-    `)
+    `);
 
     // Add employee_id column to users table if not exists (links user account to employee record)
     await queryRunner.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id UUID
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_users_employee ON users (employee_id)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_users_employee ON users (employee_id)`,
+    );
 
     // Add supervisor_id to employees if not exists
     await queryRunner.query(`
       ALTER TABLE employees ADD COLUMN IF NOT EXISTS supervisor_id UUID
-    `)
+    `);
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE employees DROP COLUMN IF EXISTS supervisor_id`)
-    await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS employee_id`)
-    await queryRunner.query(`DROP TABLE IF EXISTS overtime_requests`)
-    await queryRunner.query(`DROP TABLE IF EXISTS shift_schedules`)
-    await queryRunner.query(`DROP TABLE IF EXISTS leave_requests`)
-    await queryRunner.query(`DROP TABLE IF EXISTS leave_balances`)
-    await queryRunner.query(`DROP TABLE IF EXISTS leave_types`)
-    await queryRunner.query(`DROP TABLE IF EXISTS discrepancy_reports`)
-    await queryRunner.query(`DROP TABLE IF EXISTS profile_change_requests`)
+    await queryRunner.query(
+      `ALTER TABLE employees DROP COLUMN IF EXISTS supervisor_id`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users DROP COLUMN IF EXISTS employee_id`,
+    );
+    await queryRunner.query(`DROP TABLE IF EXISTS overtime_requests`);
+    await queryRunner.query(`DROP TABLE IF EXISTS shift_schedules`);
+    await queryRunner.query(`DROP TABLE IF EXISTS leave_requests`);
+    await queryRunner.query(`DROP TABLE IF EXISTS leave_balances`);
+    await queryRunner.query(`DROP TABLE IF EXISTS leave_types`);
+    await queryRunner.query(`DROP TABLE IF EXISTS discrepancy_reports`);
+    await queryRunner.query(`DROP TABLE IF EXISTS profile_change_requests`);
   }
 }

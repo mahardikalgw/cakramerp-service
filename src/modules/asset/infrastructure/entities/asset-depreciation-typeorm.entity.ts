@@ -1,34 +1,39 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm'
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity('asset_depreciations')
 export class AssetDepreciationTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column({ type: 'uuid' })
-  assetId: string
+  assetId: string;
 
   @Column({ type: 'date' })
-  periodDate: Date
+  periodDate: Date;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  depreciationAmount: number
+  depreciationAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  accumulatedDepreciation: number
+  accumulatedDepreciation: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  bookValueAfter: number
+  bookValueAfter: number;
 
   @Column({ type: 'varchar', length: 50 })
-  methodUsed: string
+  methodUsed: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
-  unitsProduced: number
+  unitsProduced: number;
 
   @Column({ type: 'text', nullable: true })
-  notes: string
+  notes: string;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  createdAt: Date
+  createdAt: Date;
 }

@@ -1,48 +1,48 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common'
-import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port'
-import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port'
-import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port'
-import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port'
-import type { AttendanceServicePort } from '../ports/attendance-service.port'
-import { RecordAttendanceCommand } from '../commands/record-attendance.command'
-import { ImportAttendanceCommand } from '../commands/import-attendance.command'
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port';
+import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port';
+import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
+import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port';
+import type { AttendanceServicePort } from '../ports/attendance-service.port';
+import { RecordAttendanceCommand } from '../commands/record-attendance.command';
+import { ImportAttendanceCommand } from '../commands/import-attendance.command';
 
 export interface ImportCsvLineDto {
-  employeeId: string
-  date: string
-  clockIn: string
-  clockOut: string
+  employeeId: string;
+  date: string;
+  clockIn: string;
+  clockOut: string;
 }
 
 interface DailyStatus {
-  date: string
-  status: string
-  clockIn?: string
-  clockOut?: string
-  overtimeHours: number
+  date: string;
+  status: string;
+  clockIn?: string;
+  clockOut?: string;
+  overtimeHours: number;
 }
 
 export interface EmployeeGrid {
-  employeeId: string
-  employeeName: string
-  employeeNumber: string
-  days: DailyStatus[]
+  employeeId: string;
+  employeeName: string;
+  employeeNumber: string;
+  days: DailyStatus[];
 }
 
 export interface EmployeeSummary {
-  employeeId: string
-  employeeName: string
-  employeeNumber: string
-  presentDays: number
-  absentDays: number
-  lateDays: number
-  overtimeHours: number
+  employeeId: string;
+  employeeName: string;
+  employeeNumber: string;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  overtimeHours: number;
 }
 
 @Injectable()
 export class AttendanceService implements AttendanceServicePort {
-  private readonly DEFAULT_SHIFT_START_HOUR = 8
-  private readonly DEFAULT_SHIFT_START_MINUTE = 0
+  private readonly DEFAULT_SHIFT_START_HOUR = 8;
+  private readonly DEFAULT_SHIFT_START_MINUTE = 0;
 
   constructor(
     @Inject(ATTENDANCE_REPOSITORY)
@@ -57,24 +57,31 @@ export class AttendanceService implements AttendanceServicePort {
     siteId?: string,
     departmentId?: string,
   ): Promise<EmployeeGrid[]> {
-    const employees = await this.employeeRepo.findActiveEmployees(siteId, departmentId)
-    const employeeIds = employees.map((e: any) => e.id)
+    const employees = await this.employeeRepo.findActiveEmployees(
+      siteId,
+      departmentId,
+    );
+    const employeeIds = employees.map((e: any) => e.id);
 
-    if (employeeIds.length === 0) return []
+    if (employeeIds.length === 0) return [];
 
-    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(employeeIds, month, year)
+    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(
+      employeeIds,
+      month,
+      year,
+    );
 
-    const daysInMonth = new Date(year, month, 0).getDate()
+    const daysInMonth = new Date(year, month, 0).getDate();
 
     return employees.map((emp: any) => {
-      const empRecords = records.filter((r: any) => r.employeeId === emp.id)
-      const days: DailyStatus[] = []
+      const empRecords = records.filter((r: any) => r.employeeId === emp.id);
+      const days: DailyStatus[] = [];
 
       for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const record = empRecords.find(
           (r: any) => new Date(r.date).toISOString().split('T')[0] === dateStr,
-        )
+        );
 
         days.push({
           date: dateStr,
@@ -82,7 +89,7 @@ export class AttendanceService implements AttendanceServicePort {
           clockIn: record?.clockIn?.toISOString() ?? undefined,
           clockOut: record?.clockOut?.toISOString() ?? undefined,
           overtimeHours: Number(record?.overtimeHours ?? 0),
-        })
+        });
       }
 
       return {
@@ -90,8 +97,8 @@ export class AttendanceService implements AttendanceServicePort {
         employeeName: emp.fullName,
         employeeNumber: emp.employeeNumber,
         days,
-      }
-    })
+      };
+    });
   }
 
   async getSummary(
@@ -100,39 +107,50 @@ export class AttendanceService implements AttendanceServicePort {
     siteId?: string,
     departmentId?: string,
   ): Promise<EmployeeSummary[]> {
-    const employees = await this.employeeRepo.findActiveEmployees(siteId, departmentId)
-    const employeeIds = employees.map((e: any) => e.id)
+    const employees = await this.employeeRepo.findActiveEmployees(
+      siteId,
+      departmentId,
+    );
+    const employeeIds = employees.map((e: any) => e.id);
 
-    if (employeeIds.length === 0) return []
+    if (employeeIds.length === 0) return [];
 
-    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(employeeIds, month, year)
+    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(
+      employeeIds,
+      month,
+      year,
+    );
 
     return employees.map((emp: any) => {
-      const empRecords = records.filter((r: any) => r.employeeId === emp.id)
+      const empRecords = records.filter((r: any) => r.employeeId === emp.id);
 
       return {
         employeeId: emp.id,
         employeeName: emp.fullName,
         employeeNumber: emp.employeeNumber,
-        presentDays: empRecords.filter((r: any) => r.status === 'present').length,
+        presentDays: empRecords.filter((r: any) => r.status === 'present')
+          .length,
         absentDays: empRecords.filter((r: any) => r.status === 'absent').length,
         lateDays: empRecords.filter((r: any) => r.status === 'late').length,
-        overtimeHours: empRecords.reduce((sum: number, r: any) => sum + Number(r.overtimeHours), 0),
-      }
-    })
+        overtimeHours: empRecords.reduce(
+          (sum: number, r: any) => sum + Number(r.overtimeHours),
+          0,
+        ),
+      };
+    });
   }
 
   async recordAttendance(command: RecordAttendanceCommand): Promise<any> {
     const existing = await this.attendanceRepo.findByEmployeeAndDate(
       command.employeeId,
       new Date(command.date),
-    )
+    );
 
     const parseClockTime = (time: string | undefined): Date | undefined => {
-      if (!time) return undefined
-      if (time.includes('T') || time.includes('-')) return new Date(time)
-      return new Date(`${command.date}T${time}:00`)
-    }
+      if (!time) return undefined;
+      if (time.includes('T') || time.includes('-')) return new Date(time);
+      return new Date(`${command.date}T${time}:00`);
+    };
 
     if (existing) {
       return this.attendanceRepo.update(existing.id, {
@@ -140,7 +158,7 @@ export class AttendanceService implements AttendanceServicePort {
         clockOut: parseClockTime(command.clockOut) ?? existing.clockOut,
         status: command.status,
         absenceReason: command.notes ?? existing.absenceReason,
-      })
+      });
     }
 
     return this.attendanceRepo.create({
@@ -152,29 +170,31 @@ export class AttendanceService implements AttendanceServicePort {
       absenceReason: command.notes,
       isImported: false,
       overtimeHours: 0,
-    })
+    });
   }
 
-  async importCsv(lines: ImportCsvLineDto[]): Promise<{ imported: number; flaggedLate: number }> {
-    let imported = 0
-    let flaggedLate = 0
+  async importCsv(
+    lines: ImportCsvLineDto[],
+  ): Promise<{ imported: number; flaggedLate: number }> {
+    let imported = 0;
+    let flaggedLate = 0;
 
     for (const line of lines) {
-      const clockIn = new Date(line.clockIn)
-      const clockOut = new Date(line.clockOut)
+      const clockIn = new Date(line.clockIn);
+      const clockOut = new Date(line.clockOut);
 
       const isLate =
         clockIn.getHours() > this.DEFAULT_SHIFT_START_HOUR ||
         (clockIn.getHours() === this.DEFAULT_SHIFT_START_HOUR &&
-          clockIn.getMinutes() > this.DEFAULT_SHIFT_START_MINUTE)
+          clockIn.getMinutes() > this.DEFAULT_SHIFT_START_MINUTE);
 
-      const status = isLate ? 'late' : 'present'
-      if (isLate) flaggedLate++
+      const status = isLate ? 'late' : 'present';
+      if (isLate) flaggedLate++;
 
       const existing = await this.attendanceRepo.findByEmployeeAndDate(
         line.employeeId,
         new Date(line.date),
-      )
+      );
 
       if (existing) {
         await this.attendanceRepo.update(existing.id, {
@@ -182,7 +202,7 @@ export class AttendanceService implements AttendanceServicePort {
           clockOut,
           status,
           isImported: true,
-        })
+        });
       } else {
         await this.attendanceRepo.create({
           employeeId: line.employeeId,
@@ -192,22 +212,26 @@ export class AttendanceService implements AttendanceServicePort {
           status,
           isImported: true,
           overtimeHours: 0,
-        })
+        });
       }
 
-      imported++
+      imported++;
     }
 
-    return { imported, flaggedLate }
+    return { imported, flaggedLate };
   }
 
   async exportReport(month: number, year: number): Promise<string> {
-    const employees = await this.employeeRepo.findActiveEmployees()
-    const employeeIds = employees.map((e: any) => e.id)
+    const employees = await this.employeeRepo.findActiveEmployees();
+    const employeeIds = employees.map((e: any) => e.id);
 
-    if (employeeIds.length === 0) return ''
+    if (employeeIds.length === 0) return '';
 
-    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(employeeIds, month, year)
+    const records = await this.attendanceRepo.findByEmployeeIdsAndMonth(
+      employeeIds,
+      month,
+      year,
+    );
 
     const headers = [
       'Employee Number',
@@ -218,13 +242,16 @@ export class AttendanceService implements AttendanceServicePort {
       'Status',
       'Overtime Hours',
       'Absence Reason',
-    ]
-    const csvLines = [headers.join(',')]
+    ];
+    const csvLines = [headers.join(',')];
 
     for (const emp of employees) {
       const empRecords = records
         .filter((r: any) => r.employeeId === emp.id)
-        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
 
       for (const record of empRecords) {
         csvLines.push(
@@ -238,10 +265,10 @@ export class AttendanceService implements AttendanceServicePort {
             record.overtimeHours,
             record.absenceReason ? `"${record.absenceReason}"` : '',
           ].join(','),
-        )
+        );
       }
     }
 
-    return csvLines.join('\n')
+    return csvLines.join('\n');
   }
 }

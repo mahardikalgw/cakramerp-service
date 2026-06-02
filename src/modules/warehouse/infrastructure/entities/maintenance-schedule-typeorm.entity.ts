@@ -1,29 +1,29 @@
-import { Entity, Column } from 'typeorm'
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity'
+import { Entity, Column } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
 @Entity('maintenance_schedules')
 export class MaintenanceScheduleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  equipmentId: string
+  equipmentId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  intervalType: string
+  intervalType: string;
 
   @Column({ type: 'integer' })
-  intervalValue: number
+  intervalValue: number;
 
   @Column({ type: 'date', nullable: true })
-  lastDoneDate: Date
+  lastDoneDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  lastDoneHours: number
+  lastDoneHours: number;
 
   @Column({ type: 'date', nullable: true })
-  nextDueDate: Date
+  nextDueDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  nextDueHours: number
+  nextDueHours: number;
 
   @Column({ type: 'varchar', length: 500 })
-  description: string
+  description: string;
 }

@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common'
-import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port'
-import type { PayrollRepositoryPort } from '../../domain/repositories/payroll-repository.port'
-import type { PaySlipServicePort } from '../ports/payslip-service.port'
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port';
+import type { PayrollRepositoryPort } from '../../domain/repositories/payroll-repository.port';
+import type { PaySlipServicePort } from '../ports/payslip-service.port';
 
 @Injectable()
 export class PaySlipService implements PaySlipServicePort {
@@ -10,62 +10,65 @@ export class PaySlipService implements PaySlipServicePort {
     private readonly payrollRepo: PayrollRepositoryPort,
   ) {}
 
-  async generatePaySlips(payrollRunId: string): Promise<{ generated: number; path: string }> {
-    const run = await this.payrollRepo.findRunById(payrollRunId)
-    if (!run) throw new BadRequestException('Payroll run not found')
+  async generatePaySlips(
+    payrollRunId: string,
+  ): Promise<{ generated: number; path: string }> {
+    const run = await this.payrollRepo.findRunById(payrollRunId);
+    if (!run) throw new BadRequestException('Payroll run not found');
 
-    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId)
+    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId);
 
     if (details.length === 0) {
-      throw new BadRequestException('No payroll details found for this run')
+      throw new BadRequestException('No payroll details found for this run');
     }
 
     // Generate CSV data for all pay slips
-    const csvData = this.buildPaySlipCsv(run, details)
-    const path = `payslips/${run.year}-${String(run.month).padStart(2, '0')}/all-payslips.csv`
+    const csvData = this.buildPaySlipCsv(run, details);
+    const path = `payslips/${run.year}-${String(run.month).padStart(2, '0')}/all-payslips.csv`;
 
     // In production, this would write to file storage
     // For now, return the path where it would be stored
-    return { generated: details.length, path }
+    return { generated: details.length, path };
   }
 
   async getPaySlip(
     payrollRunId: string,
     employeeId: string,
   ): Promise<{
-    employee: { id: string; name: string; employeeNumber: string }
-    period: { month: number; year: number }
+    employee: { id: string; name: string; employeeNumber: string };
+    period: { month: number; year: number };
     earnings: {
-      basicSalary: number
-      siteAllowance: number
-      mealAllowance: number
-      transportAllowance: number
-      overtimePay: number
-      otherAllowances: number
-      grossPay: number
-    }
+      basicSalary: number;
+      siteAllowance: number;
+      mealAllowance: number;
+      transportAllowance: number;
+      overtimePay: number;
+      otherAllowances: number;
+      grossPay: number;
+    };
     deductions: {
-      bpjsKesehatanEmployee: number
-      bpjsJht: number
-      bpjsJp: number
-      pph21: number
-      loanDeduction: number
-      otherDeductions: number
-      totalDeductions: number
-    }
+      bpjsKesehatanEmployee: number;
+      bpjsJht: number;
+      bpjsJp: number;
+      pph21: number;
+      loanDeduction: number;
+      otherDeductions: number;
+      totalDeductions: number;
+    };
     employerContributions: {
-      bpjsKesehatanEmployer: number
-      bpjsJkk: number
-      bpjsJkm: number
-    }
-    netPay: number
+      bpjsKesehatanEmployer: number;
+      bpjsJkk: number;
+      bpjsJkm: number;
+    };
+    netPay: number;
   }> {
-    const run = await this.payrollRepo.findRunById(payrollRunId)
-    if (!run) throw new BadRequestException('Payroll run not found')
+    const run = await this.payrollRepo.findRunById(payrollRunId);
+    if (!run) throw new BadRequestException('Payroll run not found');
 
-    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId)
-    const detail = details.find((d: any) => d.employeeId === employeeId)
-    if (!detail) throw new BadRequestException('Pay slip not found for this employee')
+    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId);
+    const detail = details.find((d: any) => d.employeeId === employeeId);
+    if (!detail)
+      throw new BadRequestException('Pay slip not found for this employee');
 
     return {
       employee: {
@@ -98,20 +101,20 @@ export class PaySlipService implements PaySlipServicePort {
         bpjsJkm: Number(detail.bpjsJkm),
       },
       netPay: Number(detail.netPay),
-    }
+    };
   }
 
   async downloadAll(payrollRunId: string): Promise<string> {
-    const run = await this.payrollRepo.findRunById(payrollRunId)
-    if (!run) throw new BadRequestException('Payroll run not found')
+    const run = await this.payrollRepo.findRunById(payrollRunId);
+    if (!run) throw new BadRequestException('Payroll run not found');
 
-    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId)
+    const details = await this.payrollRepo.findDetailsByRunId(payrollRunId);
 
     if (details.length === 0) {
-      throw new BadRequestException('No payroll details found for this run')
+      throw new BadRequestException('No payroll details found for this run');
     }
 
-    return this.buildPaySlipCsv(run, details)
+    return this.buildPaySlipCsv(run, details);
   }
 
   private buildPaySlipCsv(run: any, details: any[]): string {
@@ -136,10 +139,10 @@ export class PaySlipService implements PaySlipServicePort {
       'Other Deductions',
       'Total Deductions',
       'Net Pay',
-    ]
+    ];
 
-    const lines = [headers.join(',')]
-    const period = `${run.year}-${String(run.month).padStart(2, '0')}`
+    const lines = [headers.join(',')];
+    const period = `${run.year}-${String(run.month).padStart(2, '0')}`;
 
     for (const detail of details) {
       lines.push(
@@ -165,9 +168,9 @@ export class PaySlipService implements PaySlipServicePort {
           detail.totalDeductions,
           detail.netPay,
         ].join(','),
-      )
+      );
     }
 
-    return lines.join('\n')
+    return lines.join('\n');
   }
 }

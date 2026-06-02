@@ -1,59 +1,66 @@
-import { IsString, IsOptional, IsNumber, IsIn, IsDateString, Min } from 'class-validator'
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsIn,
+  IsDateString,
+  Min,
+} from 'class-validator';
 
 export class CreateSpendingHttpDto {
   @IsDateString()
-  date: string
+  date: string;
 
   @IsString()
-  category: string
+  category: string;
 
   @IsString()
-  description: string
+  description: string;
 
   @IsNumber()
   @Min(0.01)
-  amount: number
+  amount: number;
 
   @IsOptional()
   @IsIn(['cash', 'bank_transfer', 'credit_card', 'e_wallet'])
-  paymentMethod?: string
+  paymentMethod?: string;
 
   @IsOptional()
   @IsString()
-  reference?: string
+  reference?: string;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 }
 
 export class UpdateSpendingHttpDto {
   @IsOptional()
   @IsDateString()
-  date?: string
+  date?: string;
 
   @IsOptional()
   @IsString()
-  category?: string
+  category?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsNumber()
   @Min(0.01)
-  amount?: number
+  amount?: number;
 
   @IsOptional()
   @IsIn(['cash', 'bank_transfer', 'credit_card', 'e_wallet'])
-  paymentMethod?: string
+  paymentMethod?: string;
 
   @IsOptional()
   @IsString()
-  reference?: string
+  reference?: string;
 
   @IsOptional()
   @IsString()
-  notes?: string
+  notes?: string;
 }

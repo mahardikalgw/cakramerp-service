@@ -32,7 +32,10 @@ describe('AssetService', () => {
       providers: [
         AssetService,
         { provide: ASSET_REPOSITORY, useValue: mockAssetRepo },
-        { provide: GL_POSTING_QUEUE_SERVICE, useValue: mockGlPostingQueueService },
+        {
+          provide: GL_POSTING_QUEUE_SERVICE,
+          useValue: mockGlPostingQueueService,
+        },
       ],
     }).compile();
 
@@ -52,10 +55,16 @@ describe('AssetService', () => {
       };
       mockAssetRepo.findAll.mockResolvedValue(expectedResult);
 
-      const result = await service.findAll({ search: 'laptop', status: 'active' });
+      const result = await service.findAll({
+        search: 'laptop',
+        status: 'active',
+      });
 
       expect(result).toEqual(expectedResult);
-      expect(mockAssetRepo.findAll).toHaveBeenCalledWith({ search: 'laptop', status: 'active' });
+      expect(mockAssetRepo.findAll).toHaveBeenCalledWith({
+        search: 'laptop',
+        status: 'active',
+      });
     });
 
     it('should return all assets without filters', async () => {
@@ -82,14 +91,20 @@ describe('AssetService', () => {
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('create', () => {
     it('should create an asset with generated asset number', async () => {
       mockAssetRepo.getLastAssetNumber.mockResolvedValue(null);
-      const createdAsset = { id: 'asset-1', assetNumber: 'AST-2024-0001', name: 'Laptop' };
+      const createdAsset = {
+        id: 'asset-1',
+        assetNumber: 'AST-2024-0001',
+        name: 'Laptop',
+      };
       mockAssetRepo.create.mockResolvedValue(createdAsset);
 
       const result = await service.create({
@@ -113,7 +128,9 @@ describe('AssetService', () => {
 
     it('should increment asset number from last number', async () => {
       const currentYear = new Date().getFullYear();
-      mockAssetRepo.getLastAssetNumber.mockResolvedValue(`AST-${currentYear}-0005`);
+      mockAssetRepo.getLastAssetNumber.mockResolvedValue(
+        `AST-${currentYear}-0005`,
+      );
       mockAssetRepo.create.mockResolvedValue({ id: 'asset-2' });
 
       await service.create({
@@ -179,18 +196,25 @@ describe('AssetService', () => {
     it('should update an existing asset', async () => {
       const asset = { id: 'asset-1', name: 'Laptop', usefulLifeMonths: 36 };
       mockAssetRepo.findById.mockResolvedValue(asset);
-      mockAssetRepo.update.mockResolvedValue({ ...asset, name: 'Gaming Laptop' });
+      mockAssetRepo.update.mockResolvedValue({
+        ...asset,
+        name: 'Gaming Laptop',
+      });
 
       const result = await service.update('asset-1', { name: 'Gaming Laptop' });
 
       expect(result.name).toBe('Gaming Laptop');
-      expect(mockAssetRepo.update).toHaveBeenCalledWith('asset-1', { name: 'Gaming Laptop' });
+      expect(mockAssetRepo.update).toHaveBeenCalledWith('asset-1', {
+        name: 'Gaming Laptop',
+      });
     });
 
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
 
-      await expect(service.update('non-existent', { name: 'test' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update('non-existent', { name: 'test' }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should recalculate declining balance rate when method changes', async () => {
@@ -198,14 +222,20 @@ describe('AssetService', () => {
       mockAssetRepo.findById.mockResolvedValue(asset);
       mockAssetRepo.update.mockResolvedValue(asset);
 
-      await service.update('asset-1', { depreciationMethod: 'declining_balance' });
+      await service.update('asset-1', {
+        depreciationMethod: 'declining_balance',
+      });
 
       const updateArg = mockAssetRepo.update.mock.calls[0][1];
       expect(updateArg.decliningBalanceRate).toBeCloseTo(0.5, 5); // 2 / (48/12) = 0.5
     });
 
     it('should throw BadRequestException for unit_production without totalEstimatedUnits', async () => {
-      const asset = { id: 'asset-1', usefulLifeMonths: 48, totalEstimatedUnits: null };
+      const asset = {
+        id: 'asset-1',
+        usefulLifeMonths: 48,
+        totalEstimatedUnits: null,
+      };
       mockAssetRepo.findById.mockResolvedValue(asset);
 
       await expect(
@@ -228,7 +258,9 @@ describe('AssetService', () => {
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
 
-      await expect(service.delete('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -236,8 +268,16 @@ describe('AssetService', () => {
     it('should return depreciation history for asset', async () => {
       const asset = { id: 'asset-1', name: 'Laptop' };
       const history = [
-        { id: 'dep-1', depreciationAmount: 500000, periodDate: new Date('2024-01-01') },
-        { id: 'dep-2', depreciationAmount: 500000, periodDate: new Date('2024-02-01') },
+        {
+          id: 'dep-1',
+          depreciationAmount: 500000,
+          periodDate: new Date('2024-01-01'),
+        },
+        {
+          id: 'dep-2',
+          depreciationAmount: 500000,
+          periodDate: new Date('2024-02-01'),
+        },
       ];
       mockAssetRepo.findById.mockResolvedValue(asset);
       mockAssetRepo.getDepreciationHistory.mockResolvedValue(history);
@@ -245,13 +285,17 @@ describe('AssetService', () => {
       const result = await service.getDepreciationHistory('asset-1');
 
       expect(result).toEqual(history);
-      expect(mockAssetRepo.getDepreciationHistory).toHaveBeenCalledWith('asset-1');
+      expect(mockAssetRepo.getDepreciationHistory).toHaveBeenCalledWith(
+        'asset-1',
+      );
     });
 
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getDepreciationHistory('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getDepreciationHistory('non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -330,13 +374,20 @@ describe('AssetService', () => {
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
 
-      await expect(service.calculateDepreciation('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.calculateDepreciation('non-existent'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if asset is not active', async () => {
-      mockAssetRepo.findById.mockResolvedValue({ ...baseAsset, status: 'disposed' });
+      mockAssetRepo.findById.mockResolvedValue({
+        ...baseAsset,
+        status: 'disposed',
+      });
 
-      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(BadRequestException);
+      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if asset is fully depreciated', async () => {
@@ -346,7 +397,9 @@ describe('AssetService', () => {
         salvageValue: 0,
       });
 
-      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(BadRequestException);
+      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for unit_production without unitsProduced', async () => {
@@ -356,7 +409,9 @@ describe('AssetService', () => {
         totalEstimatedUnits: 10000,
       });
 
-      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(BadRequestException);
+      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for unknown depreciation method', async () => {
@@ -365,7 +420,9 @@ describe('AssetService', () => {
         depreciationMethod: 'unknown_method',
       });
 
-      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(BadRequestException);
+      await expect(service.calculateDepreciation('asset-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should not depreciate below salvage value', async () => {

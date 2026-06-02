@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class SeedCustomersAndSuppliers20250528000002 implements MigrationInterface {
-  name = 'SeedCustomersAndSuppliers20250528000002'
+  name = 'SeedCustomersAndSuppliers20250528000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Seed customers
@@ -17,7 +17,7 @@ export class SeedCustomersAndSuppliers20250528000002 implements MigrationInterfa
         ('PT Nusantara Indah', 'sales@nusantaraindah.co.id', '0274-556677', 'Jl. Malioboro No. 22, Yogyakarta', 'Yogyakarta', 'Wati Sulistyo', '07.890.123.4-078.000', 'Retail chain customer'),
         ('PT Cahaya Timur', 'finance@cahayatimur.co.id', '0411-332211', 'Jl. Pettarani No. 50, Makassar', 'Makassar', 'Andi Firmansyah', '08.901.234.5-089.000', 'Eastern region key account')
       ON CONFLICT DO NOTHING;
-    `)
+    `);
 
     // Seed suppliers
     await queryRunner.query(`
@@ -32,11 +32,15 @@ export class SeedCustomersAndSuppliers20250528000002 implements MigrationInterfa
         ('UD Alat Kantor Sejahtera', 'order@alatkantor.com', '024-1234567', 'Jl. Ahmad Yani No. 55, Semarang', 'Semarang', 'Lestari Wulandari', '17.890.123.4-178.000', 'Office supplies vendor'),
         ('PT Kimia Farma Supply', 'b2b@kimiafarmasupply.co.id', '021-3334455', 'Jl. Veteran No. 9, Jakarta Pusat', 'Jakarta', 'Gunawan Setiawan', '18.901.234.5-189.000', 'Chemical and cleaning supplies')
       ON CONFLICT DO NOTHING;
-    `)
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DELETE FROM customers WHERE email IN ('finance@majubersama.co.id','admin@karyamandiri.com','purchasing@sentosaabadi.co.id','berkah.jaya@gmail.com','info@globaltek.co.id','order@sumbermakmur.com','sales@nusantaraindah.co.id','finance@cahayatimur.co.id');`)
-    await queryRunner.query(`DELETE FROM suppliers WHERE email IN ('sales@bahanutama.co.id','cs@logistikcepat.com','order@mesinjaya.co.id','procurement@teksolusi.co.id','info@packagingprima.com','supply@energimandiri.co.id','order@alatkantor.com','b2b@kimiafarmasupply.co.id');`)
+    await queryRunner.query(
+      `DELETE FROM customers WHERE email IN ('finance@majubersama.co.id','admin@karyamandiri.com','purchasing@sentosaabadi.co.id','berkah.jaya@gmail.com','info@globaltek.co.id','order@sumbermakmur.com','sales@nusantaraindah.co.id','finance@cahayatimur.co.id');`,
+    );
+    await queryRunner.query(
+      `DELETE FROM suppliers WHERE email IN ('sales@bahanutama.co.id','cs@logistikcepat.com','order@mesinjaya.co.id','procurement@teksolusi.co.id','info@packagingprima.com','supply@energimandiri.co.id','order@alatkantor.com','b2b@kimiafarmasupply.co.id');`,
+    );
   }
 }

@@ -1,14 +1,14 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class AddMissingTablesAndColumns20250523000002 implements MigrationInterface {
-  name = 'AddMissingTablesAndColumns20250523000002'
+  name = 'AddMissingTablesAndColumns20250523000002';
 
   async up(queryRunner: QueryRunner): Promise<void> {
     // 1. Add missing updated_at column to journal_entry_lines
     await queryRunner.query(`
       ALTER TABLE journal_entry_lines
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    `)
+    `);
 
     // 2. Create settings table
     await queryRunner.query(`
@@ -20,8 +20,10 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_settings_category ON settings (category)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_settings_category ON settings (category)`,
+    );
 
     // 3. Create audit_logs table
     await queryRunner.query(`
@@ -29,7 +31,7 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         CREATE TYPE audit_action_type AS ENUM ('create', 'update', 'delete', 'login', 'logout', 'export');
       EXCEPTION WHEN duplicate_object THEN NULL;
       END $$
-    `)
+    `);
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -44,11 +46,19 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_module ON audit_logs (module)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs (timestamp)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_module ON audit_logs (module)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs (timestamp)`,
+    );
 
     // 4. Create backup_jobs table
     await queryRunner.query(`
@@ -56,7 +66,7 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         CREATE TYPE backup_status AS ENUM ('active', 'inactive', 'running');
       EXCEPTION WHEN duplicate_object THEN NULL;
       END $$
-    `)
+    `);
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS backup_jobs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -70,9 +80,13 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_backup_jobs_schedule ON backup_jobs (schedule)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_backup_jobs_status ON backup_jobs (status)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_backup_jobs_schedule ON backup_jobs (schedule)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_backup_jobs_status ON backup_jobs (status)`,
+    );
 
     // 5. Create backup_history table
     await queryRunner.query(`
@@ -80,7 +94,7 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         CREATE TYPE backup_history_status AS ENUM ('success', 'failed', 'in_progress');
       EXCEPTION WHEN duplicate_object THEN NULL;
       END $$
-    `)
+    `);
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS backup_history (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,20 +108,28 @@ export class AddMissingTablesAndColumns20250523000002 implements MigrationInterf
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_backup_history_job_id ON backup_history (backup_job_id)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_backup_history_status ON backup_history (status)`)
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_backup_history_completed ON backup_history (completed_at)`)
+    `);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_backup_history_job_id ON backup_history (backup_job_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_backup_history_status ON backup_history (status)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_backup_history_completed ON backup_history (completed_at)`,
+    );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS backup_history`)
-    await queryRunner.query(`DROP TABLE IF EXISTS backup_jobs`)
-    await queryRunner.query(`DROP TABLE IF EXISTS audit_logs`)
-    await queryRunner.query(`DROP TABLE IF EXISTS settings`)
-    await queryRunner.query(`ALTER TABLE journal_entry_lines DROP COLUMN IF EXISTS updated_at`)
-    await queryRunner.query(`DROP TYPE IF EXISTS backup_history_status`)
-    await queryRunner.query(`DROP TYPE IF EXISTS backup_status`)
-    await queryRunner.query(`DROP TYPE IF EXISTS audit_action_type`)
+    await queryRunner.query(`DROP TABLE IF EXISTS backup_history`);
+    await queryRunner.query(`DROP TABLE IF EXISTS backup_jobs`);
+    await queryRunner.query(`DROP TABLE IF EXISTS audit_logs`);
+    await queryRunner.query(`DROP TABLE IF EXISTS settings`);
+    await queryRunner.query(
+      `ALTER TABLE journal_entry_lines DROP COLUMN IF EXISTS updated_at`,
+    );
+    await queryRunner.query(`DROP TYPE IF EXISTS backup_history_status`);
+    await queryRunner.query(`DROP TYPE IF EXISTS backup_status`);
+    await queryRunner.query(`DROP TYPE IF EXISTS audit_action_type`);
   }
 }

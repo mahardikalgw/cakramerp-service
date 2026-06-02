@@ -1,32 +1,32 @@
-import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator'
+import { IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 
 export class CreatePositionHttpDto {
   @IsString()
-  name: string
+  name: string;
 
   @IsOptional()
   @IsUUID()
-  departmentId?: string
+  departmentId?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 }
 
 export class UpdatePositionHttpDto {
   @IsOptional()
   @IsString()
-  name?: string
+  name?: string;
 
   @IsOptional()
   @IsUUID()
-  departmentId?: string
+  departmentId?: string;
 
   @IsOptional()
   @IsString()
-  description?: string
+  description?: string;
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean
+  isActive?: boolean;
 }

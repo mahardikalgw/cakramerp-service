@@ -9,17 +9,17 @@ import {
   Param,
   UseGuards,
   Inject,
-} from '@nestjs/common'
-import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard'
-import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard'
-import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator'
-import { CUSTOMER_SERVICE } from '../../../application/ports/customer-service.port'
-import type { CustomerServicePort } from '../../../application/ports/customer-service.port'
-import { CreateCustomerCommand } from '../../../application/commands/create-customer.command'
-import { UpdateCustomerCommand } from '../../../application/commands/update-customer.command'
-import { CreateCustomerHttpDto } from '../dtos/create-customer.dto'
-import { UpdateCustomerHttpDto } from '../dtos/update-customer.dto'
-import { CustomerResponseDto } from '../dtos/customer-response.dto'
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
+import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
+import { CUSTOMER_SERVICE } from '../../../application/ports/customer-service.port';
+import type { CustomerServicePort } from '../../../application/ports/customer-service.port';
+import { CreateCustomerCommand } from '../../../application/commands/create-customer.command';
+import { UpdateCustomerCommand } from '../../../application/commands/update-customer.command';
+import { CreateCustomerHttpDto } from '../dtos/create-customer.dto';
+import { UpdateCustomerHttpDto } from '../dtos/update-customer.dto';
+import { CustomerResponseDto } from '../dtos/customer-response.dto';
 
 @Controller('customers')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -42,18 +42,18 @@ export class CustomerController {
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
-    })
+    });
     return {
       data: result.data.map(CustomerResponseDto.fromDomain),
       total: result.total,
-    }
+    };
   }
 
   @Get(':id')
   @RequirePermissions('customers:read')
   async findById(@Param('id') id: string) {
-    const customer = await this.customerService.findById(id)
-    return customer ? CustomerResponseDto.fromDomain(customer) : null
+    const customer = await this.customerService.findById(id);
+    return customer ? CustomerResponseDto.fromDomain(customer) : null;
   }
 
   @Post()
@@ -68,9 +68,9 @@ export class CustomerController {
       dto.contactPerson,
       dto.taxId,
       dto.notes,
-    )
-    const customer = await this.customerService.create(command)
-    return CustomerResponseDto.fromDomain(customer)
+    );
+    const customer = await this.customerService.create(command);
+    return CustomerResponseDto.fromDomain(customer);
   }
 
   @Patch(':id')
@@ -86,14 +86,14 @@ export class CustomerController {
       dto.taxId,
       dto.notes,
       dto.status,
-    )
-    const customer = await this.customerService.update(id, command)
-    return CustomerResponseDto.fromDomain(customer)
+    );
+    const customer = await this.customerService.update(id, command);
+    return CustomerResponseDto.fromDomain(customer);
   }
 
   @Delete(':id')
   @RequirePermissions('customers:delete')
   async delete(@Param('id') id: string) {
-    return this.customerService.delete(id)
+    return this.customerService.delete(id);
   }
 }

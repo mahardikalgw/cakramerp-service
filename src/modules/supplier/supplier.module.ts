@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { SupplierTypeOrmEntity } from './infrastructure/entities/supplier-typeorm.entity'
-import { SupplierTypeOrmRepository } from './infrastructure/repositories/supplier-typeorm.repository'
-import { SupplierService } from './application/services/supplier.service'
-import { SupplierController } from './infrastructure/http/controllers/supplier.controller'
-import { SUPPLIER_REPOSITORY } from './domain/repositories/supplier-repository.port'
-import { SUPPLIER_SERVICE } from './application/ports/supplier-service.port'
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SupplierTypeOrmEntity } from './infrastructure/entities/supplier-typeorm.entity';
+import { SupplierTypeOrmRepository } from './infrastructure/repositories/supplier-typeorm.repository';
+import { SupplierService } from './application/services/supplier.service';
+import { SupplierController } from './infrastructure/http/controllers/supplier.controller';
+import { SUPPLIER_REPOSITORY } from './domain/repositories/supplier-repository.port';
+import { SUPPLIER_SERVICE } from './application/ports/supplier-service.port';
 
 @Module({
   imports: [TypeOrmModule.forFeature([SupplierTypeOrmEntity])],

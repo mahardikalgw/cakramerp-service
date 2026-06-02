@@ -28,7 +28,6 @@ export class AdminBackupController {
   ) {}
 
   @Get()
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   @Roles('admin')
   @Permissions('backups:read')
   async getAllBackupJobs() {
