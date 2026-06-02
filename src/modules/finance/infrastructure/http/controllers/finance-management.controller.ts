@@ -73,6 +73,10 @@ import {
   ManualMatchHttpDto,
 } from '../dtos/bank-reconciliation.dto';
 import { PostGlToJournalHttpDto } from '../dtos/gl-posting-queue.dto';
+import {
+  CreateSpendingHttpDto,
+  UpdateSpendingHttpDto,
+} from '../dtos/spending.dto';
 
 @Controller('finance')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -806,7 +810,7 @@ export class FinanceManagementController {
 
   @Post('billing-letters')
   @RequirePermissions('billing-letters:create')
-  async generateBillingLetter(@Body() dto: any) {
+  async generateBillingLetter(@Body() dto: Record<string, any>) {
     return this.billingLetterService.generate({
       type: dto.type,
       customerId: dto.customerId,
@@ -887,13 +891,16 @@ export class FinanceManagementController {
 
   @Post('spendings')
   @RequirePermissions('spendings:create')
-  async createSpending(@Body() dto: any) {
+  async createSpending(@Body() dto: CreateSpendingHttpDto) {
     return this.spendingService.create(dto);
   }
 
   @Put('spendings/:id')
   @RequirePermissions('spendings:update')
-  async updateSpending(@Param('id') id: string, @Body() dto: any) {
+  async updateSpending(
+    @Param('id') id: string,
+    @Body() dto: UpdateSpendingHttpDto,
+  ) {
     return this.spendingService.update(id, dto);
   }
 

@@ -3,6 +3,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import * as bcryptjs from 'bcryptjs';
 import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
@@ -102,6 +103,14 @@ export class UserService implements UserServicePort {
   async changePassword(command: ChangePasswordCommand): Promise<void> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new NotFoundException('User not found');
+
+    const valid = await bcryptjs.compare(
+      command.oldPassword,
+      user.passwordHash,
+    );
+    if (!valid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
 
     const passwordHash = await bcryptjs.hash(command.password, 12);
     user.passwordHash = passwordHash;

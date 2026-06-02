@@ -16,6 +16,7 @@ import { LoginCommand } from '../commands/login.command';
 import { RegisterCommand } from '../commands/register.command';
 import { AuthTokensResult } from '../results/auth-tokens.result';
 import { AuthServicePort } from '../ports/auth-service.port';
+import { envConfig } from '../../../../config/env.config';
 
 @Injectable()
 export class AuthService implements AuthServicePort {
@@ -94,11 +95,11 @@ export class AuthService implements AuthServicePort {
   ): Promise<AuthTokensResult> {
     const payload = { sub: userId, email };
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET ?? 'default-secret',
+      secret: envConfig.jwt.secret,
       expiresIn: '15m',
     });
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET ?? 'default-refresh-secret',
+      secret: envConfig.jwt.refreshSecret,
       expiresIn: '7d',
     });
 
@@ -116,6 +117,6 @@ export class AuthService implements AuthServicePort {
   }
 
   private async hashToken(token: string): Promise<string> {
-    return bcryptjs.hash(token, 4);
+    return bcryptjs.hash(token, 10);
   }
 }

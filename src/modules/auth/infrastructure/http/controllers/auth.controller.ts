@@ -7,6 +7,7 @@ import {
   HttpCode,
   Inject,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { AuthServicePort } from '../../../application/ports/auth-service.port';
 import { AUTH_SERVICE } from '../../../application/ports/auth-service.port';
 import type { UserRepositoryPort } from '../../../../user/domain/repositories/user-repository.port';
@@ -31,6 +32,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @UseGuards(ThrottlerGuard)
   async register(@Body() dto: RegisterHttpDto): Promise<TokenResponseDto> {
     const command = new RegisterCommand(
       dto.email,
@@ -44,6 +46,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
   async login(@Body() dto: LoginHttpDto): Promise<TokenResponseDto> {
     const command = new LoginCommand(dto.email, dto.password);
     const result = await this.authService.login(command);

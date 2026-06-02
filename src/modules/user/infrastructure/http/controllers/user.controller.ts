@@ -95,7 +95,11 @@ export class UserController {
     @Param('id') id: string,
     @Body() dto: ChangePasswordHttpDto,
   ): Promise<void> {
-    const command = new ChangePasswordCommand(id, dto.password);
+    const command = new ChangePasswordCommand(
+      id,
+      dto.oldPassword,
+      dto.password,
+    );
     await this.userService.changePassword(command);
   }
 }

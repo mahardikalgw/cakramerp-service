@@ -94,10 +94,7 @@ export class BillingLetterService {
     let partyName = '';
     let totalOutstanding = 0;
     const items: any[] = [];
-    const invoiceTable =
-      data.type === 'receivable' ? 'ar_invoices' : 'ap_invoices';
-    const dateField =
-      data.type === 'receivable' ? 'issue_date' : 'invoice_date';
+    const { invoiceTable, dateField } = this.validateInvoiceType(data.type);
 
     if (data.type === 'receivable' && data.customerId) {
       const custRows = await this.dataSource.query(
@@ -295,8 +292,7 @@ export class BillingLetterService {
 
     const letter = letterRows[0];
     const paymentAmount = Number(letter.total_amount);
-    const invoiceTable =
-      letter.type === 'receivable' ? 'ar_invoices' : 'ap_invoices';
+    const { invoiceTable } = this.validateInvoiceType(letter.type);
     const today = new Date().toISOString().split('T')[0];
 
     // Get items sorted by due date (FIFO)
@@ -390,8 +386,7 @@ export class BillingLetterService {
    */
   async updateStatus(id: string): Promise<any> {
     const letter = await this.findById(id);
-    const invoiceTable =
-      letter.type === 'receivable' ? 'ar_invoices' : 'ap_invoices';
+    const { invoiceTable } = this.validateInvoiceType(letter.type);
 
     let totalItemsPaid = 0;
     let totalItemsOutstanding = 0;
@@ -429,6 +424,18 @@ export class BillingLetterService {
     );
 
     return this.findById(id);
+  }
+
+  private validateInvoiceType(type: string): { invoiceTable: string; dateField: string } {
+    if (type === 'receivable') {
+      return { invoiceTable: 'ar_invoices', dateField: 'issue_date' };
+    }
+    if (type === 'payable') {
+      return { invoiceTable: 'ap_invoices', dateField: 'invoice_date' };
+    }
+    throw new BadRequestException(
+      "Invalid billing type. Must be 'receivable' or 'payable'.",
+    );
   }
 
   private async generateLetterNumber(type: string): Promise<string> {
