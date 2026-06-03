@@ -12,6 +12,7 @@ import {
   Req,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
@@ -30,6 +31,13 @@ import {
   ApproveRejectDto,
 } from '../dtos/sales-order.dto';
 import { CreateSalesReturnHttpDto } from '../dtos/sales-return.dto';
+
+/**
+ * Throttle preset for state-changing endpoints (send/accept/reject/
+ * approve/deliver/invoice/cancel/convert). Caps at 5 actions per
+ * 10 seconds per user.
+ */
+const WRITE_THROTTLE = { 'write': { ttl: 10_000, limit: 5 } } as const;
 
 @Controller('sales')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -91,18 +99,21 @@ export class SalesController {
   }
 
   @Patch('quotations/:id/send')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('quotations:update')
   async sendQuotation(@Param('id') id: string) {
     return this.quotationService.send(id);
   }
 
   @Patch('quotations/:id/accept')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('quotations:update')
   async acceptQuotation(@Param('id') id: string) {
     return this.quotationService.accept(id);
   }
 
   @Patch('quotations/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('quotations:update')
   async rejectQuotation(
     @Param('id') id: string,
@@ -112,6 +123,7 @@ export class SalesController {
   }
 
   @Post('quotations/:id/convert-to-so')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-orders:create')
   async convertQuotationToSO(@Param('id') id: string, @Req() req: any) {
     const quotation = await this.quotationService.findById(id);
@@ -171,12 +183,14 @@ export class SalesController {
   }
 
   @Patch('sales-orders/:id/approve')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-orders:approve')
   async approveSalesOrder(@Param('id') id: string) {
     return this.orchestrator.approveSO(id);
   }
 
   @Patch('sales-orders/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-orders:approve')
   async rejectSalesOrder(
     @Param('id') id: string,
@@ -186,6 +200,7 @@ export class SalesController {
   }
 
   @Post('sales-orders/:id/deliver')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('issuances:create')
   async deliverSalesOrder(
     @Param('id') id: string,
@@ -200,6 +215,7 @@ export class SalesController {
   }
 
   @Post('sales-orders/:id/invoice')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-invoices:create')
   async invoiceSalesOrder(
     @Param('id') id: string,
@@ -218,6 +234,7 @@ export class SalesController {
   }
 
   @Post('sales-orders/:id/cancel')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-orders:update')
   async cancelSalesOrder(
     @Param('id') id: string,
@@ -270,6 +287,7 @@ export class SalesController {
   }
 
   @Patch('sales-returns/:id/approve')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-returns:create')
   async approveSalesReturn(
     @Param('id') id: string,
@@ -285,6 +303,7 @@ export class SalesController {
   }
 
   @Patch('sales-returns/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-returns:approve')
   async rejectSalesReturn(
     @Param('id') id: string,

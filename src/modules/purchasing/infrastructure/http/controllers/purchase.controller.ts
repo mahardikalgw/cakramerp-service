@@ -12,6 +12,7 @@ import {
   Req,
   BadRequestException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
@@ -31,6 +32,13 @@ import {
   POApproveRejectDto,
 } from '../dtos/purchase-order.dto';
 import { CreatePurchaseReturnHttpDto } from '../dtos/purchase-return.dto';
+
+/**
+ * Throttle preset for state-changing endpoints (approve/reject/deliver/
+ * invoice/cancel/convert). Caps at 5 actions per 10 seconds per user so
+ * bulk-clicking doesn't accidentally fire dozens of GL entries.
+ */
+const WRITE_THROTTLE = { 'write': { ttl: 10_000, limit: 5 } } as const;
 
 @Controller('purchasing')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -74,6 +82,7 @@ export class PurchaseController {
   }
 
   @Post('purchase-requests/:id/convert-to-po')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-orders:create')
   async convertPRToPO(@Param('id') id: string, @Req() req: any) {
     const pr = await this.purchaseRequestService.findById(id);
@@ -101,6 +110,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-requests/:id/approve')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-requests:approve')
   async approvePurchaseRequest(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown';
@@ -108,6 +118,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-requests/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-requests:approve')
   async rejectPurchaseRequest(
     @Param('id') id: string,
@@ -165,6 +176,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-orders/:id/approve')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-orders:approve')
   async approvePurchaseOrder(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown';
@@ -172,6 +184,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-orders/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-orders:approve')
   async rejectPurchaseOrder(
     @Param('id') id: string,
@@ -183,6 +196,7 @@ export class PurchaseController {
   }
 
   @Post('purchase-orders/:id/receive')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('goods-receipts:create')
   async receivePurchaseOrder(
     @Param('id') id: string,
@@ -197,6 +211,7 @@ export class PurchaseController {
   }
 
   @Post('purchase-orders/:id/invoice')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('supplier-invoices:create')
   async invoicePurchaseOrder(
     @Param('id') id: string,
@@ -219,6 +234,7 @@ export class PurchaseController {
   }
 
   @Post('purchase-orders/:id/cancel')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-orders:update')
   async cancelPurchaseOrder(
     @Param('id') id: string,
@@ -269,6 +285,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-returns/:id/approve')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-returns:create')
   async approvePurchaseReturn(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown';
@@ -276,6 +293,7 @@ export class PurchaseController {
   }
 
   @Patch('purchase-returns/:id/reject')
+  @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-returns:approve')
   async rejectPurchaseReturn(
     @Param('id') id: string,
