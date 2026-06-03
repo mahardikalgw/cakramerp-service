@@ -2,7 +2,26 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { AssetService } from './asset.service';
 import { ASSET_REPOSITORY } from '../../domain/repositories/asset-repository.port';
-import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
+import { GL_POSTING_QUEUE_PORT } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
+import { AssetFinanceAdapter } from '../adapters/asset-finance.adapter';
+
+interface MockAsset {
+  id: string;
+  name: string;
+  status?: string;
+  acquisitionCost?: number;
+  salvageValue?: number;
+  usefulLifeMonths?: number;
+  depreciationMethod?: string;
+  depreciationSchedule?: string;
+  currentBookValue?: number;
+  decliningBalanceRate?: number;
+  accumulatedDepreciation?: number;
+  totalEstimatedUnits?: number;
+  unitsProducedToDate?: number;
+  lastDepreciationDate?: Date | null;
+  assetNumber?: string;
+}
 
 describe('AssetService', () => {
   let service: AssetService;
@@ -19,23 +38,27 @@ describe('AssetService', () => {
     findAssetsDueForDepreciation: jest.fn(),
   };
 
-  const mockGlPostingQueueService = {
-    findAll: jest.fn(),
-    findById: jest.fn(),
+  const mockGlPostingQueue = {
     createEntry: jest.fn(),
-    postToJournal: jest.fn(),
-    cancel: jest.fn(),
+  };
+
+  const mockAssetFinanceAdapter = {
+    recordDepreciationGl: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: GL_POSTING_QUEUE_PORT,
+          useValue: mockGlPostingQueue,
+        },
+        {
+          provide: AssetFinanceAdapter,
+          useValue: mockAssetFinanceAdapter,
+        },
         AssetService,
         { provide: ASSET_REPOSITORY, useValue: mockAssetRepo },
-        {
-          provide: GL_POSTING_QUEUE_SERVICE,
-          useValue: mockGlPostingQueueService,
-        },
       ],
     }).compile();
 
@@ -80,7 +103,11 @@ describe('AssetService', () => {
 
   describe('findById', () => {
     it('should return an asset by id', async () => {
-      const asset = { id: 'asset-1', name: 'Laptop', status: 'active' };
+      const asset: MockAsset = {
+        id: 'asset-1',
+        name: 'Laptop',
+        status: 'active',
+      };
       mockAssetRepo.findById.mockResolvedValue(asset);
 
       const result = await service.findById('asset-1');
@@ -321,14 +348,14 @@ describe('AssetService', () => {
       const depEntry = { id: 'dep-1', depreciationAmount: 1000000 };
       mockAssetRepo.createDepreciation.mockResolvedValue(depEntry);
       mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-      const result = await service.calculateDepreciation('asset-1');
+       const result = await service.calculateDepreciation('asset-1');
 
-      expect(result).toEqual(depEntry);
-      expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
-      expect(mockAssetRepo.update).toHaveBeenCalled();
-      expect(mockGlPostingQueueService.createEntry).toHaveBeenCalled();
+       expect(result).toEqual(depEntry);
+       expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
+       expect(mockAssetRepo.update).toHaveBeenCalled();
+       expect(mockAssetFinanceAdapter.recordDepreciationGl).toHaveBeenCalled();
     });
 
     it('should calculate declining balance depreciation', async () => {
@@ -341,35 +368,35 @@ describe('AssetService', () => {
       mockAssetRepo.findById.mockResolvedValue(asset);
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-      const result = await service.calculateDepreciation('asset-1');
+       await service.calculateDepreciation('asset-1');
 
       expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
       expect(depArg.depreciationAmount).toBeCloseTo(333333.33, 1); // 10000000 * 0.4 / 12
     });
 
-    it('should calculate unit production depreciation', async () => {
-      const asset = {
-        ...baseAsset,
-        depreciationMethod: 'unit_production',
-        acquisitionCost: 10000000,
-        salvageValue: 1000000,
-        totalEstimatedUnits: 10000,
-        unitsProducedToDate: 0,
-      };
-      mockAssetRepo.findById.mockResolvedValue(asset);
-      mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
-      mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+it('should calculate unit production depreciation', async () => {
+       const asset = {
+         ...baseAsset,
+         depreciationMethod: 'unit_production',
+         acquisitionCost: 10000000,
+         salvageValue: 1000000,
+         totalEstimatedUnits: 10000,
+         unitsProducedToDate: 0,
+       };
+       mockAssetRepo.findById.mockResolvedValue(asset);
+       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
+       mockAssetRepo.update.mockResolvedValue({});
+       mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({ glPostingQueueId: 'gl-1' });
 
-      const result = await service.calculateDepreciation('asset-1', 500);
+       await service.calculateDepreciation('asset-1', 500);
 
-      const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
-      // (10000000 - 1000000) * (500 / 10000) = 450000
-      expect(depArg.depreciationAmount).toBe(450000);
-    });
+       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
+       // (10000000 - 1000000) * (500 / 10000) = 450000
+       expect(depArg.depreciationAmount).toBe(450000);
+     });
 
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
@@ -434,9 +461,9 @@ describe('AssetService', () => {
       });
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-      await service.calculateDepreciation('asset-1');
+       await service.calculateDepreciation('asset-1');
 
       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
       // Max depreciation = 1050000 - 1000000 = 50000
@@ -453,43 +480,29 @@ describe('AssetService', () => {
       });
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-      await service.calculateDepreciation('asset-1');
+       await service.calculateDepreciation('asset-1');
 
       const updateArg = mockAssetRepo.update.mock.calls[0][1];
       expect(updateArg.status).toBe('fully_depreciated');
     });
 
-    it('should create GL posting entry with correct format', async () => {
+it('should create GL posting entry with correct format', async () => {
       const currentYear = new Date().getFullYear();
       mockAssetRepo.findById.mockResolvedValue(baseAsset);
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-      mockGlPostingQueueService.createEntry.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({ glPostingQueueId: 'gl-1' });
 
       await service.calculateDepreciation('asset-1');
 
-      expect(mockGlPostingQueueService.createEntry).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sourceType: 'asset_depreciation',
-          sourceId: 'asset-1',
-          sourceNumber: `AST-${currentYear}-0001`,
-          eventType: 'depreciation',
-          amount: 1000000,
-          suggestedLines: expect.arrayContaining([
-            expect.objectContaining({
-              accountName: 'Depreciation Expense',
-              debit: 1000000,
-              credit: 0,
-            }),
-            expect.objectContaining({
-              accountName: 'Accumulated Depreciation',
-              debit: 0,
-              credit: 1000000,
-            }),
-          ]),
-        }),
+      expect(mockAssetFinanceAdapter.recordDepreciationGl).toHaveBeenCalledWith(
+        'asset-1',
+        `AST-${currentYear}-0001`,
+        'Laptop',
+        1000000,
+        expect.any(String),
       );
     });
   });

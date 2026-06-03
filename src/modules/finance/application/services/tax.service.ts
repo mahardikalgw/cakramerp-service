@@ -137,7 +137,7 @@ export class TaxService implements TaxServicePort {
     const errors: string[] = [];
 
     // NPWP format: 15 digits (or 16 for new format)
-    const npwpClean = inv.clientNpwp.replace(/[.\-]/g, '');
+    const npwpClean = inv.clientNpwp.replace(/[. -]/g, '');
     if (!/^\d{15,16}$/.test(npwpClean)) {
       errors.push(
         `Invalid NPWP format: "${inv.clientNpwp}" (must be 15-16 digits)`,
@@ -145,7 +145,7 @@ export class TaxService implements TaxServicePort {
     }
 
     // Tax invoice number format: 3 groups of digits (e.g., 010.000-24.00000001)
-    const taxNumClean = inv.taxInvoiceNumber.replace(/[.\-]/g, '');
+    const taxNumClean = inv.taxInvoiceNumber.replace(/[.-]/g, '');
     if (!/^\d{13,16}$/.test(taxNumClean)) {
       errors.push(
         `Invalid tax invoice number format: "${inv.taxInvoiceNumber}"`,

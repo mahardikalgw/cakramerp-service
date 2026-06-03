@@ -76,7 +76,7 @@ export class StockOpnameTypeOrmRepository implements StockOpnameRepositoryPort {
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data: data.map(this.mapToStockOpnameSession), total };
+    return { data: data.map((s) => this.mapToStockOpnameSession(s)), total };
   }
 
   async findById(
@@ -92,7 +92,7 @@ export class StockOpnameTypeOrmRepository implements StockOpnameRepositoryPort {
 
     return {
       session: this.mapToStockOpnameSession(session),
-      lines: lines.map(this.mapToStockOpnameLine),
+      lines: lines.map((l) => this.mapToStockOpnameLine(l)),
     };
   }
 
@@ -109,7 +109,7 @@ export class StockOpnameTypeOrmRepository implements StockOpnameRepositoryPort {
       order: { itemName: 'ASC' },
     });
 
-    return lines.map(this.mapToStockOpnameLine);
+    return lines.map((l) => this.mapToStockOpnameLine(l));
   }
 
   async findLineBySessionAndItem(

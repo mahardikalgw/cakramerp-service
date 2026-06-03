@@ -41,7 +41,7 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
     }
 
     const entities = await query.getMany();
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByAccountIdsAndDateRange(
@@ -58,7 +58,7 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
       .andWhere('je.date BETWEEN :start AND :end', { start, end })
       .getMany();
 
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByJournalEntryId(
@@ -68,7 +68,7 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
       where: { journalEntryId },
       order: { createdAt: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async save(line: JournalEntryLine): Promise<JournalEntryLine> {
@@ -77,8 +77,8 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
   }
 
   async saveMany(lines: JournalEntryLine[]): Promise<JournalEntryLine[]> {
-    const saved = await this.repo.save(lines.map(this.toEntity));
-    return saved.map(this.toDomain);
+    const saved = await this.repo.save(lines.map((l) => this.toEntity(l)));
+    return saved.map((e) => this.toDomain(e));
   }
 
   async deleteByJournalEntryId(journalEntryId: string): Promise<void> {

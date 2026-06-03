@@ -4,6 +4,7 @@ import {
   IsArray,
   ValidateNested,
   IsNumber,
+  IsInt,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -12,8 +13,8 @@ class GoodsReceiptLineDto {
   @IsString()
   itemId: string;
 
-  @IsNumber()
-  @Min(0)
+  @IsInt()
+  @Min(1)
   quantity: number;
 
   @IsOptional()
@@ -41,8 +42,8 @@ class StockIssuanceLineDto {
   @IsString()
   itemId: string;
 
-  @IsNumber()
-  @Min(0)
+  @IsInt()
+  @Min(1)
   quantity: number;
 
   @IsOptional()
@@ -90,7 +91,7 @@ class OpnameLineDto {
   @IsString()
   itemId: string;
 
-  @IsNumber()
+  @IsInt()
   @Min(0)
   actualQty: number;
 }

@@ -313,7 +313,9 @@ export class APInvoiceService implements APInvoiceServicePort {
         glPostingQueueId = pq.id;
         glPostingQueueStatus = pq.status;
       }
-    } catch {}
+    } catch {
+      // ignore GL posting queue query errors
+    }
 
     if (journalEntryId) {
       try {
@@ -325,7 +327,9 @@ export class APInvoiceService implements APInvoiceServicePort {
           journalEntryNumber = rows[0].entry_number;
           journalEntryStatus = rows[0].status;
         }
-      } catch {}
+      } catch {
+        // ignore GL posting queue query errors
+      }
     }
 
     return {

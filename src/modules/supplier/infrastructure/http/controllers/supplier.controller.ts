@@ -44,7 +44,7 @@ export class SupplierController {
       limit: limit ? parseInt(limit, 10) : undefined,
     });
     return {
-      data: result.data.map(SupplierResponseDto.fromDomain),
+      data: result.data.map((s) => SupplierResponseDto.fromDomain(s)),
       total: result.total,
     };
   }

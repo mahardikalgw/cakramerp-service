@@ -14,7 +14,7 @@ export class KpiThresholdTypeOrmRepository implements KpiThresholdRepositoryPort
 
   async findAll(): Promise<KpiThreshold[]> {
     const entities = await this.repo.find({ order: { alertType: 'ASC' } });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByType(alertType: string): Promise<KpiThreshold | null> {

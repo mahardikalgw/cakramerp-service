@@ -7,7 +7,6 @@ import {
 } from '../../domain/repositories/finance-repository.port';
 import { CreateAccountCommand } from '../commands/create-account.command';
 import { UpdateAccountCommand } from '../commands/update-account.command';
-import { Decimal } from 'decimal.js';
 
 describe('AccountService', () => {
   let service: AccountService;

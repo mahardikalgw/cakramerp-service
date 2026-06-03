@@ -1,6 +1,5 @@
 import { FinancialStatementsServicePort } from '../ports/financial-statements-service.port';
 import { Injectable, Inject } from '@nestjs/common';
-import { Decimal } from 'decimal.js';
 import {
   ACCOUNT_REPOSITORY,
   JOURNAL_ENTRY_LINE_REPOSITORY,

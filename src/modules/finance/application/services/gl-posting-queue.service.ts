@@ -38,6 +38,7 @@ export interface GlPostingQueueResponse {
   invoiceId: string | null;
   billingLetterId: string | null;
   warehouseId: string | null;
+  spendingId: string | null;
 }
 
 @Injectable()
@@ -192,7 +193,9 @@ export class GlPostingQueueService implements GlPostingQueueServicePort {
         if (rows.length > 0) {
           postedByName = `${rows[0].first_name} ${rows[0].last_name}`.trim();
         }
-      } catch {}
+      } catch {
+        // ignore user lookup errors
+      }
     }
 
     return {
@@ -216,6 +219,7 @@ export class GlPostingQueueService implements GlPostingQueueServicePort {
       invoiceId: item.invoiceId ?? null,
       billingLetterId: item.billingLetterId ?? null,
       warehouseId: item.warehouseId ?? null,
+      spendingId: item.spendingId ?? null,
     };
   }
 }

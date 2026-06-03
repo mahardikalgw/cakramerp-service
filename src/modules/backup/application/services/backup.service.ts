@@ -1,18 +1,16 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import {
   BackupJob,
   BackupJobStatus,
 } from '../../domain/entities/backup-job.entity';
-import {
-  BackupHistory,
-  BackupHistoryStatus,
-} from '../../domain/entities/backup-history.entity';
+import { BackupHistoryStatus } from '../../domain/entities/backup-history.entity';
 import type { BackupJobRepositoryPort } from '../../domain/repositories/backup-job-repository.port';
 import { BACKUP_JOB_REPOSITORY } from '../../domain/repositories/backup-job-repository.port';
 import type { BackupHistoryRepositoryPort } from '../../domain/repositories/backup-history-repository.port';
 import { BACKUP_HISTORY_REPOSITORY } from '../../domain/repositories/backup-history-repository.port';
 import { CreateBackupCommand } from '../commands/create-backup.command';
 import { UpdateBackupCommand } from '../commands/update-backup.command';
+import { BackupHistory } from '../../domain/entities/backup-history.entity';
 import { BackupServicePort } from '../ports/backup-service.port';
 
 @Injectable()

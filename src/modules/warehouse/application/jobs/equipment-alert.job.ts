@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { DataSource, Repository, LessThanOrEqual } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { MaintenanceScheduleTypeOrmEntity } from '../../infrastructure/entities/maintenance-schedule-typeorm.entity';
 import { EquipmentUnitTypeOrmEntity } from '../../infrastructure/entities/equipment-unit-typeorm.entity';
 

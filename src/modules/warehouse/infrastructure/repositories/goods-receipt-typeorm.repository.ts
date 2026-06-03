@@ -54,21 +54,52 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
     page?: number;
     limit?: number;
   }): Promise<{ data: GoodsReceipt[]; total: number }> {
-    const qb = this.receiptRepo.createQueryBuilder('gr');
-
-    if (filters?.warehouseId) {
-      qb.andWhere('gr.warehouseId = :warehouseId', {
-        warehouseId: filters.warehouseId,
-      });
-    }
-
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 20;
-    qb.orderBy('gr.createdAt', 'DESC');
-    qb.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
-    return { data: data.map(this.mapToGoodsReceipt), total };
+    let whereClause = '';
+    const params: any[] = [];
+    if (filters?.warehouseId) {
+      whereClause = 'WHERE gr.warehouse_id = $1';
+      params.push(filters.warehouseId);
+    }
+
+    const offset = (page - 1) * limit;
+    const countParams = [...params];
+    params.push(limit, offset);
+
+    const rows = await this.dataSource.query(
+      `SELECT gr.*, w.name AS warehouse_name
+       FROM goods_receipts gr
+       LEFT JOIN warehouses w ON w.id = gr.warehouse_id
+       ${whereClause}
+       ORDER BY gr.created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
+    );
+
+    const countResult = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS cnt FROM goods_receipts gr ${whereClause}`,
+      countParams,
+    );
+    const total = countResult[0]?.cnt ?? 0;
+
+    const data = rows.map((row: any) => ({
+      id: row.id,
+      grnNumber: row.grn_number,
+      poId: row.po_id,
+      warehouseId: row.warehouse_id,
+      supplierId: row.supplier_id,
+      vendorName: row.vendor_name,
+      receivedDate: row.received_date,
+      notes: row.notes,
+      status: row.status,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      warehouse: row.warehouse_name ?? null,
+    }));
+
+    return { data, total };
   }
 
   async findById(
@@ -77,14 +108,22 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
     const receipt = await this.receiptRepo.findOne({ where: { id } });
     if (!receipt) return null;
 
+    const warehouse = await this.dataSource.query(
+      `SELECT name FROM warehouses WHERE id = $1 LIMIT 1`,
+      [receipt.warehouseId],
+    );
+
     const lines = await this.lineRepo.find({
       where: { goodsReceiptId: id },
       order: { createdAt: 'ASC' },
     });
 
+    const mappedReceipt = this.mapToGoodsReceipt(receipt);
+    (mappedReceipt as any).warehouse = warehouse[0]?.name ?? null;
+
     return {
-      receipt: this.mapToGoodsReceipt(receipt),
-      lines: lines.map(this.mapToGoodsReceiptLine),
+      receipt: mappedReceipt,
+      lines: lines.map((l) => this.mapToGoodsReceiptLine(l)),
     };
   }
 

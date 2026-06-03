@@ -53,26 +53,59 @@ export class StockIssuanceTypeOrmRepository implements StockIssuanceRepositoryPo
     page?: number;
     limit?: number;
   }): Promise<{ data: StockIssuance[]; total: number }> {
-    const qb = this.issuanceRepo.createQueryBuilder('si');
-
-    if (filters?.warehouseId) {
-      qb.andWhere('si.warehouseId = :warehouseId', {
-        warehouseId: filters.warehouseId,
-      });
-    }
-    if (filters?.destinationType) {
-      qb.andWhere('si.destinationType = :destinationType', {
-        destinationType: filters.destinationType,
-      });
-    }
-
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 20;
-    qb.orderBy('si.createdAt', 'DESC');
-    qb.skip((page - 1) * limit).take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
-    return { data: data.map(this.mapToStockIssuance), total };
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (filters?.warehouseId) {
+      params.push(filters.warehouseId);
+      conditions.push(`si.warehouse_id = $${params.length}`);
+    }
+    if (filters?.destinationType) {
+      params.push(filters.destinationType);
+      conditions.push(`si.destination_type = $${params.length}`);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const offset = (page - 1) * limit;
+    const countParams = [...params];
+    params.push(limit, offset);
+
+    const rows = await this.dataSource.query(
+      `SELECT si.*, w.name AS warehouse_name
+       FROM stock_issuances si
+       LEFT JOIN warehouses w ON w.id = si.warehouse_id
+       ${whereClause}
+       ORDER BY si.created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
+    );
+
+    const countResult = await this.dataSource.query(
+      `SELECT COUNT(*)::int AS cnt FROM stock_issuances si ${whereClause}`,
+      countParams,
+    );
+    const total = countResult[0]?.cnt ?? 0;
+
+    const data = rows.map((row: any) => ({
+      id: row.id,
+      issuanceNumber: row.issuance_number,
+      warehouseId: row.warehouse_id,
+      destinationType: row.destination_type,
+      destinationId: row.destination_id,
+      destinationName: row.destination_name,
+      issuanceDate: row.issuance_date,
+      status: row.status,
+      createdBy: row.created_by,
+      reversalReason: row.reversal_reason,
+      reversedAt: row.reversed_at,
+      createdAt: row.created_at,
+      warehouse: row.warehouse_name ?? null,
+    }));
+
+    return { data, total };
   }
 
   async findById(
@@ -88,7 +121,7 @@ export class StockIssuanceTypeOrmRepository implements StockIssuanceRepositoryPo
 
     return {
       issuance: this.mapToStockIssuance(issuance),
-      lines: lines.map(this.mapToStockIssuanceLine),
+      lines: lines.map((l) => this.mapToStockIssuanceLine(l)),
     };
   }
 
@@ -98,7 +131,7 @@ export class StockIssuanceTypeOrmRepository implements StockIssuanceRepositoryPo
       order: { createdAt: 'ASC' },
     });
 
-    return lines.map(this.mapToStockIssuanceLine);
+    return lines.map((l) => this.mapToStockIssuanceLine(l));
   }
 
   async update(

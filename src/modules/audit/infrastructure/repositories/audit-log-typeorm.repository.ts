@@ -51,7 +51,7 @@ export class AuditLogTypeOrmRepository
     entity.module = domain.module;
     entity.recordId = domain.recordId;
     entity.ipAddress = domain.ipAddress;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     entity.payload = domain.payload;
     entity.timestamp = domain.timestamp;
     entity.createdAt = domain.createdAt;

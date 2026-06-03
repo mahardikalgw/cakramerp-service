@@ -3,14 +3,8 @@ import { NotFoundException } from '@nestjs/common';
 import { BackupService } from './backup.service';
 import { BACKUP_JOB_REPOSITORY } from '../../domain/repositories/backup-job-repository.port';
 import { BACKUP_HISTORY_REPOSITORY } from '../../domain/repositories/backup-history-repository.port';
-import {
-  BackupJob,
-  BackupJobStatus,
-} from '../../domain/entities/backup-job.entity';
-import {
-  BackupHistory,
-  BackupHistoryStatus,
-} from '../../domain/entities/backup-history.entity';
+import { BackupJobStatus } from '../../domain/entities/backup-job.entity';
+import { BackupHistoryStatus } from '../../domain/entities/backup-history.entity';
 import { CreateBackupCommand } from '../commands/create-backup.command';
 import { UpdateBackupCommand } from '../commands/update-backup.command';
 
@@ -123,7 +117,9 @@ describe('BackupService', () => {
 
     it('should create a backup job without retentionDays', async () => {
       const command = new CreateBackupCommand('Weekly Backup', '0 3 * * 0');
-      mockJobRepo.save.mockImplementation(async (job) => ({ id: '1', ...job }));
+      mockJobRepo.save.mockImplementation((job) =>
+        Promise.resolve({ id: '1', ...job }),
+      );
 
       const result = await service.createBackupJob(command);
 
@@ -173,7 +169,7 @@ describe('BackupService', () => {
       };
       const command = new UpdateBackupCommand('1', 'New Name');
       mockJobRepo.findById.mockResolvedValue(entity);
-      mockJobRepo.save.mockImplementation(async (e) => e);
+      mockJobRepo.save.mockImplementation((e) => e);
 
       const result = await service.updateBackupJob(command);
 
@@ -198,7 +194,7 @@ describe('BackupService', () => {
         60,
       );
       mockJobRepo.findById.mockResolvedValue(entity);
-      mockJobRepo.save.mockImplementation(async (e) => e);
+      mockJobRepo.save.mockImplementation((e) => e);
 
       const result = await service.updateBackupJob(command);
 
@@ -222,7 +218,7 @@ describe('BackupService', () => {
     it('should trigger a backup and create history entry', async () => {
       const job = { id: '1', name: 'Daily Backup', schedule: '0 2 * * *' };
       mockJobRepo.findById.mockResolvedValue(job);
-      mockHistoryRepo.save.mockImplementation(async (h) => ({
+      mockHistoryRepo.save.mockImplementation((h) => ({
         id: 'h1',
         ...h,
       }));

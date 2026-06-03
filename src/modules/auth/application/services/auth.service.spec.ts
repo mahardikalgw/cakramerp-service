@@ -7,7 +7,7 @@ import { USER_REPOSITORY } from '../../../user/domain/repositories/user-reposito
 import { AUTH_REPOSITORY } from '../../domain/repositories/auth-repository.port';
 import { LoginCommand } from '../commands/login.command';
 import { RegisterCommand } from '../commands/register.command';
-import { User, UserStatus } from '../../../user/domain/entities/user.entity';
+import { User } from '../../../user/domain/entities/user.entity';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
 
 jest.mock('bcryptjs');

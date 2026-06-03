@@ -29,7 +29,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
       order: { code: 'ASC' },
     });
     return {
-      data: entities.map(this.toDomain),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page: options?.page ?? 1,
         limit: options?.limit ?? 20,
@@ -46,7 +46,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
       where: { status: 'active' },
       order: { code: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findBySegment(segment: string): Promise<Project[]> {
@@ -54,7 +54,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
       where: { segment },
       order: { code: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async save(entity: Project): Promise<Project> {
@@ -63,8 +63,8 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
   }
 
   async saveMany(entities: Project[]): Promise<Project[]> {
-    const saved = await this.repo.save(entities.map(this.toEntity));
-    return saved.map(this.toDomain);
+    const saved = await this.repo.save(entities.map((e) => this.toEntity(e)));
+    return saved.map((e) => this.toDomain(e));
   }
 
   async delete(id: string): Promise<boolean> {

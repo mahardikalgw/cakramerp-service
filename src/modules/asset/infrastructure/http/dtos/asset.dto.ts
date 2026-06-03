@@ -105,7 +105,7 @@ export class UpdateAssetHttpDto {
   depreciationSchedule?: string;
 
   @IsOptional()
-  @IsIn(['active', 'disposed', 'fully_depreciated'])
+  @IsIn(['active', 'inactive', 'fully_depreciated', 'disposed'])
   status?: string;
 
   @IsOptional()

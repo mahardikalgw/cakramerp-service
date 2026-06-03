@@ -50,4 +50,7 @@ export class GlPostingQueueTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   warehouseId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  spendingId: string;
 }

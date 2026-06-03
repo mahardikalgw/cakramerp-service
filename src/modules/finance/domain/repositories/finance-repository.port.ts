@@ -1,7 +1,4 @@
-import {
-  RepositoryPort,
-  FindResult,
-} from '../../../../shared/kernel/domain/repositories/repository.port';
+import { RepositoryPort } from '../../../../shared/kernel/domain/repositories/repository.port';
 import { Account } from '../entities/account.entity';
 import { JournalEntry } from '../entities/journal-entry.entity';
 import { JournalEntryLine } from '../entities/journal-entry-line.entity';

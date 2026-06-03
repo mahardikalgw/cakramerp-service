@@ -12,10 +12,10 @@ export class StockLedgerTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50 })
   movementType: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   quantity: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   balanceAfter: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })

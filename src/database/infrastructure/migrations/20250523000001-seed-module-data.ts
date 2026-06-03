@@ -497,7 +497,12 @@ export class SeedModuleData20250523000001 implements MigrationInterface {
         `INSERT INTO accounts (id, code, name, type, tax_category, is_active, created_at, updated_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, true, now(), now())
          ON CONFLICT (code) DO NOTHING`,
-        [acc.code, acc.name, acc.type, (acc as any).taxCategory ?? null],
+        [
+          acc.code,
+          acc.name,
+          acc.type,
+          'taxCategory' in acc ? acc.taxCategory : null,
+        ],
       );
     }
 

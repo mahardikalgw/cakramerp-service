@@ -297,7 +297,8 @@ describe('UserService', () => {
         lastName: 'Doe',
         status: UserStatus.INACTIVE,
       });
-      user.activate = jest.fn();
+
+      user.activate = jest.fn() as typeof user.activate;
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
 
@@ -315,7 +316,8 @@ describe('UserService', () => {
         firstName: 'John',
         lastName: 'Doe',
       });
-      user.deactivate = jest.fn();
+
+      user.deactivate = jest.fn() as typeof user.deactivate;
       mockUserRepository.findById.mockResolvedValue(user);
       mockUserRepository.save.mockResolvedValue(user);
 
@@ -362,7 +364,11 @@ describe('UserService', () => {
       (bcryptjs.hash as jest.Mock).mockResolvedValue('new-hashed-password');
       mockUserRepository.save.mockResolvedValue(user);
 
-      const command = new ChangePasswordCommand('user-1', 'OldPass', 'NewPass123!');
+      const command = new ChangePasswordCommand(
+        'user-1',
+        'OldPass',
+        'NewPass123!',
+      );
       await service.changePassword(command);
 
       expect(bcryptjs.hash).toHaveBeenCalledWith('NewPass123!', 12);
@@ -373,7 +379,11 @@ describe('UserService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockUserRepository.findById.mockResolvedValue(null);
 
-      const command = new ChangePasswordCommand('non-existent', 'OldPass', 'NewPass123!');
+      const command = new ChangePasswordCommand(
+        'non-existent',
+        'OldPass',
+        'NewPass123!',
+      );
       await expect(service.changePassword(command)).rejects.toThrow(
         NotFoundException,
       );

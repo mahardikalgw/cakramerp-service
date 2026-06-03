@@ -1,11 +1,10 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port';
 import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port';
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port';
 import type { AttendanceServicePort } from '../ports/attendance-service.port';
 import { RecordAttendanceCommand } from '../commands/record-attendance.command';
-import { ImportAttendanceCommand } from '../commands/import-attendance.command';
 
 export interface ImportCsvLineDto {
   employeeId: string;

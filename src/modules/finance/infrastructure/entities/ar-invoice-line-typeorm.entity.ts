@@ -9,7 +9,7 @@ export class ARInvoiceLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 500 })
   description: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, default: 1 })
+  @Column({ type: 'integer', default: 1 })
   quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })

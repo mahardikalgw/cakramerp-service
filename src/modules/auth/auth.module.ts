@@ -18,7 +18,6 @@ import { UserModule } from '../user/user.module';
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'default-secret',
       signOptions: {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expiresIn: (process.env.JWT_EXPIRATION || '7d') as any,
       },
     }),

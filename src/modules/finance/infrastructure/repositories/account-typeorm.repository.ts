@@ -28,7 +28,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
       order: { code: 'ASC' },
     });
     return {
-      data: entities.map(this.toDomain),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page: options?.page ?? 1,
         limit: options?.limit ?? 20,
@@ -42,7 +42,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
 
   async findAllFlat(): Promise<Account[]> {
     const entities = await this.repo.find({ order: { code: 'ASC' } });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByType(type: string): Promise<Account[]> {
@@ -50,7 +50,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
       where: { type },
       order: { code: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findBySegment(segment: string): Promise<Account[]> {
@@ -58,7 +58,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
       where: { segment },
       order: { code: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findActive(): Promise<Account[]> {
@@ -66,7 +66,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
       where: { isActive: true },
       order: { code: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async save(entity: Account): Promise<Account> {
@@ -75,8 +75,8 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
   }
 
   async saveMany(entities: Account[]): Promise<Account[]> {
-    const saved = await this.repo.save(entities.map(this.toEntity));
-    return saved.map(this.toDomain);
+    const saved = await this.repo.save(entities.map((e) => this.toEntity(e)));
+    return saved.map((e) => this.toDomain(e));
   }
 
   async delete(id: string): Promise<boolean> {

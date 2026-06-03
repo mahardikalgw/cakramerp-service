@@ -44,8 +44,11 @@ export class SnakeNamingStrategy
   }
 
   private toSnakeCase(str: string): string {
-    return str.replace(/([A-Z])/g, (match, p1, offset) => {
-      return (offset > 0 ? '_' : '') + p1.toLowerCase();
-    });
+    return str.replace(
+      /([A-Z])/g,
+      (match: string, p1: string, offset: number) => {
+        return (offset > 0 ? '_' : '') + p1.toLowerCase();
+      },
+    );
   }
 }

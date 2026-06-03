@@ -6,7 +6,7 @@ import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-reposito
 import type { EmployeeRepositoryPort } from '../../domain/repositories/employee-repository.port';
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port';
 import type { AttendanceRepositoryPort } from '../../domain/repositories/attendance-repository.port';
-import { GlPostingQueueTypeOrmEntity } from '../../../finance/infrastructure/entities/gl-posting-queue-typeorm.entity';
+import { HrFinanceAdapter } from '../adapters/hr-finance.adapter';
 import type { PayrollServicePort } from '../ports/payroll-service.port';
 
 @Injectable()
@@ -36,6 +36,7 @@ export class PayrollEngineService implements PayrollServicePort {
     @Inject(ATTENDANCE_REPOSITORY)
     private readonly attendanceRepo: AttendanceRepositoryPort,
     private readonly dataSource: DataSource,
+    private readonly financeAdapter: HrFinanceAdapter,
   ) {}
 
   async runPayroll(month: number, year: number): Promise<any> {
@@ -269,94 +270,9 @@ export class PayrollEngineService implements PayrollServicePort {
     return tax;
   }
 
-  private async createPayrollQueueEntry(run: any): Promise<void> {
+  private async createPayrollQueueEntry(run: { id: string; month: number; year: number }): Promise<void> {
     const details = await this.payrollRepo.findDetailsByRunId(run.id);
 
-    const totalGross = details.reduce(
-      (s: number, d: any) => s + Number(d.grossPay),
-      0,
-    );
-    const totalBpjsEmployee = details.reduce(
-      (s: number, d: any) =>
-        s +
-        Number(d.bpjsKesehatanEmployee) +
-        Number(d.bpjsJht) +
-        Number(d.bpjsJp),
-      0,
-    );
-    const totalBpjsEmployer = details.reduce(
-      (s: number, d: any) =>
-        s +
-        Number(d.bpjsKesehatanEmployer) +
-        Number(d.bpjsJkk) +
-        Number(d.bpjsJkm),
-      0,
-    );
-    const totalPph21 = details.reduce(
-      (s: number, d: any) => s + Number(d.pph21),
-      0,
-    );
-    const totalNet = details.reduce(
-      (s: number, d: any) => s + Number(d.netPay),
-      0,
-    );
-
-    const queueRepo = this.dataSource.getRepository(
-      GlPostingQueueTypeOrmEntity,
-    );
-
-    await queueRepo.save(
-      queueRepo.create({
-        sourceType: 'payroll',
-        sourceId: run.id,
-        sourceNumber: `PAYROLL-${run.year}-${String(run.month).padStart(2, '0')}`,
-        eventType: 'payroll_run',
-        amount: totalGross,
-        description: `Payroll ${run.month}/${run.year} — ${details.length} employees`,
-        suggestedLines: [
-          {
-            accountId: '',
-            accountCode: '5101',
-            accountName: 'Biaya Gaji Karyawan',
-            debit: totalGross,
-            credit: 0,
-            description: `Gaji karyawan periode ${run.month}/${run.year}`,
-          },
-          {
-            accountId: '',
-            accountCode: '5102',
-            accountName: 'Biaya BPJS Perusahaan',
-            debit: totalBpjsEmployer,
-            credit: 0,
-            description: 'Biaya BPJS perusahaan',
-          },
-          {
-            accountId: '',
-            accountCode: '2300',
-            accountName: 'Hutang BPJS',
-            debit: 0,
-            credit: totalBpjsEmployee + totalBpjsEmployer,
-            description: 'Hutang BPJS (karyawan + perusahaan)',
-          },
-          {
-            accountId: '',
-            accountCode: '2310',
-            accountName: 'Hutang PPh 21',
-            debit: 0,
-            credit: totalPph21,
-            description: 'Hutang PPh 21',
-          },
-          {
-            accountId: '',
-            accountCode: '1100',
-            accountName: 'Kas & Bank',
-            debit: 0,
-            credit: totalNet,
-            description: 'Pembayaran bersih gaji karyawan',
-          },
-        ],
-        status: 'pending',
-      }),
-    );
+    await this.financeAdapter.recordPayrollGl(run, details);
   }
 }

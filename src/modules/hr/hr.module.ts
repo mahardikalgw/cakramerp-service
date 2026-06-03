@@ -3,8 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HrController } from './infrastructure/http/controllers/hr.controller';
 import { FinanceModule } from '../finance/finance.module';
 import { UserModule } from '../user/user.module';
-
-// Infrastructure entities
 import { EmployeeTypeOrmEntity } from './infrastructure/entities/employee-typeorm.entity';
 import { EmployeeDocumentTypeOrmEntity } from './infrastructure/entities/employee-document-typeorm.entity';
 import { EmployeeHistoryTypeOrmEntity } from './infrastructure/entities/employee-history-typeorm.entity';
@@ -53,6 +51,9 @@ import { BpjsReportService } from './application/services/bpjs-report.service';
 import { ThrService } from './application/services/thr.service';
 import { DepartmentService } from './application/services/department.service';
 import { PositionService } from './application/services/position.service';
+import { HrFinanceAdapter } from './application/adapters/hr-finance.adapter';
+import { HrUserProvisioningAdapter } from './application/adapters/hr-user-provisioning.adapter';
+import { USER_PROVISIONING_PORT } from '../../shared/kernel/domain/ports/user-provisioning.port';
 
 @Module({
   imports: [
@@ -91,12 +92,19 @@ import { PositionService } from './application/services/position.service';
     { provide: THR_SERVICE, useClass: ThrService },
     { provide: DEPARTMENT_SERVICE, useClass: DepartmentService },
     { provide: POSITION_SERVICE, useClass: PositionService },
+    HrFinanceAdapter,
+    HrUserProvisioningAdapter,
+    {
+      provide: USER_PROVISIONING_PORT,
+      useExisting: HrUserProvisioningAdapter,
+    },
   ],
   exports: [
     EMPLOYEE_SERVICE,
     PAYROLL_SERVICE,
     DEPARTMENT_SERVICE,
     POSITION_SERVICE,
+    USER_PROVISIONING_PORT,
   ],
 })
 export class HrModule {}

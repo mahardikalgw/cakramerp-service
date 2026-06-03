@@ -101,6 +101,10 @@ import { MaintenanceLogTypeOrmEntity } from './infrastructure/entities/maintenan
     // Jobs
     EquipmentMaintenanceAlertJob,
   ],
-  exports: [STOCK_MOVEMENT_SERVICE],
+  exports: [
+    STOCK_MOVEMENT_SERVICE,
+    GOODS_RECEIPT_SERVICE,
+    STOCK_ISSUANCE_SERVICE,
+  ],
 })
 export class WarehouseModule {}

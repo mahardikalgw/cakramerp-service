@@ -29,7 +29,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
       order: { scheduledDate: 'ASC' },
     });
     return {
-      data: entities.map(this.toDomain),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page: options?.page ?? 1,
         limit: options?.limit ?? 20,
@@ -46,7 +46,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
       where: [{ status: 'scheduled' }, { status: 'overdue' }],
       order: { scheduledDate: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByDateRange(start: Date, end: Date): Promise<APPayment[]> {
@@ -54,7 +54,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
       where: { scheduledDate: start },
       order: { scheduledDate: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async save(entity: APPayment): Promise<APPayment> {
@@ -63,8 +63,8 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
   }
 
   async saveMany(entities: APPayment[]): Promise<APPayment[]> {
-    const saved = await this.repo.save(entities.map(this.toEntity));
-    return saved.map(this.toDomain);
+    const saved = await this.repo.save(entities.map((e) => this.toEntity(e)));
+    return saved.map((e) => this.toDomain(e));
   }
 
   async delete(id: string): Promise<boolean> {

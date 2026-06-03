@@ -47,7 +47,7 @@ export class EquipmentTypeOrmRepository implements EquipmentRepositoryPort {
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data: data.map(this.mapToEquipment), total };
+    return { data: data.map((e) => this.mapToEquipment(e)), total };
   }
 
   async findById(id: string): Promise<Equipment | null> {
@@ -121,7 +121,7 @@ export class EquipmentTypeOrmRepository implements EquipmentRepositoryPort {
       order: { nextDueDate: 'ASC' },
     });
 
-    return schedules.map(this.mapToMaintenanceSchedule);
+    return schedules.map((s) => this.mapToMaintenanceSchedule(s));
   }
 
   async getMaintenanceLogs(equipmentId: string): Promise<MaintenanceLog[]> {
@@ -130,7 +130,7 @@ export class EquipmentTypeOrmRepository implements EquipmentRepositoryPort {
       order: { maintenanceDate: 'DESC' },
     });
 
-    return logs.map(this.mapToMaintenanceLog);
+    return logs.map((l) => this.mapToMaintenanceLog(l));
   }
 
   async updateSchedulesAfterMaintenance(
@@ -178,7 +178,7 @@ export class EquipmentTypeOrmRepository implements EquipmentRepositoryPort {
       .where('eq.id IN (:...ids)', { ids: equipmentIds })
       .getMany();
 
-    return equipments.map(this.mapToEquipment);
+    return equipments.map((e) => this.mapToEquipment(e));
   }
 
   private mapToEquipment(entity: EquipmentUnitTypeOrmEntity): Equipment {

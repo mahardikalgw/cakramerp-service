@@ -5,8 +5,8 @@ import type { GoodsReceiptRepositoryPort } from '../../domain/repositories/goods
 import { STOCK_MOVEMENT_SERVICE } from '../ports/stock-movement-service.port';
 import type { StockMovementServicePort } from '../ports/stock-movement-service.port';
 import type { GoodsReceiptServicePort } from '../ports/goods-receipt-service.port';
-import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
-import type { GlPostingQueueServicePort } from '../../../finance/application/ports/gl-posting-queue-service.port';
+import { GL_POSTING_QUEUE_PORT } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
+import type { GlPostingQueuePort } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
 
 export interface CreateGoodsReceiptDto {
   poId?: string;
@@ -33,8 +33,8 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
     private readonly goodsReceiptRepo: GoodsReceiptRepositoryPort,
     @Inject(STOCK_MOVEMENT_SERVICE)
     private readonly stockMovementService: StockMovementServicePort,
-    @Inject(GL_POSTING_QUEUE_SERVICE)
-    private readonly glPostingQueueService: GlPostingQueueServicePort,
+    @Inject(GL_POSTING_QUEUE_PORT)
+    private readonly glPostingQueue: GlPostingQueuePort,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -106,7 +106,7 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
 
     // Create GL Posting Queue entry (DR Inventory 1300 / CR GRNI 1310)
     if (totalGrnAmount > 0) {
-      await this.glPostingQueueService.createEntry({
+      await this.glPostingQueue.createEntry({
         sourceType: 'goods_receipt',
         sourceId: savedReceipt.id,
         sourceNumber: grnNumber,

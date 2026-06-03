@@ -55,7 +55,7 @@ export class UserController {
   ) {
     const result = await this.userService.findAll(page, limit);
     return {
-      data: result.data.map(UserResponseDto.fromDomain),
+      data: result.data.map((u) => UserResponseDto.fromDomain(u)),
       meta: result.meta,
     };
   }

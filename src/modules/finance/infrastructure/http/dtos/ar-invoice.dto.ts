@@ -4,6 +4,7 @@ import {
   IsArray,
   ValidateNested,
   IsNumber,
+  IsInt,
   Min,
   IsBoolean,
 } from 'class-validator';
@@ -13,8 +14,8 @@ class ARInvoiceLineDto {
   @IsString()
   description: string;
 
-  @IsNumber()
-  @Min(0)
+  @IsInt()
+  @Min(1)
   quantity: number;
 
   @IsNumber()

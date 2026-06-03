@@ -22,7 +22,7 @@ export class AuditLogResponseDto {
     dto.module = auditLog.module;
     dto.recordId = auditLog.recordId;
     dto.ipAddress = auditLog.ipAddress;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     dto.payload = auditLog.payload;
     dto.timestamp = auditLog.timestamp;
     dto.createdAt = auditLog.createdAt;

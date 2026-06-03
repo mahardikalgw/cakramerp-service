@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource, Between } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { JournalEntryTypeOrmEntity } from '../entities/journal-entry-typeorm.entity';
 import { JournalEntry } from '../../domain/entities/journal-entry.entity';
 import { JournalEntryRepositoryPort } from '../../domain/repositories/finance-repository.port';
-import { Decimal } from 'decimal.js';
 
 @Injectable()
 export class JournalEntryTypeOrmRepository implements JournalEntryRepositoryPort {
@@ -49,7 +48,7 @@ export class JournalEntryTypeOrmRepository implements JournalEntryRepositoryPort
     qb.skip((page - 1) * limit).take(limit);
 
     const [entities, total] = await qb.getManyAndCount();
-    return { data: entities.map(this.toDomain), total };
+    return { data: entities.map((e) => this.toDomain(e)), total };
   }
 
   async save(entry: JournalEntry): Promise<JournalEntry> {

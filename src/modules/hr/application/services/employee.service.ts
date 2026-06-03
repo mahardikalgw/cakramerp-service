@@ -6,12 +6,11 @@ import { DEPARTMENT_REPOSITORY } from '../../domain/repositories/department-repo
 import type { DepartmentRepositoryPort } from '../../domain/repositories/department-repository.port';
 import { POSITION_REPOSITORY } from '../../domain/repositories/position-repository.port';
 import type { PositionRepositoryPort } from '../../domain/repositories/position-repository.port';
-import { USER_SERVICE } from '../../../user/application/ports/user-service.port';
-import type { UserServicePort } from '../../../user/application/ports/user-service.port';
+import { USER_PROVISIONING_PORT } from '../../../../shared/kernel/domain/ports/user-provisioning.port';
+import type { UserProvisioningPort } from '../../../../shared/kernel/domain/ports/user-provisioning.port';
 import type { EmployeeServicePort } from '../ports/employee-service.port';
 import { CreateEmployeeCommand } from '../commands/create-employee.command';
 import { UpdateEmployeeCommand } from '../commands/update-employee.command';
-import { CreateUserCommand } from '../../../user/application/commands/create-user.command';
 
 export interface UploadDocumentDto {
   type: string;
@@ -37,8 +36,8 @@ export class EmployeeService implements EmployeeServicePort {
     private readonly departmentRepo: DepartmentRepositoryPort,
     @Inject(POSITION_REPOSITORY)
     private readonly positionRepo: PositionRepositoryPort,
-    @Inject(USER_SERVICE)
-    private readonly userService: UserServicePort,
+    @Inject(USER_PROVISIONING_PORT)
+    private readonly userProvisioning: UserProvisioningPort,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -104,34 +103,17 @@ export class EmployeeService implements EmployeeServicePort {
     // Auto-create user account for the employee and link it
     if (command.email) {
       try {
-        const defaultPassword = this.generateDefaultPassword(
-          command.firstName,
-          command.lastName,
-        );
-        const createUserCommand = new CreateUserCommand(
-          command.email,
-          defaultPassword,
-          command.firstName,
-          command.lastName,
-          [],
-          'active',
-        );
-        const user = await this.userService.create(createUserCommand);
+        const user = await this.userProvisioning.createUser({
+          email: command.email,
+          firstName: command.firstName,
+          lastName: command.lastName,
+          roles: [],
+          status: 'active',
+        });
         // Link user to employee
-        await this.dataSource.query(
-          `UPDATE users SET employee_id = $1 WHERE id = $2`,
-          [employee.id, user.id],
-        );
-      } catch (error) {
-        // If user already exists, try to link existing user to this employee
-        try {
-          await this.dataSource.query(
-            `UPDATE users SET employee_id = $1 WHERE email = $2 AND employee_id IS NULL`,
-            [employee.id, command.email],
-          );
-        } catch {
-          // silently skip if linking fails
-        }
+        await this.userProvisioning.linkUserToEmployee(user.id, employee.id);
+      } catch {
+        // silently skip if linking fails
       }
     }
 
@@ -200,25 +182,16 @@ export class EmployeeService implements EmployeeServicePort {
           command.lastName ??
           employee.fullName?.split(' ').slice(1).join(' ') ??
           '';
-        const defaultPassword = this.generateDefaultPassword(
+        const user = await this.userProvisioning.createUser({
+          email: newEmail,
           firstName,
           lastName,
-        );
-        const createUserCommand = new CreateUserCommand(
-          newEmail,
-          defaultPassword,
-          firstName,
-          lastName,
-          [],
-          'active',
-        );
-        const user = await this.userService.create(createUserCommand);
+          roles: [],
+          status: 'active',
+        });
         // Link user to employee
-        await this.dataSource.query(
-          `UPDATE users SET employee_id = $1 WHERE id = $2`,
-          [id, user.id],
-        );
-      } catch (error) {
+        await this.userProvisioning.linkUserToEmployee(user.id, id);
+      } catch {
         // If user already exists, try to link existing user to this employee
         try {
           await this.dataSource.query(
@@ -283,11 +256,5 @@ export class EmployeeService implements EmployeeServicePort {
     if (!lastNumber) return `${prefix}0001`;
     const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1;
     return `${prefix}${seq.toString().padStart(4, '0')}`;
-  }
-
-  private generateDefaultPassword(firstName: string, lastName: string): string {
-    const timestamp = Date.now().toString().slice(-4);
-    const name = (firstName || 'user').toLowerCase().replace(/[^a-z]/g, '');
-    return `${name.charAt(0).toUpperCase()}${name.slice(1)}@${timestamp}`;
   }
 }

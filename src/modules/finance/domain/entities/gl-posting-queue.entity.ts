@@ -7,7 +7,11 @@ export type GlPostingSourceType =
   | 'spending'
   | 'goods_receipt'
   | 'stock_issuance'
-  | 'stock_opname';
+  | 'stock_opname'
+  | 'purchase_order'
+  | 'purchase_return'
+  | 'sales_order'
+  | 'sales_return';
 export type GlPostingEventType =
   | 'invoice_issued'
   | 'payment_received'
@@ -18,7 +22,11 @@ export type GlPostingEventType =
   | 'spending_recorded'
   | 'grn_received'
   | 'stock_issued'
-  | 'stock_adjusted';
+  | 'stock_adjusted'
+  | 'po_created'
+  | 'purchase_returned'
+  | 'so_created'
+  | 'sales_returned';
 
 export interface SuggestedLine {
   accountId: string;
@@ -47,6 +55,7 @@ export class GlPostingQueue {
   invoiceId?: string;
   billingLetterId?: string;
   warehouseId?: string;
+  spendingId?: string;
   createdAt: Date;
   updatedAt: Date;
 

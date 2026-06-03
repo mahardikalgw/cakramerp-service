@@ -86,6 +86,7 @@ export class GlPostingQueueTypeOrmRepository implements GlPostingQueueRepository
       invoiceId: entity.invoiceId ?? undefined,
       billingLetterId: entity.billingLetterId ?? undefined,
       warehouseId: entity.warehouseId ?? undefined,
+      spendingId: entity.spendingId ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });

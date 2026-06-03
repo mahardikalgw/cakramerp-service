@@ -27,7 +27,6 @@ export class AuditLogService implements AuditLogServicePort {
   }
 
   async findAll(options?: any): Promise<FindResult<AuditLog>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.auditLogRepository.findAll(options);
   }
 
@@ -35,7 +34,6 @@ export class AuditLogService implements AuditLogServicePort {
     userId: string,
     options?: any,
   ): Promise<FindResult<AuditLog>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.auditLogRepository.findByUserId(userId, options);
   }
 
@@ -43,7 +41,6 @@ export class AuditLogService implements AuditLogServicePort {
     module: string,
     options?: any,
   ): Promise<FindResult<AuditLog>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.auditLogRepository.findByModule(module, options);
   }
 
@@ -51,7 +48,6 @@ export class AuditLogService implements AuditLogServicePort {
     action: string,
     options?: any,
   ): Promise<FindResult<AuditLog>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.auditLogRepository.findByAction(action, options);
   }
 
@@ -60,7 +56,6 @@ export class AuditLogService implements AuditLogServicePort {
     endDate: Date,
     options?: any,
   ): Promise<FindResult<AuditLog>> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.auditLogRepository.findByDateRange(startDate, endDate, options);
   }
 

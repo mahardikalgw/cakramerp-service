@@ -44,7 +44,7 @@ export class CustomerController {
       limit: limit ? parseInt(limit, 10) : undefined,
     });
     return {
-      data: result.data.map(CustomerResponseDto.fromDomain),
+      data: result.data.map((c) => CustomerResponseDto.fromDomain(c)),
       total: result.total,
     };
   }

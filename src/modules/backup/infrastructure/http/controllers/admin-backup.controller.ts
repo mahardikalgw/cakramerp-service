@@ -33,7 +33,7 @@ export class AdminBackupController {
   async getAllBackupJobs() {
     const backupJobs = await this.backupService.getAllBackupJobs();
     return {
-      data: backupJobs.map(BackupJobResponseDto.fromDomain),
+      data: backupJobs.map((job) => BackupJobResponseDto.fromDomain(job)),
     };
   }
 

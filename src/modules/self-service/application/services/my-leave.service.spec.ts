@@ -217,7 +217,7 @@ describe('MyLeaveService', () => {
         status: 'cancelled',
       });
 
-      const result = await service.cancelLeave('emp-1', 'req-1');
+      await service.cancelLeave('emp-1', 'req-1');
 
       // Balance should NOT be restored since it was never deducted (pending status)
       expect(mockLeaveBalanceRepo.update).not.toHaveBeenCalled();

@@ -13,6 +13,8 @@ import { BackupModule } from './modules/backup';
 import { FinanceModule } from './modules/finance/finance.module';
 import { HrModule } from './modules/hr/hr.module';
 import { WarehouseModule } from './modules/warehouse/warehouse.module';
+import { PurchasingModule } from './modules/purchasing/purchasing.module';
+import { SalesModule } from './modules/sales/sales.module';
 import { SelfServiceModule } from './modules/self-service/self-service.module';
 import { CustomerModule } from './modules/customer';
 import { SupplierModule } from './modules/supplier';
@@ -32,6 +34,8 @@ import { AssetModule } from './modules/asset/asset.module';
     FinanceModule,
     HrModule,
     WarehouseModule,
+    PurchasingModule,
+    SalesModule,
     SelfServiceModule,
     CustomerModule,
     SupplierModule,

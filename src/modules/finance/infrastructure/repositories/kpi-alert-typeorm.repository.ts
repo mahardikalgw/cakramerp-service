@@ -14,7 +14,7 @@ export class KpiAlertTypeOrmRepository implements KpiAlertRepositoryPort {
 
   async findAll(): Promise<KpiAlert[]> {
     const entities = await this.repo.find({ order: { createdAt: 'DESC' } });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findUnread(): Promise<KpiAlert[]> {
@@ -22,7 +22,7 @@ export class KpiAlertTypeOrmRepository implements KpiAlertRepositoryPort {
       where: { status: 'unread' },
       order: { createdAt: 'DESC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByType(type: string, since: Date): Promise<KpiAlert[]> {
@@ -30,7 +30,7 @@ export class KpiAlertTypeOrmRepository implements KpiAlertRepositoryPort {
       where: { type, createdAt: MoreThan(since), status: Not('dismissed') },
       order: { createdAt: 'DESC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findById(id: string): Promise<KpiAlert | null> {

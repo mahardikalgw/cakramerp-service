@@ -1,5 +1,4 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
-import { Decimal } from 'decimal.js';
 
 export type JournalEntryStatus =
   | 'draft'

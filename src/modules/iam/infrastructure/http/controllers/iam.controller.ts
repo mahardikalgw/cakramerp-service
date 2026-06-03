@@ -59,7 +59,7 @@ export class IAMController {
   ) {
     const result = await this.roleService.findAll(page, limit);
     return {
-      data: result.data.map(RoleResponseDto.fromDomain),
+      data: result.data.map((r) => RoleResponseDto.fromDomain(r)),
       meta: result.meta,
     };
   }
@@ -99,7 +99,7 @@ export class IAMController {
   ) {
     const result = await this.permissionService.findAll(page, limit);
     return {
-      data: result.data.map(PermissionResponseDto.fromDomain),
+      data: result.data.map((p) => PermissionResponseDto.fromDomain(p)),
       meta: result.meta,
     };
   }

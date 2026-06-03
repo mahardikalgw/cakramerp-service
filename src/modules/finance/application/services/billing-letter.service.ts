@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-posting-queue-typeorm.entity';
 import { SUBSIDIARY_LEDGER_SERVICE } from '../ports/subsidiary-ledger-service.port';
@@ -426,7 +421,10 @@ export class BillingLetterService {
     return this.findById(id);
   }
 
-  private validateInvoiceType(type: string): { invoiceTable: string; dateField: string } {
+  private validateInvoiceType(type: string): {
+    invoiceTable: string;
+    dateField: string;
+  } {
     if (type === 'receivable') {
       return { invoiceTable: 'ar_invoices', dateField: 'issue_date' };
     }

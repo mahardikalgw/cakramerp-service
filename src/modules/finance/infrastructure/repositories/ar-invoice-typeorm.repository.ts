@@ -29,7 +29,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
       order: { issueDate: 'DESC' },
     });
     return {
-      data: entities.map(this.toDomain),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page: options?.page ?? 1,
         limit: options?.limit ?? 20,
@@ -46,7 +46,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
       where: { status: Not('paid') },
       order: { dueDate: 'ASC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByClientId(clientId: string): Promise<ARInvoice[]> {
@@ -54,7 +54,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
       where: { clientId },
       order: { issueDate: 'DESC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByDateRange(start: Date, end: Date): Promise<ARInvoice[]> {
@@ -62,7 +62,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
       where: { issueDate: start, dueDate: LessThan(end) },
       order: { issueDate: 'DESC' },
     });
-    return entities.map(this.toDomain);
+    return entities.map((e) => this.toDomain(e));
   }
 
   async save(entity: ARInvoice): Promise<ARInvoice> {
@@ -71,8 +71,8 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
   }
 
   async saveMany(entities: ARInvoice[]): Promise<ARInvoice[]> {
-    const saved = await this.repo.save(entities.map(this.toEntity));
-    return saved.map(this.toDomain);
+    const saved = await this.repo.save(entities.map((e) => this.toEntity(e)));
+    return saved.map((e) => this.toDomain(e));
   }
 
   async delete(id: string): Promise<boolean> {

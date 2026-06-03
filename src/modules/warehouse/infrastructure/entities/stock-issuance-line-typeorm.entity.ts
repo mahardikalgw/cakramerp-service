@@ -12,7 +12,7 @@ export class StockIssuanceLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   itemName: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   quantity: number;
 
   @Column({ type: 'varchar', length: 50 })

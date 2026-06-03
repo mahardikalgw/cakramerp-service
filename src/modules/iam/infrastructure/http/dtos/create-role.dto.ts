@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsArray } from 'class-validator';
 
 export class CreateRoleHttpDto {
   @IsString()

@@ -17,6 +17,8 @@ import { SubsidiaryLedgerService } from './application/services/subsidiary-ledge
 import { BillingLetterService } from './application/services/billing-letter.service';
 import { SpendingService } from './application/services/spending.service';
 import { KpiAlertCheckJob } from './application/jobs/kpi-alert-check.job';
+import { GlPostingQueueAdapter } from './application/adapters/gl-posting-queue.adapter';
+import { GL_POSTING_QUEUE_PORT } from '../../shared/kernel/domain/ports/gl-posting-queue.port';
 import { AccountTypeOrmEntity } from './infrastructure/entities/account-typeorm.entity';
 import { JournalEntryTypeOrmEntity } from './infrastructure/entities/journal-entry-typeorm.entity';
 import { JournalEntryLineTypeOrmEntity } from './infrastructure/entities/journal-entry-line-typeorm.entity';
@@ -205,6 +207,10 @@ import { SUBSIDIARY_LEDGER_SERVICE } from './application/ports/subsidiary-ledger
       useClass: GlPostingQueueService,
     },
     {
+      provide: GL_POSTING_QUEUE_PORT,
+      useClass: GlPostingQueueAdapter,
+    },
+    {
       provide: SUBSIDIARY_LEDGER_SERVICE,
       useClass: SubsidiaryLedgerService,
     },
@@ -217,7 +223,10 @@ import { SUBSIDIARY_LEDGER_SERVICE } from './application/ports/subsidiary-ledger
     JOURNAL_ENTRY_SERVICE,
     ACCOUNT_REPOSITORY,
     GL_POSTING_QUEUE_SERVICE,
+    GL_POSTING_QUEUE_PORT,
     SUBSIDIARY_LEDGER_SERVICE,
+    AP_INVOICE_SERVICE,
+    AR_INVOICE_SERVICE,
   ],
 })
 export class FinanceModule {}

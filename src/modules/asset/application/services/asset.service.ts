@@ -6,17 +6,15 @@ import {
 } from '@nestjs/common';
 import { ASSET_REPOSITORY } from '../../domain/repositories/asset-repository.port';
 import type { AssetRepositoryPort } from '../../domain/repositories/asset-repository.port';
-import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
-import type { GlPostingQueueServicePort } from '../../../finance/application/ports/gl-posting-queue-service.port';
 import type { AssetServicePort } from '../ports/asset-service.port';
+import { AssetFinanceAdapter } from '../adapters/asset-finance.adapter';
 
 @Injectable()
 export class AssetService implements AssetServicePort {
   constructor(
     @Inject(ASSET_REPOSITORY)
     private readonly assetRepo: AssetRepositoryPort,
-    @Inject(GL_POSTING_QUEUE_SERVICE)
-    private readonly glPostingQueueService: GlPostingQueueServicePort,
+    private readonly assetFinanceAdapter: AssetFinanceAdapter,
   ) {}
 
   async findAll(filters?: any): Promise<{ data: any[]; total: number }> {
@@ -32,10 +30,8 @@ export class AssetService implements AssetServicePort {
   async create(data: any): Promise<any> {
     const assetNumber = await this.generateAssetNumber();
 
-    // Set initial book value = acquisition cost
     const currentBookValue = data.acquisitionCost;
 
-    // Default declining balance rate if not provided: 2 / useful life in years
     let decliningBalanceRate = data.decliningBalanceRate;
     if (
       data.depreciationMethod === 'declining_balance' &&
@@ -45,7 +41,6 @@ export class AssetService implements AssetServicePort {
       decliningBalanceRate = usefulLifeYears > 0 ? 2 / usefulLifeYears : 0;
     }
 
-    // Validate unit production method has total units
     if (
       data.depreciationMethod === 'unit_production' &&
       !data.totalEstimatedUnits
@@ -83,7 +78,6 @@ export class AssetService implements AssetServicePort {
     const asset = await this.assetRepo.findById(id);
     if (!asset) throw new NotFoundException('Asset not found');
 
-    // Recalculate declining balance rate if method changed
     if (
       data.depreciationMethod === 'declining_balance' &&
       !data.decliningBalanceRate
@@ -157,7 +151,6 @@ export class AssetService implements AssetServicePort {
         );
     }
 
-    // Ensure we don't depreciate below salvage value
     const maxDepreciation =
       Number(asset.currentBookValue) - Number(asset.salvageValue);
     depreciationAmount = Math.min(depreciationAmount, maxDepreciation);
@@ -174,7 +167,6 @@ export class AssetService implements AssetServicePort {
     const newBookValue = Number(asset.currentBookValue) - depreciationAmount;
     const today = new Date();
 
-    // Record depreciation entry
     const depreciationEntry = await this.assetRepo.createDepreciation({
       assetId,
       periodDate: today,
@@ -182,10 +174,9 @@ export class AssetService implements AssetServicePort {
       accumulatedDepreciation: newAccumulatedDepreciation,
       bookValueAfter: newBookValue,
       methodUsed: asset.depreciationMethod,
-      unitsProduced: unitsProduced ?? null,
+      unitsProduced: unitsProduced ?? undefined,
     });
 
-    // Update asset
     const updateData: any = {
       currentBookValue: newBookValue,
       accumulatedDepreciation: newAccumulatedDepreciation,
@@ -197,49 +188,30 @@ export class AssetService implements AssetServicePort {
         Number(asset.unitsProducedToDate) + unitsProduced;
     }
 
-    // Check if fully depreciated
     if (newBookValue <= Number(asset.salvageValue)) {
       updateData.status = 'fully_depreciated';
     }
 
     await this.assetRepo.update(assetId, updateData);
 
-    // Auto-create GL Posting Queue entry for this depreciation
     const periodLabel = today.toLocaleDateString('id-ID', {
       month: 'long',
       year: 'numeric',
     });
-    await this.glPostingQueueService.createEntry({
-      sourceType: 'asset_depreciation',
-      sourceId: assetId,
-      sourceNumber: asset.assetNumber,
-      eventType: 'depreciation',
-      amount: depreciationAmount,
-      description: `Depreciation for ${asset.name} — ${periodLabel}`,
-      suggestedLines: [
-        {
-          accountId: '',
-          accountCode: '6xxx',
-          accountName: 'Depreciation Expense',
-          debit: depreciationAmount,
-          credit: 0,
-          description: `Depreciation - ${asset.name}`,
-        },
-        {
-          accountId: '',
-          accountCode: '1xxx',
-          accountName: 'Accumulated Depreciation',
-          debit: 0,
-          credit: depreciationAmount,
-          description: `Accumulated Depreciation - ${asset.name}`,
-        },
-      ],
-    });
+    await this.assetFinanceAdapter.recordDepreciationGl(
+      assetId,
+      asset.assetNumber,
+      asset.name,
+      depreciationAmount,
+      periodLabel,
+    );
 
     return depreciationEntry;
   }
 
-  async runScheduledDepreciation(schedule: string): Promise<any> {
+  async runScheduledDepreciation(
+    schedule: string,
+  ): Promise<{ processed: number; skipped: number; errors: string[] }> {
     const today = new Date();
     const assets = await this.assetRepo.findAssetsDueForDepreciation(
       schedule,
@@ -250,21 +222,20 @@ export class AssetService implements AssetServicePort {
 
     for (const asset of assets) {
       try {
-        // Skip unit production — requires manual input
         if (asset.depreciationMethod === 'unit_production') {
           results.skipped++;
           continue;
         }
 
-        // Check if depreciation is due based on schedule
         if (this.isDepreciationDue(asset, schedule, today)) {
           await this.calculateDepreciation(asset.id);
           results.processed++;
         } else {
           results.skipped++;
         }
-      } catch (error: any) {
-        results.errors.push(`${asset.assetNumber}: ${error.message}`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        results.errors.push(`${asset.assetNumber}: ${message}`);
         results.skipped++;
       }
     }
@@ -272,15 +243,11 @@ export class AssetService implements AssetServicePort {
     return results;
   }
 
-  // ─── Depreciation Calculation Methods ──────────────────────────────────────
-
   private calculateStraightLine(asset: any): number {
-    // (Cost - Salvage) / Useful Life Months
     const depreciableAmount =
       Number(asset.acquisitionCost) - Number(asset.salvageValue);
     const monthlyDepreciation = depreciableAmount / asset.usefulLifeMonths;
 
-    // Adjust for schedule
     return this.adjustForSchedule(
       monthlyDepreciation,
       asset.depreciationSchedule,
@@ -288,7 +255,6 @@ export class AssetService implements AssetServicePort {
   }
 
   private calculateDecliningBalance(asset: any): number {
-    // Book Value * Rate / 12 (monthly) — rate is annual
     const rate =
       Number(asset.decliningBalanceRate) || 2 / (asset.usefulLifeMonths / 12);
     const annualDepreciation = Number(asset.currentBookValue) * rate;
@@ -301,7 +267,6 @@ export class AssetService implements AssetServicePort {
   }
 
   private calculateUnitProduction(asset: any, unitsProduced: number): number {
-    // (Cost - Salvage) * (Units Produced / Total Estimated Units)
     const depreciableAmount =
       Number(asset.acquisitionCost) - Number(asset.salvageValue);
     const totalUnits = Number(asset.totalEstimatedUnits);

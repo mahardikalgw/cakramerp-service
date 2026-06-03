@@ -163,7 +163,7 @@ describe('CustomerService', () => {
       };
       const command = new UpdateCustomerCommand(undefined, 'new@test.com');
       mockRepo.findById.mockResolvedValue(entity);
-      mockRepo.save.mockImplementation(async (e) => e);
+      mockRepo.save.mockImplementation((e) => e);
 
       const result = await service.update('1', command);
 
@@ -186,7 +186,7 @@ describe('CustomerService', () => {
         'inactive',
       );
       mockRepo.findById.mockResolvedValue(entity);
-      mockRepo.save.mockImplementation(async (e) => e);
+      mockRepo.save.mockImplementation((e) => e);
 
       const result = await service.update('1', command);
 

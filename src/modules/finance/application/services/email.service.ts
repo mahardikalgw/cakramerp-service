@@ -15,6 +15,7 @@ export class EmailService {
    * In production, integrate with an SMTP provider (e.g., nodemailer, SendGrid, AWS SES).
    * For now, this logs the email and can be extended with actual transport.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async send(payload: EmailPayload): Promise<void> {
     // TODO: Replace with actual SMTP/email transport in production
     this.logger.log(

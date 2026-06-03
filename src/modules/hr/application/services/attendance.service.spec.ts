@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port';
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';

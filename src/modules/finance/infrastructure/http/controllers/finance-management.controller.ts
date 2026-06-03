@@ -202,7 +202,9 @@ export class FinanceManagementController {
         if (rows.length > 0) {
           entry.sourceNumber = rows[0][field];
         }
-      } catch {}
+      } catch {
+        // ignore errors
+      }
     }
 
     return result;
@@ -218,7 +220,9 @@ export class FinanceManagementController {
       if (rows.length > 0) {
         return `${rows[0].first_name} ${rows[0].last_name}`.trim();
       }
-    } catch {}
+    } catch {
+      // ignore errors
+    }
     return userId;
   }
 

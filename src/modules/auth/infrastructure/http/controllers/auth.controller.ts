@@ -20,7 +20,6 @@ import { TokenResponseDto } from '../dtos/token-response.dto';
 import { JwtRefreshGuard } from '../../guards/jwt-refresh.guard';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { CurrentUser } from '../../decorators/current-user.decorator';
-import type { JwtPayload } from '../../strategies/jwt.strategy';
 
 @Controller('auth')
 export class AuthController {

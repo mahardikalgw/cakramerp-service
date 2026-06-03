@@ -28,7 +28,7 @@ export class ItemService implements ItemServicePort {
     limit?: number;
   }): Promise<{ data: ItemResponseDto[]; total: number }> {
     const { data, total } = await this.repo.findAll(filters);
-    return { data: data.map(this.toResponse), total };
+    return { data: data.map((i) => this.toResponse(i)), total };
   }
 
   async findById(id: string): Promise<ItemResponseDto | null> {

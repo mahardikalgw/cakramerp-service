@@ -12,13 +12,13 @@ export class StockOpnameLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   itemName: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   systemQty: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   actualQty: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   varianceQty: number;
 
   @Column({ type: 'varchar', length: 50 })

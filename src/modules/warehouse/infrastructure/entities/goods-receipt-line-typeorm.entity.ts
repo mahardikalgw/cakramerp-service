@@ -12,13 +12,13 @@ export class GoodsReceiptLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   itemName: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   poQty: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
+  @Column({ type: 'integer' })
   receivedQty: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
+  @Column({ type: 'integer', default: 0 })
   discrepancyQty: number;
 
   @Column({ type: 'varchar', length: 50 })

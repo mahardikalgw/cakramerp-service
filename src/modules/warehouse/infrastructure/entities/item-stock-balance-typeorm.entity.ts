@@ -9,7 +9,7 @@ export class ItemStockBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
   warehouseId: string;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
+  @Column({ type: 'integer', default: 0 })
   quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })

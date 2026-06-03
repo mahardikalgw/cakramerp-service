@@ -1,8 +1,7 @@
+import { Decimal } from 'decimal.js';
 import { ARInvoiceServicePort } from '../ports/ar-invoice-service.port';
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
-import { Decimal } from 'decimal.js';
 import {
-  AR_INVOICE_REPOSITORY,
   AR_INVOICE_LINE_REPOSITORY,
   JOURNAL_ENTRY_REPOSITORY,
   JOURNAL_ENTRY_LINE_REPOSITORY,
@@ -467,7 +466,9 @@ export class ARInvoiceService implements ARInvoiceServicePort {
         glPostingQueueId = pq.id;
         glPostingQueueStatus = pq.status;
       }
-    } catch {}
+    } catch {
+      // ignore GL posting queue query errors
+    }
 
     if (journalEntryId) {
       try {
@@ -479,7 +480,9 @@ export class ARInvoiceService implements ARInvoiceServicePort {
           journalEntryNumber = rows[0].entry_number;
           journalEntryStatus = rows[0].status;
         }
-      } catch {}
+      } catch {
+        // ignore GL posting queue query errors
+      }
     }
 
     return {
