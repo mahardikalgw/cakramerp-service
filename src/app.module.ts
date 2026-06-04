@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -21,6 +22,7 @@ import { CustomerModule } from './modules/customer';
 import { SupplierModule } from './modules/supplier';
 import { AssetModule } from './modules/asset/asset.module';
 import { UserThrottlerGuard } from './modules/shared/infrastructure/guards/user-throttler.guard';
+import { HealthController } from './modules/shared/infrastructure/controllers/health.controller';
 
 /**
  * Named throttler tiers used across the API.
@@ -34,6 +36,21 @@ import { UserThrottlerGuard } from './modules/shared/infrastructure/guards/user-
  */
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? { target: 'pino-pretty', options: { colorize: true } }
+            : undefined,
+        level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
+        autoLogging: true,
+        serializers: {
+          req(req) {
+            return { method: req.method, url: req.url };
+          },
+        },
+      },
+    }),
     ThrottlerModule.forRoot([
       { name: 'short', ttl: 1_000, limit: 20 },
       { name: 'medium', ttl: 10_000, limit: 60 },
@@ -58,7 +75,7 @@ import { UserThrottlerGuard } from './modules/shared/infrastructure/guards/user-
     SupplierModule,
     AssetModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     {
