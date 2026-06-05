@@ -5,43 +5,43 @@ import { PurchaseReturnLineTypeOrmEntity } from './purchase-return-line-typeorm.
 @Entity('purchase_returns')
 export class PurchaseReturnTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  returnNumber: string;
+  declare returnNumber: string;
 
   @Column({ type: 'uuid', nullable: true })
-  purchaseOrderId: string;
+  declare purchaseOrderId: string;
 
   @Column({ type: 'uuid' })
-  supplierId: string;
+  declare supplierId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  supplierName: string;
+  declare supplierName: string;
 
   @Column({ type: 'date' })
-  returnDate: Date;
+  declare returnDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  totalAmount: number;
+  declare totalAmount: number;
 
   @Column({ type: 'text', nullable: true })
-  reason: string;
+  declare reason: string;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string;
+  declare approvedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date;
+  declare approvedAt: Date;
 
   @Column({ type: 'text', nullable: true })
-  rejectionReason: string;
+  declare rejectionReason: string;
 
   @Column({ type: 'uuid', nullable: true })
-  glPostingQueueId: string;
+  declare glPostingQueueId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 
   @OneToMany(
     () => PurchaseReturnLineTypeOrmEntity,

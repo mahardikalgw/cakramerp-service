@@ -4,17 +4,17 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('item_stock_balances')
 export class ItemStockBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'uuid' })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'integer', default: 0 })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  unitCost: number;
+  declare unitCost: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastMovementDate: Date;
+  declare lastMovementDate: Date;
 }

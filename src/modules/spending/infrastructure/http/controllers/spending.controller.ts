@@ -83,20 +83,14 @@ export class SpendingController {
 
   @Patch(':id/approve')
   @RequirePermissions('spending:approve')
-  async approveSpending(
-    @Param('id') id: string,
-    @Body() dto: { approverId: string },
-  ) {
-    return this.spendingService.approve(id, dto.approverId);
+  async approveSpending(@Param('id') id: string) {
+    return this.spendingService.approve(id);
   }
 
   @Patch(':id/reject')
   @RequirePermissions('spending:approve')
-  async rejectSpending(
-    @Param('id') id: string,
-    @Body() dto: { approverId: string; reason?: string },
-  ) {
-    return this.spendingService.reject(id, dto.approverId, dto.reason);
+  async rejectSpending(@Param('id') id: string) {
+    return this.spendingService.reject(id);
   }
 
   @Delete(':id')

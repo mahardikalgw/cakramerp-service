@@ -106,8 +106,8 @@ describe('ItemService', () => {
       const result = await service.findById('item-1');
 
       expect(repo.findById).toHaveBeenCalledWith('item-1');
-      expect(result.id).toBe('item-1');
-      expect(result.code).toBe('ITM-001');
+      expect(result!.id).toBe('item-1');
+      expect(result!.code).toBe('ITM-001');
     });
 
     it('should return null when entity not found', async () => {

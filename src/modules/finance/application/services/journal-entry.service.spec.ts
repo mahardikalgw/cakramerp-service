@@ -162,10 +162,10 @@ describe('JournalEntryService', () => {
       const result = await service.findById('1');
 
       expect(result).not.toBeNull();
-      expect(result.entry.id).toBe('1');
-      expect(result.totalDebit).toBe(100);
-      expect(result.totalCredit).toBe(100);
-      expect(result.lines[0].accountCode).toBe('1000');
+      expect(result!.entry.id).toBe('1');
+      expect(result!.totalDebit).toBe(100);
+      expect(result!.totalCredit).toBe(100);
+      expect(result!.lines[0].accountCode).toBe('1000');
     });
 
     it('should return null when entry not found', async () => {

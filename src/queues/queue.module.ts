@@ -1,0 +1,45 @@
+import { Global, Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { envConfig } from '../config/env.config';
+import { GlPostingProcessor } from './gl-posting.processor';
+import { AuditLogProcessor } from './audit-log.processor';
+import { NotificationProcessor } from './notification.processor';
+import { GL_POSTING_QUEUE_NAME } from './gl-posting.constants';
+import {
+  AUDIT_LOG_QUEUE_NAME,
+  NOTIFICATION_QUEUE_NAME,
+} from './audit-log.constants';
+import { QueueHealthService } from './queue-health.service';
+
+const redisUrl = envConfig.redis?.url;
+const connection = redisUrl
+  ? { url: redisUrl }
+  : {
+      host: envConfig.redis?.host || 'localhost',
+      port: envConfig.redis?.port || 6379,
+      ...(envConfig.redis?.password
+        ? { password: envConfig.redis.password }
+        : {}),
+    };
+
+@Global()
+@Module({
+  imports: [
+    BullModule.forRootAsync({
+      useFactory: () => ({ connection }),
+    }),
+    BullModule.registerQueue(
+      { name: GL_POSTING_QUEUE_NAME },
+      { name: AUDIT_LOG_QUEUE_NAME },
+      { name: NOTIFICATION_QUEUE_NAME },
+    ),
+  ],
+  providers: [
+    GlPostingProcessor,
+    AuditLogProcessor,
+    NotificationProcessor,
+    QueueHealthService,
+  ],
+  exports: [BullModule, QueueHealthService],
+})
+export class QueueModule {}

@@ -5,49 +5,49 @@ import { PurchaseRequestLineTypeOrmEntity } from './purchase-request-line-typeor
 @Entity('purchase_requests')
 export class PurchaseRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  prNumber: string;
+  declare prNumber: string;
 
   @Column({ type: 'uuid' })
-  requestedBy: string;
+  declare requestedBy: string;
 
   @Column({ type: 'uuid', nullable: true })
-  departmentId: string;
+  declare departmentId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  departmentName: string;
+  declare departmentName: string;
 
   @Column({ type: 'date' })
-  requestDate: Date;
+  declare requestDate: Date;
 
   @Column({ type: 'varchar', length: 20, default: 'normal' })
-  priority: string;
+  declare priority: string;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalAmount: number;
+  declare totalAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: number;
+  declare discountAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  taxAmount: number;
+  declare taxAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  grandTotal: number;
+  declare grandTotal: number;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string;
+  declare approvedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date;
+  declare approvedAt: Date;
 
   @Column({ type: 'text', nullable: true })
-  rejectionReason: string;
+  declare rejectionReason: string;
 
   @OneToMany(
     () => PurchaseRequestLineTypeOrmEntity,

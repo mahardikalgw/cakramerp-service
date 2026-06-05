@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('goods_receipt_lines')
 export class GoodsReceiptLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  goodsReceiptId: string;
+  declare goodsReceiptId: string;
 
   @Column({ type: 'uuid' })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'integer' })
-  poQty: number;
+  declare poQty: number;
 
   @Column({ type: 'integer' })
-  receivedQty: number;
+  declare receivedQty: number;
 
   @Column({ type: 'integer', default: 0 })
-  discrepancyQty: number;
+  declare discrepancyQty: number;
 
   @Column({ type: 'varchar', length: 50 })
-  uom: string;
+  declare uom: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  remarks: string;
+  declare remarks: string;
 }

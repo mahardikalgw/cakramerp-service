@@ -54,7 +54,7 @@ export interface LeaveRequestRepositoryPort {
   findById(id: string): Promise<any | null>;
   update(id: string, data: any): Promise<any>;
   findPending(): Promise<any[]>;
-  findPendingByApprover(approverId: string): Promise<any[]>;
+  findPendingByApprover(approverId?: string): Promise<any[]>;
 }
 
 export interface ShiftScheduleRepositoryPort {
@@ -75,5 +75,5 @@ export interface OvertimeRequestRepositoryPort {
   ): Promise<any[]>;
   findById(id: string): Promise<any | null>;
   update(id: string, data: any): Promise<any>;
-  findPendingBySupervisor(supervisorId: string): Promise<any[]>;
+  findPendingBySupervisor(supervisorId?: string): Promise<any[]>;
 }

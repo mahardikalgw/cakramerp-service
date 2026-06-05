@@ -10,17 +10,17 @@ export enum AuditAction {
 }
 
 export class AuditLog extends BaseEntity {
-  id: string;
-  userId: string;
-  userName: string;
-  action: AuditAction;
-  module: string;
-  recordId: string;
-  ipAddress: string;
-  payload?: any;
-  timestamp: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare userId: string;
+  declare userName: string;
+  declare action: AuditAction;
+  declare module: string;
+  declare recordId: string;
+  declare ipAddress: string;
+  declare payload?: any;
+  declare timestamp: Date;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<AuditLog> & {

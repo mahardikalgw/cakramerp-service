@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('maintenance_schedules')
 export class MaintenanceScheduleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  equipmentId: string;
+  declare equipmentId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  intervalType: string;
+  declare intervalType: string;
 
   @Column({ type: 'integer' })
-  intervalValue: number;
+  declare intervalValue: number;
 
   @Column({ type: 'date', nullable: true })
-  lastDoneDate: Date;
+  declare lastDoneDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  lastDoneHours: number;
+  declare lastDoneHours: number;
 
   @Column({ type: 'date', nullable: true })
-  nextDueDate: Date;
+  declare nextDueDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  nextDueHours: number;
+  declare nextDueHours: number;
 
   @Column({ type: 'varchar', length: 500 })
-  description: string;
+  declare description: string;
 }

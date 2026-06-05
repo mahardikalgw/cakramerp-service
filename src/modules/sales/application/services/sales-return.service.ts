@@ -30,7 +30,12 @@ export class SalesReturnService {
     salesOrderId?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: SalesReturnTypeOrmEntity[]; total: number; page: number; limit: number }> {
+  }): Promise<{
+    data: SalesReturnTypeOrmEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 20;
     const qb = this.returnRepo.createQueryBuilder('sr');

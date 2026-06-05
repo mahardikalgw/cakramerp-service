@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('attendance_records')
 export class AttendanceRecordTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  clockIn: Date;
+  declare clockIn: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  clockOut: Date;
+  declare clockOut: Date;
 
   @Column({ type: 'varchar', length: 50 })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  absenceReason: string;
+  declare absenceReason: string;
 
   @Column({ type: 'boolean', default: false })
-  isImported: boolean;
+  declare isImported: boolean;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  overtimeHours: number;
+  declare overtimeHours: number;
 }

@@ -8,50 +8,50 @@ export class PurchaseOrderLineTypeOrmEntity extends TypeOrmBaseEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'purchase_order_id' })
-  purchaseOrder: PurchaseOrderTypeOrmEntity;
+  declare purchaseOrder: PurchaseOrderTypeOrmEntity;
 
   @Column({ type: 'uuid', name: 'purchase_order_id' })
-  purchaseOrderId: string;
+  declare purchaseOrderId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  purchaseRequestLineId: string;
+  declare purchaseRequestLineId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'integer' })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'integer', default: 0 })
-  receivedQuantity: number;
+  declare receivedQuantity: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  uom: string;
+  declare uom: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  unitCost: number;
+  declare unitCost: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  totalCost: number;
+  declare totalCost: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  taxPercent: number;
+  declare taxPercent: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  taxAmount: number;
+  declare taxAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: number;
+  declare discountAmount: number;
 
   @Column({ type: 'varchar', length: 50, default: 'goods' })
-  lineType: string;
+  declare lineType: string;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  fulfillmentStatus: string;
+  declare fulfillmentStatus: string;
 }

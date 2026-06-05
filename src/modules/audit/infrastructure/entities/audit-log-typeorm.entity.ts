@@ -14,32 +14,32 @@ export enum AuditActionType {
 export class AuditLogTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   @Index()
-  userId: string;
+  declare userId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  userName: string;
+  declare userName: string;
 
   @Column({
     type: 'enum',
     enum: AuditActionType,
   })
   @Index()
-  action: AuditActionType;
+  declare action: AuditActionType;
 
   @Column({ type: 'varchar', length: 100 })
   @Index()
-  module: string;
+  declare module: string;
 
   @Column({ type: 'varchar', length: 255 })
-  recordId: string;
+  declare recordId: string;
 
   @Column({ type: 'varchar', length: 45 })
-  ipAddress: string;
+  declare ipAddress: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  payload: any;
+  declare payload: any;
 
   @Column({ type: 'timestamp' })
   @Index()
-  timestamp: Date;
+  declare timestamp: Date;
 }

@@ -4,14 +4,14 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('positions')
 export class PositionTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'uuid', nullable: true })
-  departmentId: string;
+  declare departmentId: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  declare isActive: boolean;
 }

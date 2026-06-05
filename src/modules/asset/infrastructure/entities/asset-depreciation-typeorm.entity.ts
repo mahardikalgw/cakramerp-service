@@ -8,32 +8,32 @@ import {
 @Entity('asset_depreciations')
 export class AssetDepreciationTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  declare id: string;
 
   @Column({ type: 'uuid' })
-  assetId: string;
+  declare assetId: string;
 
   @Column({ type: 'date' })
-  periodDate: Date;
+  declare periodDate: Date;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  depreciationAmount: number;
+  declare depreciationAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  accumulatedDepreciation: number;
+  declare accumulatedDepreciation: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  bookValueAfter: number;
+  declare bookValueAfter: number;
 
   @Column({ type: 'varchar', length: 50 })
-  methodUsed: string;
+  declare methodUsed: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
-  unitsProduced: number;
+  declare unitsProduced: number;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  createdAt: Date;
+  declare createdAt: Date;
 }

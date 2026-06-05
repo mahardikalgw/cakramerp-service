@@ -64,7 +64,7 @@ export class GlPostingQueueTypeOrmRepository implements GlPostingQueueRepository
   }
 
   async update(id: string, data: Partial<GlPostingQueue>): Promise<void> {
-    await this.repo.update(id, data);
+    await this.repo.update(id, data as any);
   }
 
   private toDomain(entity: GlPostingQueueTypeOrmEntity): GlPostingQueue {

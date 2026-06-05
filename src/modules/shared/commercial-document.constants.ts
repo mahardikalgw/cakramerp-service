@@ -65,21 +65,21 @@ export type SalesDocumentStatus = (typeof SALES_DOCUMENT_STATUSES)[number];
  * `document_links.source_type` columns accept.
  */
 export const SOURCE_TYPES = {
-   PURCHASE_REQUEST: 'purchase_request',
-   PURCHASE_ORDER: 'purchase_order',
-   PURCHASE_RETURN: 'purchase_return',
-   GOODS_RECEIPT: 'goods_receipt',
-   SUPPLIER_INVOICE: 'supplier_invoice',
-   SUPPLIER_PAYMENT: 'supplier_payment',
-   QUOTATION: 'quotation',
-   SALES_ORDER: 'sales_order',
-   SALES_RETURN: 'sales_return',
-   STOCK_ISSUANCE: 'stock_issuance',
-   AR_INVOICE: 'sales_invoice',
-   CUSTOMER_PAYMENT: 'customer_payment',
-   PAYROLL_RUN: 'payroll_run',
-   ASSET_DEPRECIATION: 'asset_depreciation',
- } as const;
+  PURCHASE_REQUEST: 'purchase_request',
+  PURCHASE_ORDER: 'purchase_order',
+  PURCHASE_RETURN: 'purchase_return',
+  GOODS_RECEIPT: 'goods_receipt',
+  SUPPLIER_INVOICE: 'supplier_invoice',
+  SUPPLIER_PAYMENT: 'supplier_payment',
+  QUOTATION: 'quotation',
+  SALES_ORDER: 'sales_order',
+  SALES_RETURN: 'sales_return',
+  STOCK_ISSUANCE: 'stock_issuance',
+  AR_INVOICE: 'sales_invoice',
+  CUSTOMER_PAYMENT: 'customer_payment',
+  PAYROLL_RUN: 'payroll_run',
+  ASSET_DEPRECIATION: 'asset_depreciation',
+} as const;
 
 export type SourceType = (typeof SOURCE_TYPES)[keyof typeof SOURCE_TYPES];
 

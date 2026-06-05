@@ -38,26 +38,26 @@ export interface SuggestedLine {
 }
 
 export class GlPostingQueue {
-  id: string;
-  sourceType: GlPostingSourceType;
-  sourceId: string;
-  sourceNumber: string;
-  eventType: GlPostingEventType;
-  amount: number;
-  description: string;
-  suggestedLines: Record<string, unknown>[];
-  status: GlPostingQueueStatus;
-  journalEntryId?: string;
-  postedBy?: string;
-  postedAt?: Date;
-  customerId?: string;
-  supplierId?: string;
-  invoiceId?: string;
-  billingLetterId?: string;
-  warehouseId?: string;
-  spendingId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare sourceType: GlPostingSourceType;
+  declare sourceId: string;
+  declare sourceNumber: string;
+  declare eventType: GlPostingEventType;
+  declare amount: number;
+  declare description: string;
+  declare suggestedLines: Record<string, unknown>[];
+  declare status: GlPostingQueueStatus;
+  declare journalEntryId?: string;
+  declare postedBy?: string;
+  declare postedAt?: Date;
+  declare customerId?: string;
+  declare supplierId?: string;
+  declare invoiceId?: string;
+  declare billingLetterId?: string;
+  declare warehouseId?: string;
+  declare spendingId?: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<GlPostingQueue> & {

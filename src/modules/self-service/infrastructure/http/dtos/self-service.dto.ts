@@ -107,4 +107,8 @@ export class ResolveDiscrepancyHttpDto {
 export class RejectChangeRequestHttpDto {
   @IsString()
   reason: string;
+
+  @IsOptional()
+  @IsString()
+  resolution?: string;
 }

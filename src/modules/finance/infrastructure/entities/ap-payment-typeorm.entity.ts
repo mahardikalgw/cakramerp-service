@@ -4,23 +4,23 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('ap_payments')
 export class APPaymentTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100 })
-  vendorId: string;
+  declare vendorId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  vendorName: string;
+  declare vendorName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 
   @Column({ type: 'date' })
-  scheduledDate: Date;
+  declare scheduledDate: Date;
 
   @Column({ type: 'date', nullable: true })
-  paidDate: Date;
+  declare paidDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'scheduled' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'varchar', length: 100, default: 'operations' })
-  category: string;
+  declare category: string;
 }

@@ -348,14 +348,14 @@ describe('AssetService', () => {
       const depEntry = { id: 'dep-1', depreciationAmount: 1000000 };
       mockAssetRepo.createDepreciation.mockResolvedValue(depEntry);
       mockAssetRepo.update.mockResolvedValue({});
-mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-       const result = await service.calculateDepreciation('asset-1');
+      const result = await service.calculateDepreciation('asset-1');
 
-       expect(result).toEqual(depEntry);
-       expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
-       expect(mockAssetRepo.update).toHaveBeenCalled();
-       expect(mockAssetFinanceAdapter.recordDepreciationGl).toHaveBeenCalled();
+      expect(result).toEqual(depEntry);
+      expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
+      expect(mockAssetRepo.update).toHaveBeenCalled();
+      expect(mockAssetFinanceAdapter.recordDepreciationGl).toHaveBeenCalled();
     });
 
     it('should calculate declining balance depreciation', async () => {
@@ -368,35 +368,37 @@ mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
       mockAssetRepo.findById.mockResolvedValue(asset);
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-       await service.calculateDepreciation('asset-1');
+      await service.calculateDepreciation('asset-1');
 
       expect(mockAssetRepo.createDepreciation).toHaveBeenCalled();
       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
       expect(depArg.depreciationAmount).toBeCloseTo(333333.33, 1); // 10000000 * 0.4 / 12
     });
 
-it('should calculate unit production depreciation', async () => {
-       const asset = {
-         ...baseAsset,
-         depreciationMethod: 'unit_production',
-         acquisitionCost: 10000000,
-         salvageValue: 1000000,
-         totalEstimatedUnits: 10000,
-         unitsProducedToDate: 0,
-       };
-       mockAssetRepo.findById.mockResolvedValue(asset);
-       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
-       mockAssetRepo.update.mockResolvedValue({});
-       mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({ glPostingQueueId: 'gl-1' });
+    it('should calculate unit production depreciation', async () => {
+      const asset = {
+        ...baseAsset,
+        depreciationMethod: 'unit_production',
+        acquisitionCost: 10000000,
+        salvageValue: 1000000,
+        totalEstimatedUnits: 10000,
+        unitsProducedToDate: 0,
+      };
+      mockAssetRepo.findById.mockResolvedValue(asset);
+      mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
+      mockAssetRepo.update.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({
+        glPostingQueueId: 'gl-1',
+      });
 
-       await service.calculateDepreciation('asset-1', 500);
+      await service.calculateDepreciation('asset-1', 500);
 
-       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
-       // (10000000 - 1000000) * (500 / 10000) = 450000
-       expect(depArg.depreciationAmount).toBe(450000);
-     });
+      const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
+      // (10000000 - 1000000) * (500 / 10000) = 450000
+      expect(depArg.depreciationAmount).toBe(450000);
+    });
 
     it('should throw NotFoundException if asset not found', async () => {
       mockAssetRepo.findById.mockResolvedValue(null);
@@ -461,9 +463,9 @@ it('should calculate unit production depreciation', async () => {
       });
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-       await service.calculateDepreciation('asset-1');
+      await service.calculateDepreciation('asset-1');
 
       const depArg = mockAssetRepo.createDepreciation.mock.calls[0][0];
       // Max depreciation = 1050000 - 1000000 = 50000
@@ -480,20 +482,22 @@ mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
       });
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({});
 
-       await service.calculateDepreciation('asset-1');
+      await service.calculateDepreciation('asset-1');
 
       const updateArg = mockAssetRepo.update.mock.calls[0][1];
       expect(updateArg.status).toBe('fully_depreciated');
     });
 
-it('should create GL posting entry with correct format', async () => {
+    it('should create GL posting entry with correct format', async () => {
       const currentYear = new Date().getFullYear();
       mockAssetRepo.findById.mockResolvedValue(baseAsset);
       mockAssetRepo.createDepreciation.mockResolvedValue({ id: 'dep-1' });
       mockAssetRepo.update.mockResolvedValue({});
-      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({ glPostingQueueId: 'gl-1' });
+      mockAssetFinanceAdapter.recordDepreciationGl.mockResolvedValue({
+        glPostingQueueId: 'gl-1',
+      });
 
       await service.calculateDepreciation('asset-1');
 

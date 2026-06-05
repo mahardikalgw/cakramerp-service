@@ -4,19 +4,19 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
 export class ARInvoice extends BaseEntity {
-  id: string;
-  invoiceNumber: string;
-  clientId: string;
-  clientName: string;
-  projectId?: string;
-  segment?: string;
-  amount: Decimal;
-  paidAmount: Decimal;
-  dueDate: Date;
-  issueDate: Date;
-  status: InvoiceStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare invoiceNumber: string;
+  declare clientId: string;
+  declare clientName: string;
+  declare projectId?: string;
+  declare segment?: string;
+  declare amount: Decimal;
+  declare paidAmount: Decimal;
+  declare dueDate: Date;
+  declare issueDate: Date;
+  declare status: InvoiceStatus;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   get balance(): Decimal {
     return this.amount.minus(this.paidAmount);

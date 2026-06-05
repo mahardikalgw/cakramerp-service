@@ -180,8 +180,9 @@ export class AccountService implements AccountServicePort {
 
     for (const acc of accounts) {
       const node = map.get(acc.id);
+      if (!node) continue;
       if (acc.parentId && map.has(acc.parentId)) {
-        map.get(acc.parentId).children.push(node);
+        map.get(acc.parentId)!.children.push(node);
       } else {
         roots.push(node);
       }

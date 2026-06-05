@@ -6,11 +6,11 @@ import {
 
 export abstract class TypeOrmBaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  declare id: string;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  createdAt: Date;
+  declare createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
-  updatedAt: Date;
+  declare updatedAt: Date;
 }

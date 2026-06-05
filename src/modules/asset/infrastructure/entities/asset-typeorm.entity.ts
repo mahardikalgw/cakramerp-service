@@ -4,62 +4,62 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('assets')
 export class AssetTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
-  assetNumber: string;
+  declare assetNumber: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  category: string;
+  declare category: string;
 
   @Column({ type: 'date' })
-  acquisitionDate: Date;
+  declare acquisitionDate: Date;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  acquisitionCost: number;
+  declare acquisitionCost: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  salvageValue: number;
+  declare salvageValue: number;
 
   @Column({ type: 'int' })
-  usefulLifeMonths: number;
+  declare usefulLifeMonths: number;
 
   @Column({ type: 'varchar', length: 50, default: 'straight_line' })
-  depreciationMethod: string;
+  declare depreciationMethod: string;
 
   @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
-  decliningBalanceRate: number;
+  declare decliningBalanceRate: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
-  totalEstimatedUnits: number;
+  declare totalEstimatedUnits: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  unitsProducedToDate: number;
+  declare unitsProducedToDate: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  currentBookValue: number;
+  declare currentBookValue: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  accumulatedDepreciation: number;
+  declare accumulatedDepreciation: number;
 
   @Column({ type: 'varchar', length: 20, default: 'monthly' })
-  depreciationSchedule: string;
+  declare depreciationSchedule: string;
 
   @Column({ type: 'date', nullable: true })
-  lastDepreciationDate: Date;
+  declare lastDepreciationDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'active' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  location: string;
+  declare location: string;
 
   @Column({ type: 'uuid', nullable: true })
-  assignedToEmployeeId: string;
+  declare assignedToEmployeeId: string;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 }

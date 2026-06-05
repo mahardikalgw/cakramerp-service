@@ -23,7 +23,6 @@ export class PayrollEngineService implements PayrollServicePort {
   private readonly BPJS_JHT_EMPLOYEE_RATE = 0.02;
   private readonly BPJS_JHT_EMPLOYER_RATE = 0.037;
   private readonly BPJS_JP_EMPLOYEE_RATE = 0.01;
-  private readonly BPJS_JP_EMPLOYER_RATE = 0.02;
 
   // PTKP (single)
   private readonly PTKP = 54_000_000;
@@ -179,12 +178,9 @@ export class PayrollEngineService implements PayrollServicePort {
 
     // BPJS JHT
     const bpjsJhtEmployee = grossPay * this.BPJS_JHT_EMPLOYEE_RATE;
-    const bpjsJhtEmployer = grossPay * this.BPJS_JHT_EMPLOYER_RATE;
 
     // BPJS JP
-    const bpjsJpBase = Math.min(grossPay, this.BPJS_JP_MAX_BASE);
-    const bpjsJpEmployee = bpjsJpBase * this.BPJS_JP_EMPLOYEE_RATE;
-    const bpjsJpEmployer = bpjsJpBase * this.BPJS_JP_EMPLOYER_RATE;
+    const bpjsJpEmployee = grossPay * this.BPJS_JP_EMPLOYEE_RATE;
 
     // PPh 21 calculation
     const monthlyBpjsEmployee =
@@ -270,7 +266,11 @@ export class PayrollEngineService implements PayrollServicePort {
     return tax;
   }
 
-  private async createPayrollQueueEntry(run: { id: string; month: number; year: number }): Promise<void> {
+  private async createPayrollQueueEntry(run: {
+    id: string;
+    month: number;
+    year: number;
+  }): Promise<void> {
     const details = await this.payrollRepo.findDetailsByRunId(run.id);
 
     await this.financeAdapter.recordPayrollGl(run, details);

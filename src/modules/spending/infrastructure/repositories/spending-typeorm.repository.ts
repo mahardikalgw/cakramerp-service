@@ -39,17 +39,17 @@ export class SpendingTypeOrmRepository
   toEntity(domain: Spending): SpendingTypeOrmEntity {
     const entity = new SpendingTypeOrmEntity();
     entity.id = domain.id;
-    entity.spendingNumber = domain.spendingNumber;
-    entity.expenseCategory = domain.expenseCategory;
+    entity.spendingNumber = domain.spendingNumber ?? '';
+    entity.expenseCategory = domain.expenseCategory ?? '';
     entity.amount = domain.amount;
     entity.spendingDate = domain.spendingDate;
-    entity.description = domain.description;
-    entity.vendor = domain.vendor;
-    entity.referenceNo = domain.referenceNo;
-    entity.status = domain.status;
-    entity.paymentMethod = domain.paymentMethod;
-    entity.glPostingQueueId = domain.glPostingQueueId;
-    entity.journalEntryId = domain.journalEntryId;
+    entity.description = domain.description ?? '';
+    entity.vendor = domain.vendor ?? '';
+    entity.referenceNo = domain.referenceNo ?? '';
+    entity.status = domain.status ?? 'draft';
+    entity.paymentMethod = domain.paymentMethod ?? '';
+    entity.glPostingQueueId = domain.glPostingQueueId ?? '';
+    entity.journalEntryId = domain.journalEntryId ?? '';
     return entity;
   }
 

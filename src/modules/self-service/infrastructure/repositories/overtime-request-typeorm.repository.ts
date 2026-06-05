@@ -41,7 +41,7 @@ export class OvertimeRequestTypeOrmRepository implements OvertimeRequestReposito
     return this.repo.save(entity);
   }
 
-  async findPendingBySupervisor(_supervisorId: string): Promise<any[]> {
+  async findPendingBySupervisor(): Promise<any[]> {
     // For now, return all pending overtime requests
     // TODO: Filter by supervisor when hierarchy is implemented
     return this.repo.find({

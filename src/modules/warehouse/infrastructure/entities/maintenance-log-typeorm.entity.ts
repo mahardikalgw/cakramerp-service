@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('maintenance_logs')
 export class MaintenanceLogTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  equipmentId: string;
+  declare equipmentId: string;
 
   @Column({ type: 'date' })
-  maintenanceDate: Date;
+  declare maintenanceDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  hoursAtMaintenance: number;
+  declare hoursAtMaintenance: number;
 
   @Column({ type: 'varchar', length: 100 })
-  type: string;
+  declare type: string;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  cost: number;
+  declare cost: number;
 
   @Column({ type: 'varchar', length: 255 })
-  performedBy: string;
+  declare performedBy: string;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  declare createdBy: string;
 }

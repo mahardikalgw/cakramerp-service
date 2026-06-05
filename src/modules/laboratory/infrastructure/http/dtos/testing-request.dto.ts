@@ -1,0 +1,103 @@
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  IsInt,
+  Min,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class TestingRequestLineDto {
+  @IsOptional()
+  @IsUUID()
+  testingServiceId?: string;
+
+  @IsString()
+  serviceName: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sampleQuantity?: number;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class CreateTestingRequestHttpDto {
+  @IsUUID()
+  customerId: string;
+
+  @IsString()
+  projectName: string;
+
+  @IsOptional()
+  @IsString()
+  projectLocation?: string;
+
+  @IsOptional()
+  @IsString()
+  testingType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sampleQuantity?: number;
+
+  @IsOptional()
+  scheduleDate?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TestingRequestLineDto)
+  lines: TestingRequestLineDto[];
+}
+
+export class UpdateTestingRequestHttpDto {
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  projectName?: string;
+
+  @IsOptional()
+  @IsString()
+  projectLocation?: string;
+
+  @IsOptional()
+  @IsString()
+  testingType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sampleQuantity?: number;
+
+  @IsOptional()
+  scheduleDate?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TestingRequestLineDto)
+  lines?: TestingRequestLineDto[];
+}
+
+export class ApproveRejectDto {
+  @IsOptional()
+  @IsString()
+  rejectionReason?: string;
+}

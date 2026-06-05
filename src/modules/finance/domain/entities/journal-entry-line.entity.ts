@@ -1,13 +1,13 @@
 import { Decimal } from 'decimal.js';
 
 export class JournalEntryLine {
-  id: string;
-  journalEntryId: string;
-  accountId: string;
-  debit: Decimal;
-  credit: Decimal;
-  description?: string;
-  createdAt: Date;
+  declare id: string;
+  declare journalEntryId: string;
+  declare accountId: string;
+  declare debit: Decimal;
+  declare credit: Decimal;
+  declare description?: string;
+  declare createdAt: Date;
 
   constructor(
     props: Partial<JournalEntryLine> & {

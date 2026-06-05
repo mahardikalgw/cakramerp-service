@@ -271,7 +271,8 @@ export class FinanceService implements FinanceServicePort {
           invoices: [],
         });
       }
-      byClient.get(inv.clientId).invoices.push(inv);
+      const clientData = byClient.get(inv.clientId);
+      if (clientData) clientData.invoices.push(inv);
     }
 
     const result: AgingBucket[] = [];

@@ -4,47 +4,47 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('ar_invoices')
 export class ARInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  invoiceNumber: string;
+  declare invoiceNumber: string;
 
   @Column({ type: 'varchar', length: 100 })
-  clientId: string;
+  declare clientId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  clientName: string;
+  declare clientName: string;
 
   @Column({ type: 'uuid', nullable: true })
-  projectId: string;
+  declare projectId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string;
+  declare segment: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  paidAmount: number;
+  declare paidAmount: number;
 
   @Column({ type: 'date' })
-  dueDate: Date;
+  declare dueDate: Date;
 
   @Column({ type: 'date' })
-  issueDate: Date;
+  declare issueDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string;
+  declare customerId: string;
 
   @Column({ type: 'int', nullable: true })
-  paymentTermDays: number;
+  declare paymentTermDays: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  paymentTermLabel: string;
+  declare paymentTermLabel: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  additionalDiscount: number;
+  declare additionalDiscount: number;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 }

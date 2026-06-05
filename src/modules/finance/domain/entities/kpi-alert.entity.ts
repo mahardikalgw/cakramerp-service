@@ -3,16 +3,16 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 export type KpiAlertStatus = 'unread' | 'read' | 'dismissed';
 
 export class KpiAlert extends BaseEntity {
-  id: string;
-  type: string;
-  message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: KpiAlertStatus;
-  relatedValue: number;
-  thresholdValue: number;
-  relatedUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare type: string;
+  declare message: string;
+  declare severity: 'low' | 'medium' | 'high' | 'critical';
+  declare status: KpiAlertStatus;
+  declare relatedValue: number;
+  declare thresholdValue: number;
+  declare relatedUrl?: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<KpiAlert> & {

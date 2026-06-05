@@ -19,4 +19,6 @@ export interface SpendingServicePort {
     data: any[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }>;
+  approve(id: string): Promise<any>;
+  reject(id: string): Promise<any>;
 }

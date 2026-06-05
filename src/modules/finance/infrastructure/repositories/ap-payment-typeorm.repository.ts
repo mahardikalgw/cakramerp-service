@@ -49,7 +49,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
     return entities.map((e) => this.toDomain(e));
   }
 
-  async findByDateRange(start: Date, end: Date): Promise<APPayment[]> {
+  async findByDateRange(start: Date): Promise<APPayment[]> {
     const entities = await this.repo.find({
       where: { scheduledDate: start },
       order: { scheduledDate: 'ASC' },

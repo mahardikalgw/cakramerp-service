@@ -4,16 +4,16 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 export type PaymentStatus = 'scheduled' | 'paid' | 'overdue';
 
 export class APPayment extends BaseEntity {
-  id: string;
-  vendorId: string;
-  vendorName: string;
-  amount: Decimal;
-  scheduledDate: Date;
-  paidDate?: Date;
-  status: PaymentStatus;
-  category: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare vendorId: string;
+  declare vendorName: string;
+  declare amount: Decimal;
+  declare scheduledDate: Date;
+  declare paidDate?: Date;
+  declare status: PaymentStatus;
+  declare category: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<APPayment> & {

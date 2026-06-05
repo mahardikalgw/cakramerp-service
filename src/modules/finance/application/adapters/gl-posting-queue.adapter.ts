@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { GL_POSTING_QUEUE_PORT, GlPostingQueuePort } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
+import { GlPostingQueuePort } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
 import { GL_POSTING_QUEUE_SERVICE } from '../ports/gl-posting-queue-service.port';
 import type { GlPostingQueueServicePort } from '../ports/gl-posting-queue-service.port';
 

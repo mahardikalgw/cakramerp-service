@@ -38,7 +38,7 @@ import { CreatePurchaseReturnHttpDto } from '../dtos/purchase-return.dto';
  * invoice/cancel/convert). Caps at 5 actions per 10 seconds per user so
  * bulk-clicking doesn't accidentally fire dozens of GL entries.
  */
-const WRITE_THROTTLE = { 'write': { ttl: 10_000, limit: 5 } } as const;
+const WRITE_THROTTLE = { write: { ttl: 10_000, limit: 5 } } as const;
 
 @Controller('purchasing')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -84,7 +84,7 @@ export class PurchaseController {
   @Post('purchase-requests/:id/convert-to-po')
   @Throttle(WRITE_THROTTLE)
   @RequirePermissions('purchase-orders:create')
-  async convertPRToPO(@Param('id') id: string, @Req() req: any) {
+  async convertPRToPO(@Param('id') id: string) {
     const pr = await this.purchaseRequestService.findById(id);
     if (!pr || pr.status !== 'approved') {
       throw new BadRequestException(

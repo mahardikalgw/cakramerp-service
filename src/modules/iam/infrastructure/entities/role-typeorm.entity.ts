@@ -6,10 +6,10 @@ import { UserTypeOrmEntity } from '../../../user/infrastructure/entities/user-ty
 @Entity('roles')
 export class RoleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  description: string;
+  declare description: string;
 
   @ManyToMany(() => PermissionTypeOrmEntity, (permission) => permission.roles, {
     eager: true,

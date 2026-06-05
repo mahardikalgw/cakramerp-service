@@ -5,27 +5,27 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class ShiftScheduleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'date' })
   @Index()
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'varchar', length: 20, name: 'shift_type' })
-  shiftType: string;
+  declare shiftType: string;
 
   @Column({ type: 'uuid', nullable: true, name: 'site_id' })
-  siteId: string | null;
+  declare siteId: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'site_name' })
-  siteName: string | null;
+  declare siteName: string | null;
 
   @Column({ type: 'time', nullable: true, name: 'start_time' })
-  startTime: string | null;
+  declare startTime: string | null;
 
   @Column({ type: 'time', nullable: true, name: 'end_time' })
-  endTime: string | null;
+  declare endTime: string | null;
 
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  declare notes: string | null;
 }

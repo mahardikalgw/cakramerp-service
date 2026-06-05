@@ -4,13 +4,9 @@ import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 export class TypeOrmConfigFactory {
   static createOptions(config: DatabaseConfig): DataSourceOptions {
-    return {
+    const master = config.master;
+    const baseOptions: DataSourceOptions = {
       type: 'postgres',
-      host: config.host,
-      port: config.port,
-      username: config.username,
-      password: config.password,
-      database: config.database,
       schema: config.schema,
       synchronize: config.synchronize,
       logging: config.logging,
@@ -23,6 +19,41 @@ export class TypeOrmConfigFactory {
       ],
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       migrationsRun: false,
+    };
+
+    if (config.replicas.length > 0) {
+      const replicas = config.replicas.map((replica) => ({
+        type: 'postgres' as const,
+        host: replica.host,
+        port: replica.port,
+        username: replica.username,
+        password: replica.password,
+        database: replica.database,
+      }));
+
+      return {
+        ...baseOptions,
+        replication: {
+          master: {
+            host: master.host,
+            port: master.port,
+            username: master.username,
+            password: master.password,
+            database: master.database,
+          },
+          slaves: replicas,
+          defaultMode: 'slave' as const,
+        },
+      };
+    }
+
+    return {
+      ...baseOptions,
+      host: master.host,
+      port: master.port,
+      username: master.username,
+      password: master.password,
+      database: master.database,
     };
   }
 

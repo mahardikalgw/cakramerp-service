@@ -5,27 +5,27 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class ProfileChangeRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'varchar', length: 100, name: 'field_name' })
-  fieldName: string;
+  declare fieldName: string;
 
   @Column({ type: 'text', name: 'old_value' })
-  oldValue: string;
+  declare oldValue: string;
 
   @Column({ type: 'text', name: 'new_value' })
-  newValue: string;
+  declare newValue: string;
 
   @Column({ type: 'text' })
-  reason: string;
+  declare reason: string;
 
   @Column({ type: 'varchar', length: 20, default: 'pending' })
   @Index()
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true, name: 'reviewed_by' })
-  reviewedBy: string | null;
+  declare reviewedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'reviewed_at' })
-  reviewedAt: Date | null;
+  declare reviewedAt: Date | null;
 }

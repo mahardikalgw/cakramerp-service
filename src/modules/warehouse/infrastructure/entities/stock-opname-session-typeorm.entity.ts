@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('stock_opname_sessions')
 export class StockOpnameSessionTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  warehouseName: string;
+  declare warehouseName: string;
 
   @Column({ type: 'uuid' })
-  conductedBy: string;
+  declare conductedBy: string;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  submittedAt: Date;
+  declare submittedAt: Date | undefined;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string;
+  declare approvedBy: string | undefined;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date;
+  declare approvedAt: Date | undefined;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 }

@@ -4,65 +4,65 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('employees')
 export class EmployeeTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
-  employeeNumber: string;
+  declare employeeNumber: string;
 
   @Column({ type: 'varchar', length: 255 })
-  fullName: string;
+  declare fullName: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  email: string;
+  declare email: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  phone: string;
+  declare phone: string;
 
   @Column({ type: 'date', nullable: true })
-  dateOfBirth: Date;
+  declare dateOfBirth: Date;
 
   @Column({ type: 'text', nullable: true })
-  address: string;
+  declare address: string;
 
   @Column({ type: 'varchar', length: 50 })
-  employmentType: string;
+  declare employmentType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  positionId: string;
+  declare positionId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  departmentId: string;
+  declare departmentId: string;
 
   @Column({ type: 'date' })
-  joinDate: Date;
+  declare joinDate: Date;
 
   @Column({ type: 'date', nullable: true })
-  endDate: Date;
+  declare endDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'active' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  basicSalary: number;
+  declare basicSalary: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  bankAccountNumber: string;
+  declare bankAccountNumber: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  bankName: string;
+  declare bankName: string;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
-  npwp: string;
+  declare npwp: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  bpjsKesehatanNumber: string;
+  declare bpjsKesehatanNumber: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  bpjsKetenagakerjaanNumber: string;
+  declare bpjsKetenagakerjaanNumber: string;
 
   @Column({ type: 'varchar', length: 5, default: '08:00' })
-  workStartTime: string;
+  declare workStartTime: string;
 
   @Column({ type: 'varchar', length: 5, default: '17:00' })
-  workEndTime: string;
+  declare workEndTime: string;
 
   @Column({ type: 'int', default: 60 })
-  breakDurationMinutes: number;
+  declare breakDurationMinutes: number;
 }

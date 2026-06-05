@@ -1,12 +1,12 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export class Permission extends BaseEntity {
-  id: string;
-  name: string;
-  resource: string;
-  action: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare name: string;
+  declare resource: string;
+  declare action: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<Permission> & {

@@ -5,22 +5,22 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class OvertimeRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'time', name: 'start_time' })
-  startTime: string;
+  declare startTime: string;
 
   @Column({ type: 'time', name: 'end_time' })
-  endTime: string;
+  declare endTime: string;
 
   @Column({ type: 'decimal', precision: 5, scale: 2 })
-  hours: number;
+  declare hours: number;
 
   @Column({ type: 'text' })
-  reason: string;
+  declare reason: string;
 
   @Column({
     type: 'varchar',
@@ -32,14 +32,14 @@ export class OvertimeRequestTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 20, default: 'pending' })
   @Index()
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true, name: 'approved_by' })
-  approvedBy: string | null;
+  declare approvedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'approved_at' })
-  approvedAt: Date | null;
+  declare approvedAt: Date | null;
 
   @Column({ type: 'text', nullable: true, name: 'rejection_reason' })
-  rejectionReason: string | null;
+  declare rejectionReason: string | null;
 }

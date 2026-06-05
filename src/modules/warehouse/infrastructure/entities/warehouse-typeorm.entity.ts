@@ -4,14 +4,14 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('warehouses')
 export class WarehouseTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 255 })
-  location: string;
+  declare location: string;
 
   @Column({ type: 'varchar', length: 50 })
-  type: string;
+  declare type: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  declare isActive: boolean;
 }

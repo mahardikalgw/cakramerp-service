@@ -6,12 +6,12 @@ export type AlertType =
   | 'project_cost_overrun';
 
 export class KpiThreshold extends BaseEntity {
-  id: string;
-  alertType: AlertType;
-  value: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare alertType: AlertType;
+  declare value: number;
+  declare isActive: boolean;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<KpiThreshold> & { alertType: AlertType; value: number },

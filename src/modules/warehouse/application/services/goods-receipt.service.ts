@@ -108,7 +108,7 @@ export class GoodsReceiptService implements GoodsReceiptServicePort {
     if (totalGrnAmount > 0) {
       await this.glPostingQueue.createEntry({
         sourceType: 'goods_receipt',
-        sourceId: savedReceipt.id,
+        sourceId: savedReceipt.id!,
         sourceNumber: grnNumber,
         eventType: 'grn_received',
         amount: totalGrnAmount,

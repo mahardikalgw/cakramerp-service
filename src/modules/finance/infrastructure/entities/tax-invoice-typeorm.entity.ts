@@ -4,32 +4,32 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('tax_invoices')
 export class TaxInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  taxInvoiceNumber: string;
+  declare taxInvoiceNumber: string;
 
   @Column({ type: 'uuid' })
-  arInvoiceId: string;
+  declare arInvoiceId: string;
 
   @Column({ type: 'date' })
-  transactionDate: Date;
+  declare transactionDate: Date;
 
   @Column({ type: 'varchar', length: 20 })
-  clientNpwp: string;
+  declare clientNpwp: string;
 
   @Column({ type: 'varchar', length: 255 })
-  clientName: string;
+  declare clientName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  dpp: number;
+  declare dpp: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  ppnAmount: number;
+  declare ppnAmount: number;
 
   @Column({ type: 'varchar', length: 50, default: 'created' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'integer' })
-  month: number;
+  declare month: number;
 
   @Column({ type: 'integer' })
-  year: number;
+  declare year: number;
 }

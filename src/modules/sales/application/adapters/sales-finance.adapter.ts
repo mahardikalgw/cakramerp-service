@@ -112,11 +112,11 @@ export class SalesFinanceAdapter {
       throw new BadRequestException('Sales return has no amount to reverse');
     }
 
-const entry = await this.glPostingQueue.createEntry({
-       sourceType: SOURCE_TYPES.SALES_RETURN,
-       sourceId: header.id,
-       sourceNumber: header.return_number,
-       eventType: GL_EVENTS.SALES_RETURN_APPROVED,
+    const entry = await this.glPostingQueue.createEntry({
+      sourceType: SOURCE_TYPES.SALES_RETURN,
+      sourceId: header.id,
+      sourceNumber: header.return_number,
+      eventType: GL_EVENTS.SALES_RETURN_APPROVED,
       amount,
       description: `Sales Return ${header.return_number} - ${header.customer_name}`,
       suggestedLines: [
@@ -163,11 +163,11 @@ const entry = await this.glPostingQueue.createEntry({
       return { glPostingQueueId: '' };
     }
 
-const entry = await this.glPostingQueue.createEntry({
-       sourceType: SOURCE_TYPES.SALES_ORDER,
-       sourceId: header.id,
-       sourceNumber: header.so_number,
-       eventType: GL_EVENTS.SO_APPROVED,
+    const entry = await this.glPostingQueue.createEntry({
+      sourceType: SOURCE_TYPES.SALES_ORDER,
+      sourceId: header.id,
+      sourceNumber: header.so_number,
+      eventType: GL_EVENTS.SO_APPROVED,
       amount,
       description: `SO Approval ${header.so_number} - ${header.customer_name}`,
       suggestedLines: [

@@ -4,32 +4,32 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('stock_issuances')
 export class StockIssuanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  issuanceNumber: string;
+  declare issuanceNumber: string;
 
   @Column({ type: 'uuid' })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  destinationType: string;
+  declare destinationType: string;
 
   @Column({ type: 'uuid' })
-  destinationId: string;
+  declare destinationId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  destinationName: string;
+  declare destinationName: string;
 
   @Column({ type: 'date' })
-  issuanceDate: Date;
+  declare issuanceDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'confirmed' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  reversalReason: string;
+  declare reversalReason: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  reversedAt: Date;
+  declare reversedAt: Date | undefined;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  declare createdBy: string | undefined;
 }

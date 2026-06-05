@@ -8,17 +8,17 @@ export type AccountType =
   | 'expense';
 
 export class Account extends BaseEntity {
-  id: string;
-  code: string;
-  name: string;
-  type: AccountType;
-  taxCategory?: string;
-  segment?: string;
-  costCenter?: string;
-  parentId?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare code: string;
+  declare name: string;
+  declare type: AccountType;
+  declare taxCategory?: string;
+  declare segment?: string;
+  declare costCenter?: string;
+  declare parentId?: string;
+  declare isActive: boolean;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<Account> & { code: string; name: string; type: AccountType },

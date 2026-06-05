@@ -4,20 +4,20 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('ar_invoice_lines')
 export class ARInvoiceLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  invoiceId: string;
+  declare invoiceId: string;
 
   @Column({ type: 'varchar', length: 500 })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'integer', default: 1 })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  unitPrice: number;
+  declare unitPrice: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  taxPercent: number;
+  declare taxPercent: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 }

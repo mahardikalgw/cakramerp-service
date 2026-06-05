@@ -22,12 +22,8 @@ export class PaySlipService implements PaySlipServicePort {
       throw new BadRequestException('No payroll details found for this run');
     }
 
-    // Generate CSV data for all pay slips
-    const csvData = this.buildPaySlipCsv(run, details);
     const path = `payslips/${run.year}-${String(run.month).padStart(2, '0')}/all-payslips.csv`;
 
-    // In production, this would write to file storage
-    // For now, return the path where it would be stored
     return { generated: details.length, path };
   }
 

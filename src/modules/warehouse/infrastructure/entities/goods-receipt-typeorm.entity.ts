@@ -4,29 +4,29 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('goods_receipts')
 export class GoodsReceiptTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  grnNumber: string;
+  declare grnNumber: string;
 
   @Column({ type: 'uuid', nullable: true })
-  poId: string;
+  declare poId: string | undefined;
 
   @Column({ type: 'uuid' })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string;
+  declare supplierId: string | undefined;
 
   @Column({ type: 'varchar', length: 255 })
-  vendorName: string;
+  declare vendorName: string;
 
   @Column({ type: 'date' })
-  receivedDate: Date;
+  declare receivedDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'confirmed' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string | undefined;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  declare createdBy: string | undefined;
 }

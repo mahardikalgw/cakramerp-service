@@ -4,12 +4,12 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('refresh_tokens')
 export class RefreshTokenTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'user_id' })
-  userId: string;
+  declare userId: string;
 
   @Index()
   @Column({ type: 'varchar', length: 255, name: 'token_hash' })
-  tokenHash: string;
+  declare tokenHash: string;
 
   @Column({ type: 'timestamptz', name: 'expires_at' })
-  expiresAt: Date;
+  declare expiresAt: Date;
 }

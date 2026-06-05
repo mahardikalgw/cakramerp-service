@@ -35,16 +35,20 @@ export class SalesOrderService {
     customerId?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: SalesOrderTypeOrmEntity[]; total: number; page: number; limit: number }> {
+  }): Promise<{
+    data: SalesOrderTypeOrmEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 20;
     const qb = this.soRepo.createQueryBuilder('so');
 
     if (filters?.search) {
-      qb.where(
-        '(so.soNumber ILIKE :search OR so.customerName ILIKE :search)',
-        { search: `%${filters.search}%` },
-      );
+      qb.where('(so.soNumber ILIKE :search OR so.customerName ILIKE :search)', {
+        search: `%${filters.search}%`,
+      });
     }
 
     if (filters?.status) {
@@ -92,7 +96,8 @@ export class SalesOrderService {
       for (const qLine of quotation.lines) {
         const lineAmount = Number(qLine.quantity) * Number(qLine.unitPrice);
         const lineDiscount = Number(qLine.discountAmount ?? 0);
-        const lineTax = (lineAmount - lineDiscount) * (Number(qLine.taxPercent) / 100);
+        const lineTax =
+          (lineAmount - lineDiscount) * (Number(qLine.taxPercent) / 100);
         totalAmount += lineAmount - lineDiscount;
         taxAmount += lineTax;
 
@@ -116,7 +121,8 @@ export class SalesOrderService {
       for (const line of dto.lines) {
         const lineAmount = line.quantity * line.unitPrice;
         const lineDiscount = line.discountAmount ?? 0;
-        const lineTax = (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
+        const lineTax =
+          (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
         totalAmount += lineAmount - lineDiscount;
         taxAmount += lineTax;
 
@@ -213,7 +219,8 @@ export class SalesOrderService {
       for (const line of dto.lines) {
         const lineAmount = line.quantity * line.unitPrice;
         const lineDiscount = line.discountAmount ?? 0;
-        const lineTax = (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
+        const lineTax =
+          (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
         totalAmount += lineAmount - lineDiscount;
         taxAmount += lineTax;
 

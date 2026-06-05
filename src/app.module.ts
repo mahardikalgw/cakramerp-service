@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { TerminusModule } from '@nestjs/terminus';
 import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { QueueModule } from './queues/queue.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
 import { UserModule } from './modules/user';
 import { AuthModule } from './modules/auth';
 import { IAMModule } from './modules/iam';
@@ -21,19 +25,12 @@ import { SelfServiceModule } from './modules/self-service/self-service.module';
 import { CustomerModule } from './modules/customer';
 import { SupplierModule } from './modules/supplier';
 import { AssetModule } from './modules/asset/asset.module';
+import { LaboratoryModule } from './modules/laboratory/laboratory.module';
+import { SpendingModule } from './modules/spending/spending.module';
+import { HealthModule } from './modules/shared/infrastructure/health/health.module';
 import { UserThrottlerGuard } from './modules/shared/infrastructure/guards/user-throttler.guard';
-import { HealthController } from './modules/shared/infrastructure/controllers/health.controller';
+import { envConfig } from './config/env.config';
 
-/**
- * Named throttler tiers used across the API.
- *
- * - `short` (1s / 20)  : read-heavy endpoints, allows brief bursts.
- * - `medium` (10s / 60) : general API surface, protects against scrapers.
- * - `long` (1m / 300)  : very long window to catch sustained abuse.
- * - `write` (10s / 5)  : tight limit applied to state-changing endpoints
- *                        (approve/reject/deliver/invoice/cancel/convert) via
- *                        the `@Throttle({ write: {} })` decorator.
- */
 @Module({
   imports: [
     LoggerModule.forRoot({
@@ -57,8 +54,22 @@ import { HealthController } from './modules/shared/infrastructure/controllers/he
       { name: 'long', ttl: 60_000, limit: 300 },
       { name: 'write', ttl: 10_000, limit: 5 },
     ]),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: () => {
+        const ttlMs = (envConfig.redis?.ttl ?? 300) * 1000;
+        if (envConfig.redis?.url || envConfig.redis?.host) {
+          return { ttl: ttlMs } as any;
+        }
+        return { ttl: ttlMs } as any;
+      },
+    }),
     ScheduleModule.forRoot(),
+    TerminusModule,
     DatabaseModule,
+    QueueModule,
+    TelemetryModule,
+    HealthModule,
     UserModule,
     AuthModule,
     IAMModule,
@@ -74,13 +85,13 @@ import { HealthController } from './modules/shared/infrastructure/controllers/he
     CustomerModule,
     SupplierModule,
     AssetModule,
+    LaboratoryModule,
+    SpendingModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [AppController],
   providers: [
     AppService,
     {
-      // Apply the user-aware throttler globally. Per-endpoint limits are
-      // overridden via `@Throttle({ short: { ttl, limit }, ... })`.
       provide: APP_GUARD,
       useClass: UserThrottlerGuard,
     },

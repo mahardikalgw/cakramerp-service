@@ -1,0 +1,43 @@
+import { Entity, Column, OneToMany } from 'typeorm';
+import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { LabPurchaseOrderLineTypeOrmEntity } from './lab-purchase-order-line-typeorm.entity';
+
+@Entity('lab_purchase_orders')
+export class LabPurchaseOrderTypeOrmEntity extends TypeOrmBaseEntity {
+  @Column({ type: 'varchar', length: 50, unique: true })
+  declare poNumber: string;
+
+  @Column({ type: 'uuid' })
+  declare customerId: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  declare customerName: string;
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+  declare totalAmount: number;
+
+  @Column({ type: 'int', nullable: true })
+  declare sampleQuantity: number;
+
+  @Column({ type: 'varchar', length: 50, default: 'draft' })
+  declare status: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare createdBy: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare signedBy: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  declare signedAt: Date;
+
+  @OneToMany(
+    () => LabPurchaseOrderLineTypeOrmEntity,
+    (line) => line.labPurchaseOrder,
+    {
+      cascade: true,
+      eager: true,
+    },
+  )
+  lines: LabPurchaseOrderLineTypeOrmEntity[];
+}

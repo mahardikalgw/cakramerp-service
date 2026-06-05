@@ -8,41 +8,41 @@ import {
 @Entity('ar_subsidiary_ledger')
 export class ArSubsidiaryLedgerTypeOrmEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  declare id: string;
 
   @Column({ type: 'uuid' })
-  customerId: string;
+  declare customerId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  customerName: string;
+  declare customerName: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  glPostingQueueId: string;
+  declare glPostingQueueId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  invoiceId: string;
+  declare invoiceId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  invoiceNumber: string;
+  declare invoiceNumber: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  debit: number;
+  declare debit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  credit: number;
+  declare credit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  balance: number;
+  declare balance: number;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  createdAt: Date;
+  declare createdAt: Date;
 }

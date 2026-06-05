@@ -7,16 +7,16 @@ export enum BackupHistoryStatus {
 }
 
 export class BackupHistory extends BaseEntity {
-  id: string;
-  backupJobId: string;
-  fileName: string;
-  status: BackupHistoryStatus;
-  size: number;
-  completedAt: Date;
-  errorMessage: string | null;
-  filePath: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare backupJobId: string;
+  declare fileName: string;
+  declare status: BackupHistoryStatus;
+  declare size: number;
+  declare completedAt: Date;
+  declare errorMessage: string | null;
+  declare filePath: string | null;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<BackupHistory> & { backupJobId: string; fileName: string },

@@ -4,65 +4,65 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('payroll_details')
 export class PayrollDetailTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  payrollRunId: string;
+  declare payrollRunId: string;
 
   @Column({ type: 'uuid' })
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  employeeName: string;
+  declare employeeName: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  basicSalary: number;
+  declare basicSalary: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  siteAllowance: number;
+  declare siteAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  mealAllowance: number;
+  declare mealAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  transportAllowance: number;
+  declare transportAllowance: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  overtimePay: number;
+  declare overtimePay: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  otherAllowances: number;
+  declare otherAllowances: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  grossPay: number;
+  declare grossPay: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsKesehatanEmployee: number;
+  declare bpjsKesehatanEmployee: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsKesehatanEmployer: number;
+  declare bpjsKesehatanEmployer: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJkk: number;
+  declare bpjsJkk: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJkm: number;
+  declare bpjsJkm: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJht: number;
+  declare bpjsJht: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  bpjsJp: number;
+  declare bpjsJp: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  pph21: number;
+  declare pph21: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  loanDeduction: number;
+  declare loanDeduction: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  otherDeductions: number;
+  declare otherDeductions: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalDeductions: number;
+  declare totalDeductions: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  netPay: number;
+  declare netPay: number;
 }

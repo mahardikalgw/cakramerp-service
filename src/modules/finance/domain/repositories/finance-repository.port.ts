@@ -52,7 +52,7 @@ export interface JournalEntryRepositoryPort {
   }): Promise<{ data: JournalEntry[]; total: number }>;
   save(entry: JournalEntry): Promise<JournalEntry>;
   getNextEntryNumber(): Promise<string>;
-  countByAccountId(accountId: string): Promise<number>;
+  countByAccountId(): Promise<number>;
 }
 
 export interface JournalEntryLineRepositoryPort {

@@ -4,18 +4,18 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 export type ProjectStatus = 'planning' | 'active' | 'completed' | 'on_hold';
 
 export class Project extends BaseEntity {
-  id: string;
-  name: string;
-  code: string;
-  segment: string;
-  status: ProjectStatus;
-  budget: Decimal;
-  actualCost: Decimal;
-  completionPercent: number;
-  startDate: Date;
-  endDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare name: string;
+  declare code: string;
+  declare segment: string;
+  declare status: ProjectStatus;
+  declare budget: Decimal;
+  declare actualCost: Decimal;
+  declare completionPercent: number;
+  declare startDate: Date;
+  declare endDate?: Date;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   get costOverrunPercent(): number {
     if (this.budget.eq(0)) return 0;

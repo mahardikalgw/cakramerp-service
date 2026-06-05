@@ -4,23 +4,23 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('stock_opname_lines')
 export class StockOpnameLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  sessionId: string;
+  declare sessionId: string;
 
   @Column({ type: 'uuid' })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'integer' })
-  systemQty: number;
+  declare systemQty: number;
 
   @Column({ type: 'integer' })
-  actualQty: number;
+  declare actualQty: number;
 
   @Column({ type: 'integer' })
-  varianceQty: number;
+  declare varianceQty: number;
 
   @Column({ type: 'varchar', length: 50 })
-  uom: string;
+  declare uom: string;
 }

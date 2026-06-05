@@ -129,7 +129,7 @@ export class MyAttendanceService implements MyAttendanceServicePort {
       employeeId,
       date: today,
       clockIn: now,
-      clockOut: null,
+      clockOut: undefined,
       status: isLate ? 'late' : 'present',
       isImported: false,
       overtimeHours: 0,

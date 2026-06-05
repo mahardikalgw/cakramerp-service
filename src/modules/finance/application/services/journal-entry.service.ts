@@ -143,6 +143,7 @@ export class JournalEntryService implements JournalEntryServicePort {
 
     entry.status = 'pending_approval';
     entry.updatedAt = new Date();
+    entry.approvedBy = userId;
     return this.journalEntryRepo.save(entry);
   }
 

@@ -5,17 +5,17 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class LeaveBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'uuid', name: 'leave_type_id' })
   @Index()
-  leaveTypeId: string;
+  declare leaveTypeId: string;
 
   @Column({ type: 'int' })
-  year: number;
+  declare year: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, name: 'total_days' })
-  totalDays: number;
+  declare totalDays: number;
 
   @Column({
     type: 'decimal',
@@ -27,5 +27,5 @@ export class LeaveBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   usedDays: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, name: 'remaining_days' })
-  remainingDays: number;
+  declare remainingDays: number;
 }

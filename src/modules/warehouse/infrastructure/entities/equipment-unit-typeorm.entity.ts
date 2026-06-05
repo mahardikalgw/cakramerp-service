@@ -4,29 +4,29 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('equipment_units')
 export class EquipmentUnitTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  unitId: string;
+  declare unitId: string;
 
   @Column({ type: 'varchar', length: 100 })
-  type: string;
+  declare type: string;
 
   @Column({ type: 'varchar', length: 100 })
-  brand: string;
+  declare brand: string;
 
   @Column({ type: 'varchar', length: 100 })
-  model: string;
+  declare model: string;
 
   @Column({ type: 'integer' })
-  year: number;
+  declare year: number;
 
   @Column({ type: 'uuid', nullable: true })
-  siteId: string;
+  declare siteId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  siteName: string;
+  declare siteName: string;
 
   @Column({ type: 'varchar', length: 50, default: 'active' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  currentHours: number;
+  declare currentHours: number;
 }

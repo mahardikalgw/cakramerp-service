@@ -1,7 +1,7 @@
 export class StockIssuance {
   constructor(
     public readonly props: {
-      id?: string;
+      id: string;
       issuanceNumber: string;
       warehouseId: string;
       destinationType: string;
@@ -9,7 +9,7 @@ export class StockIssuance {
       destinationName: string;
       issuanceDate: Date;
       status: string;
-      createdBy: string;
+      createdBy?: string;
       reversalReason?: string;
       reversedAt?: Date;
       createdAt?: Date;

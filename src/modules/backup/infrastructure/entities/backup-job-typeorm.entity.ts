@@ -10,11 +10,11 @@ export enum BackupStatus {
 @Entity('backup_jobs')
 export class BackupJobTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 100 })
   @Index()
-  schedule: string;
+  declare schedule: string;
 
   @Column({
     type: 'enum',
@@ -22,17 +22,17 @@ export class BackupJobTypeOrmEntity extends TypeOrmBaseEntity {
     default: BackupStatus.ACTIVE,
   })
   @Index()
-  status: BackupStatus;
+  declare status: BackupStatus;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastRun: Date | null;
+  declare lastRun: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  nextRun: Date | null;
+  declare nextRun: Date | null;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  lastSize: string | null;
+  declare lastSize: string | null;
 
   @Column({ type: 'text', nullable: true })
-  retentionDays: number | null;
+  declare retentionDays: number | null;
 }

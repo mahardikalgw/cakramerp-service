@@ -4,7 +4,10 @@ import { AP_INVOICE_SERVICE } from '../../../finance/application/ports/ap-invoic
 import type { APInvoiceServicePort } from '../../../finance/application/ports/ap-invoice-service.port';
 import { GL_POSTING_QUEUE_PORT } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
 import type { GlPostingQueuePort } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
-import { SOURCE_TYPES, GL_EVENTS } from '../../../../modules/shared/commercial-document.constants';
+import {
+  SOURCE_TYPES,
+  GL_EVENTS,
+} from '../../../../modules/shared/commercial-document.constants';
 
 /**
  * Procurement → Finance adapter.

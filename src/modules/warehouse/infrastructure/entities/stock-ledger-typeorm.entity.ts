@@ -4,29 +4,29 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('stock_ledger')
 export class StockLedgerTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'uuid' })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  movementType: string;
+  declare movementType: string;
 
   @Column({ type: 'integer' })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'integer' })
-  balanceAfter: number;
+  declare balanceAfter: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  referenceType: string;
+  declare referenceType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  referenceId: string;
+  declare referenceId: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  declare createdBy: string;
 }

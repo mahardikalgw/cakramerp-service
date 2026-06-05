@@ -1,12 +1,12 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export class Settings extends BaseEntity {
-  id: string;
-  key: string;
-  value: string;
-  category: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare key: string;
+  declare value: string;
+  declare category: string | null;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(props: Partial<Settings> & { key: string }) {
     super();

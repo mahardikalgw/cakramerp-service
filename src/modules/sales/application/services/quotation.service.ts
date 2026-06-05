@@ -27,7 +27,12 @@ export class QuotationService {
     customerId?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: QuotationTypeOrmEntity[]; total: number; page: number; limit: number }> {
+  }): Promise<{
+    data: QuotationTypeOrmEntity[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 20;
     const qb = this.quotationRepo.createQueryBuilder('q');
@@ -74,7 +79,8 @@ export class QuotationService {
     for (const line of dto.lines) {
       const lineAmount = line.quantity * line.unitPrice;
       const lineDiscount = line.discountAmount ?? 0;
-      const lineTax = (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
+      const lineTax =
+        (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
       totalAmount += lineAmount - lineDiscount;
       taxAmount += lineTax;
     }
@@ -101,7 +107,8 @@ export class QuotationService {
     for (const line of dto.lines) {
       const lineAmount = line.quantity * line.unitPrice;
       const lineDiscount = line.discountAmount ?? 0;
-      const lineTax = (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
+      const lineTax =
+        (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
       await this.lineRepo.save(
         this.lineRepo.create({
           quotationId: savedQuotation.id,
@@ -156,7 +163,8 @@ export class QuotationService {
       for (const line of dto.lines) {
         const lineAmount = line.quantity * line.unitPrice;
         const lineDiscount = line.discountAmount ?? 0;
-        const lineTax = (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
+        const lineTax =
+          (lineAmount - lineDiscount) * ((line.taxPercent ?? 0) / 100);
         totalAmount += lineAmount - lineDiscount;
         taxAmount += lineTax;
 

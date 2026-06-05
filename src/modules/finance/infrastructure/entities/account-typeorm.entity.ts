@@ -4,26 +4,26 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('accounts')
 export class AccountTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
-  code: string;
+  declare code: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 50 })
-  type: string;
+  declare type: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  taxCategory: string;
+  declare taxCategory: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string;
+  declare segment: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  costCenter: string;
+  declare costCenter: string;
 
   @Column({ type: 'uuid', nullable: true })
-  parentId: string;
+  declare parentId: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  declare isActive: boolean;
 }

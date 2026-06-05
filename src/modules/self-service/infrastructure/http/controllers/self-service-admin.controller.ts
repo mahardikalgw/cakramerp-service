@@ -187,6 +187,7 @@ export class SelfServiceAdminController {
       status: 'rejected',
       reviewedBy,
       reviewedAt: new Date(),
+      resolution: dto.resolution,
     });
   }
 }

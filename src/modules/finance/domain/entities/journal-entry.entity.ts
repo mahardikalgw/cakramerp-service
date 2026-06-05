@@ -7,30 +7,29 @@ export type JournalEntryStatus =
   | 'reversed';
 
 export class JournalEntry extends BaseEntity {
-  id: string;
-  entryNumber: string;
-  date: Date;
-  description: string;
-  reference?: string;
-  status: JournalEntryStatus;
-  projectId?: string;
-  segment?: string;
-  costCenter?: string;
-  createdBy: string;
-  approvedBy?: string;
-  approvedAt?: Date;
-  reversalOfId?: string;
-  sourceType?: string;
-  sourceId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare entryNumber: string;
+  declare date: Date;
+  declare description: string;
+  declare reference?: string;
+  declare status: JournalEntryStatus;
+  declare projectId?: string;
+  declare segment?: string;
+  declare costCenter?: string;
+  declare createdBy: string | undefined;
+  declare approvedBy?: string;
+  declare approvedAt?: Date;
+  declare reversalOfId?: string;
+  declare sourceType?: string;
+  declare sourceId?: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<JournalEntry> & {
       entryNumber: string;
       date: Date;
       description: string;
-      createdBy: string;
     },
   ) {
     super();

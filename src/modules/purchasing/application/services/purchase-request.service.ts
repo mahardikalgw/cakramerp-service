@@ -231,7 +231,9 @@ export class PurchaseRequestService {
       pr.totalAmount = totalAmount;
       pr.taxAmount = data.taxAmount ?? taxAmount;
       pr.grandTotal =
-        totalAmount + (data.taxAmount ?? taxAmount) - Number(pr.discountAmount ?? 0);
+        totalAmount +
+        (data.taxAmount ?? taxAmount) -
+        Number(pr.discountAmount ?? 0);
     }
 
     await repo.save(pr);
@@ -269,7 +271,7 @@ export class PurchaseRequestService {
     pr.status = 'rejected';
     pr.approvedBy = approverId;
     pr.approvedAt = new Date();
-    pr.rejectionReason = reason;
+    pr.rejectionReason = reason ?? '';
     await repo.save(pr);
 
     return this.findById(id);

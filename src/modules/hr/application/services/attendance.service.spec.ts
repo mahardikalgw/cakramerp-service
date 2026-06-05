@@ -352,7 +352,7 @@ describe('AttendanceService', () => {
       attendanceRepo.findByEmployeeAndDate.mockResolvedValue(null);
       attendanceRepo.create.mockResolvedValue({});
 
-      const result = await service.importCsv(lines);
+      await service.importCsv(lines);
 
       expect(attendanceRepo.create).toHaveBeenNthCalledWith(
         1,

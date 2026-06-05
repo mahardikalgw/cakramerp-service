@@ -5,33 +5,33 @@ import { PurchaseRequestTypeOrmEntity } from './purchase-request-typeorm.entity'
 @Entity('purchase_request_lines')
 export class PurchaseRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  purchaseRequestId: string;
+  declare purchaseRequestId: string;
 
   @ManyToOne(() => PurchaseRequestTypeOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'purchaseRequestId' })
-  purchaseRequest: PurchaseRequestTypeOrmEntity;
+  declare purchaseRequest: PurchaseRequestTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'integer' })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  uom: string;
+  declare uom: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  unitCost: number;
+  declare unitCost: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  taxPercent: number;
+  declare taxPercent: number;
 
   @Column({ type: 'varchar', length: 50, default: 'goods' })
-  lineType: string;
+  declare lineType: string;
 }

@@ -4,20 +4,20 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('employee_history')
 export class EmployeeHistoryTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'varchar', length: 100 })
-  eventType: string;
+  declare eventType: string;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  previousValue: string;
+  declare previousValue: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  newValue: string;
+  declare newValue: string;
 
   @Column({ type: 'date' })
-  effectiveDate: Date;
+  declare effectiveDate: Date;
 }

@@ -4,17 +4,17 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('stock_issuance_lines')
 export class StockIssuanceLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  issuanceId: string;
+  declare issuanceId: string;
 
   @Column({ type: 'uuid' })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'integer' })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'varchar', length: 50 })
-  uom: string;
+  declare uom: string;
 }

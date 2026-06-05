@@ -4,23 +4,23 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('bpjs_enrollments')
 export class BpjsEnrollmentTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'varchar', length: 50 })
-  program: string;
+  declare program: string;
 
   @Column({ type: 'varchar', length: 100 })
-  memberNumber: string;
+  declare memberNumber: string;
 
   @Column({ type: 'date' })
-  enrollmentDate: Date;
+  declare enrollmentDate: Date;
 
   @Column({ type: 'date', nullable: true })
-  endDate: Date;
+  declare endDate: Date;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  salary: number;
+  declare salary: number;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  declare isActive: boolean;
 }

@@ -1,16 +1,16 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export class PurchaseOrderLine extends BaseEntity {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
   purchaseOrderId?: string;
-  itemId: string;
-  itemName: string;
-  quantity: number;
-  uom: string;
-  unitCost: number;
-  totalCost: number;
+  declare itemId: string;
+  declare itemName: string;
+  declare quantity: number;
+  declare uom: string;
+  declare unitCost: number;
+  declare totalCost: number;
 
   constructor(
     props: Partial<PurchaseOrderLine> & {

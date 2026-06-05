@@ -1,5 +1,4 @@
 export const envConfig = {
-  // Database Configuration
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),
@@ -9,8 +8,6 @@ export const envConfig = {
     synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.DB_LOGGING === 'true',
   },
-
-  // JWT Configuration
   jwt: {
     secret:
       process.env.JWT_SECRET ||
@@ -21,11 +18,20 @@ export const envConfig = {
       'z9x7c5v3b1n9m7k5j3h1g9f7d5s3a1p9o7i5u3y1t9r7e5w3q1m0n8b6v4c2x0',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRATION || '30d',
   },
-
-  // Server Configuration
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-
-  // CORS Configuration
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  redis: {
+    url: process.env.REDIS_URL || undefined,
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+    ttl: parseInt(process.env.CACHE_TTL || '300', 10),
+  },
+  otel: {
+    enabled: process.env.OTEL_ENABLED === 'true',
+    exporterEndpoint:
+      process.env.OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318/v1/traces',
+    serviceName: process.env.OTEL_SERVICE_NAME || 'cakramerp-service',
+  },
 };

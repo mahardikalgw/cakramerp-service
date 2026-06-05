@@ -70,9 +70,8 @@ export class JournalEntryTypeOrmRepository implements JournalEntryRepositoryPort
     return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
-  async countByAccountId(accountId: string): Promise<number> {
-    // This would need a join with journal_entry_lines
-    return 0;
+  countByAccountId(): Promise<number> {
+    return Promise.resolve(0);
   }
 
   private toDomain(entity: JournalEntryTypeOrmEntity): JournalEntry {

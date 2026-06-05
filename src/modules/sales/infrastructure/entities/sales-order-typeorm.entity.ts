@@ -5,61 +5,61 @@ import { SalesOrderLineTypeOrmEntity } from './sales-order-line-typeorm.entity';
 @Entity('sales_orders')
 export class SalesOrderTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  soNumber: string;
+  declare soNumber: string;
 
   @Column({ type: 'uuid' })
-  customerId: string;
+  declare customerId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  customerName: string;
+  declare customerName: string;
 
   @Column({ type: 'uuid', nullable: true })
-  quotationId: string | null;
+  declare quotationId: string | null;
 
   @Column({ type: 'date' })
-  orderDate: Date;
+  declare orderDate: Date;
 
   @Column({ type: 'date', nullable: true })
-  expectedDeliveryDate: Date | null;
+  declare expectedDeliveryDate: Date | null;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalAmount: number;
+  declare totalAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: number;
+  declare discountAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  taxAmount: number;
+  declare taxAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  grandTotal: number;
+  declare grandTotal: number;
 
   @Column({ type: 'int', default: 30 })
-  paymentTermDays: number;
+  declare paymentTermDays: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  paymentTermLabel: string | null;
+  declare paymentTermLabel: string | null;
 
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  declare notes: string | null;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string | null;
+  declare approvedBy: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date | null;
+  declare approvedAt: Date | null;
 
   @Column({ type: 'text', nullable: true })
-  rejectionReason: string | null;
+  declare rejectionReason: string | null;
 
   @Column({ type: 'uuid', nullable: true })
-  glPostingQueueId: string | null;
+  declare glPostingQueueId: string | null;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string | null;
+  declare journalEntryId: string | null;
 
   @OneToMany(() => SalesOrderLineTypeOrmEntity, (line) => line.salesOrder, {
     cascade: true,

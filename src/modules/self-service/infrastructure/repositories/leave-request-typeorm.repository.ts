@@ -53,7 +53,7 @@ export class LeaveRequestTypeOrmRepository implements LeaveRequestRepositoryPort
     });
   }
 
-  async findPendingByApprover(_approverId: string): Promise<any[]> {
+  async findPendingByApprover(): Promise<any[]> {
     // For now, return all pending leave requests
     // TODO: Filter by approver when supervisor hierarchy is implemented
     return this.repo.find({

@@ -119,7 +119,7 @@ export class SpendingService {
     return spending;
   }
 
-  async approve(id: string, approverId: string): Promise<any> {
+  async approve(id: string): Promise<any> {
     const repo = this.dataSource.getRepository(SpendingTypeOrmEntity);
     const spending = await repo.findOne({ where: { id } });
     if (!spending) throw new NotFoundException('Spending not found');
@@ -133,7 +133,7 @@ export class SpendingService {
     return spending;
   }
 
-  async reject(id: string, approverId: string, reason?: string): Promise<any> {
+  async reject(id: string): Promise<any> {
     const repo = this.dataSource.getRepository(SpendingTypeOrmEntity);
     const spending = await repo.findOne({ where: { id } });
     if (!spending) throw new NotFoundException('Spending not found');

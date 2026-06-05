@@ -112,7 +112,7 @@ export class WarehouseService {
       type?: string;
       isActive?: boolean;
     },
-  ): Promise<WarehouseResponseDto> {
+  ): Promise<WarehouseResponseDto | null> {
     const existing = await this.dataSource.query(
       `SELECT id FROM warehouses WHERE id = $1 LIMIT 1`,
       [id],
@@ -157,7 +157,7 @@ export class WarehouseService {
     }
 
     if (setClauses.length === 0) {
-      return await this.findById(id);
+      return null;
     }
 
     params.push(id);

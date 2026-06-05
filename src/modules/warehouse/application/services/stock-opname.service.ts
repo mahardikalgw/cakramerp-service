@@ -75,9 +75,9 @@ export class StockOpnameService implements StockOpnameServicePort {
         );
       }
 
-      const updatedLine = await this.stockOpnameRepo.updateLine(line.id, {
+      const updatedLine = await this.stockOpnameRepo.updateLine(line.id!, {
         actualQty: input.actualQty,
-        varianceQty: input.actualQty - Number(line.systemQty),
+        varianceQty: input.actualQty - Number(line.systemQty ?? 0),
       });
 
       updatedLines.push(updatedLine);

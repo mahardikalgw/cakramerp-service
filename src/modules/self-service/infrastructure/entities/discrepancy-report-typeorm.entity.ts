@@ -5,24 +5,24 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class DiscrepancyReportTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'date', name: 'attendance_date' })
-  attendanceDate: Date;
+  declare attendanceDate: Date;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'varchar', length: 20, default: 'pending' })
   @Index()
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true, name: 'resolved_by' })
-  resolvedBy: string | null;
+  declare resolvedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'resolved_at' })
-  resolvedAt: Date | null;
+  declare resolvedAt: Date | null;
 
   @Column({ type: 'text', nullable: true })
-  resolution: string | null;
+  declare resolution: string | null;
 }

@@ -5,32 +5,32 @@ import { PurchaseReturnTypeOrmEntity } from './purchase-return-typeorm.entity';
 @Entity('purchase_return_lines')
 export class PurchaseReturnLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  purchaseReturnId: string;
+  declare purchaseReturnId: string;
 
   @ManyToOne(() => PurchaseReturnTypeOrmEntity, (ret) => ret.lines, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'purchaseReturnId' })
-  purchaseReturn: PurchaseReturnTypeOrmEntity;
+  declare purchaseReturn: PurchaseReturnTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })
-  itemId: string;
+  declare itemId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  itemName: string;
+  declare itemName: string;
 
   @Column({ type: 'integer' })
-  quantity: number;
+  declare quantity: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  uom: string;
+  declare uom: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  unitCost: number;
+  declare unitCost: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 4, default: 0 })
-  totalCost: number;
+  declare totalCost: number;
 
   @Column({ type: 'text', nullable: true })
-  reason: string;
+  declare reason: string;
 }

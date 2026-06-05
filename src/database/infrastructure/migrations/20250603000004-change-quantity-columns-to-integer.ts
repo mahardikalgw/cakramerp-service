@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ChangeQuantityColumnsToInteger20250603000002
-  implements MigrationInterface
-{
+export class ChangeQuantityColumnsToInteger20250603000002 implements MigrationInterface {
   name = 'ChangeQuantityColumnsToInteger20250603000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

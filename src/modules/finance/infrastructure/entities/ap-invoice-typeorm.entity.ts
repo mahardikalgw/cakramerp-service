@@ -4,59 +4,59 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('ap_invoices')
 export class APInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  invoiceNumber: string;
+  declare invoiceNumber: string;
 
   @Column({ type: 'uuid' })
-  vendorId: string;
+  declare vendorId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  vendorName: string;
+  declare vendorName: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  supplierInvoiceNumber: string;
+  declare supplierInvoiceNumber: string;
 
   @Column({ type: 'uuid', nullable: true })
-  poReferenceId: string;
+  declare poReferenceId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  grnReferenceId: string;
+  declare grnReferenceId: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  paidAmount: number;
+  declare paidAmount: number;
 
   @Column({ type: 'date' })
-  invoiceDate: Date;
+  declare invoiceDate: Date;
 
   @Column({ type: 'date' })
-  dueDate: Date;
+  declare dueDate: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  threeWayMatchStatus: string;
+  declare threeWayMatchStatus: string;
 
   @Column({ type: 'uuid', nullable: true })
-  bankAccountId: string;
+  declare bankAccountId: string;
 
   @Column({ type: 'date', nullable: true })
-  scheduledPaymentDate: Date;
+  declare scheduledPaymentDate: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string;
+  declare supplierId: string;
 
   @Column({ type: 'int', nullable: true })
-  paymentTermDays: number;
+  declare paymentTermDays: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  paymentTermLabel: string;
+  declare paymentTermLabel: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  additionalDiscount: number;
+  declare additionalDiscount: number;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 }

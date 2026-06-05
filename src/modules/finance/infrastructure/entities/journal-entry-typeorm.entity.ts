@@ -4,59 +4,59 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('journal_entries')
 export class JournalEntryTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  entryNumber: string;
+  declare entryNumber: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reference: string;
+  declare reference: string | undefined;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  projectId: string;
+  declare projectId: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  segment: string;
+  declare segment: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  costCenter: string;
+  declare costCenter: string;
 
   @Column({ type: 'uuid', nullable: true })
-  createdBy: string;
+  declare createdBy: string | undefined;
 
   @Column({ type: 'uuid', nullable: true })
-  approvedBy: string;
+  declare approvedBy: string | undefined;
 
   @Column({ type: 'timestamp', nullable: true })
-  approvedAt: Date;
+  declare approvedAt: Date | undefined;
 
   @Column({ type: 'uuid', nullable: true })
-  reversalOfId: string;
+  declare reversalOfId: string | undefined;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  sourceType: string;
+  declare sourceType: string | undefined;
 
   @Column({ type: 'uuid', nullable: true })
-  sourceId: string;
+  declare sourceId: string | undefined;
 
   @Column({ type: 'varchar', length: 20, default: 'cash' })
-  journalType: string;
+  declare journalType: string;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string;
+  declare customerId: string | undefined;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string;
+  declare supplierId: string | undefined;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  partyName: string;
+  declare partyName: string | undefined;
 
   @Column({ type: 'boolean', default: false })
-  subsidiaryLedgerRecorded: boolean;
+  declare subsidiaryLedgerRecorded: boolean;
 }

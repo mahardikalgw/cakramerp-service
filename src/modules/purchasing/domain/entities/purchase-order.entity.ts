@@ -2,18 +2,23 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 import { PurchaseOrderLine } from './purchase-order-line.entity';
 
 export class PurchaseOrder extends BaseEntity {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  orderNumber: string;
-  supplierId: string;
-  supplierName: string;
-  status: 'draft' | 'confirmed' | 'received' | 'closed' | 'cancelled';
-  orderDate: Date;
+  declare id: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
+  declare orderNumber: string;
+  declare supplierId: string;
+  declare supplierName: string;
+  declare status: 'draft' | 'confirmed' | 'received' | 'closed' | 'cancelled';
+  declare orderDate: Date;
   expectedDate: Date | null;
-  totalAmount: number;
+  declare totalAmount: number;
   notes: string | null;
-  lines: PurchaseOrderLine[];
+  purchaseRequestId?: string;
+  declare lines: PurchaseOrderLine[];
+  paymentTermDays?: number;
+  discountAmount?: number;
+  taxAmount?: number;
+  grandTotal?: number;
   createdBy?: string;
 
   constructor(

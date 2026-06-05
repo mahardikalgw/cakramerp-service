@@ -5,10 +5,10 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 export class LeaveRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   @Index()
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'uuid', name: 'leave_type_id' })
-  leaveTypeId: string;
+  declare leaveTypeId: string;
 
   @Column({
     type: 'varchar',
@@ -19,16 +19,16 @@ export class LeaveRequestTypeOrmEntity extends TypeOrmBaseEntity {
   leaveTypeName: string | null;
 
   @Column({ type: 'date', name: 'start_date' })
-  startDate: Date;
+  declare startDate: Date;
 
   @Column({ type: 'date', name: 'end_date' })
-  endDate: Date;
+  declare endDate: Date;
 
   @Column({ type: 'decimal', precision: 5, scale: 1, name: 'working_days' })
-  workingDays: number;
+  declare workingDays: number;
 
   @Column({ type: 'text' })
-  reason: string;
+  declare reason: string;
 
   @Column({
     type: 'varchar',
@@ -40,14 +40,14 @@ export class LeaveRequestTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 20, default: 'pending' })
   @Index()
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true, name: 'approved_by' })
-  approvedBy: string | null;
+  declare approvedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'approved_at' })
-  approvedAt: Date | null;
+  declare approvedAt: Date | null;
 
   @Column({ type: 'text', nullable: true, name: 'rejection_reason' })
-  rejectionReason: string | null;
+  declare rejectionReason: string | null;
 }

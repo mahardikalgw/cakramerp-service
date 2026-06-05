@@ -137,8 +137,7 @@ export class PurchaseOrderService {
 
     const lineTaxAmount = linesToUse.reduce(
       (sum, line) =>
-        sum +
-        line.quantity * line.unitCost * ((line.taxPercent ?? 0) / 100),
+        sum + line.quantity * line.unitCost * ((line.taxPercent ?? 0) / 100),
       0,
     );
 
@@ -165,7 +164,7 @@ export class PurchaseOrderService {
       notes: data.notes,
     });
 
-    const savedPo = await poRepo.save(po);
+    const savedPo = (await poRepo.save(po)) as PurchaseOrderTypeOrmEntity;
 
     const lines = await Promise.all(
       linesToUse.map((line) => {
@@ -255,16 +254,13 @@ export class PurchaseOrderService {
       );
       const lineTaxAmount = data.lines.reduce(
         (sum, line) =>
-          sum +
-          line.quantity * line.unitCost * ((line.taxPercent ?? 0) / 100),
+          sum + line.quantity * line.unitCost * ((line.taxPercent ?? 0) / 100),
         0,
       );
       po.totalAmount = totalAmount;
       if (data.taxAmount === undefined) po.taxAmount = lineTaxAmount;
       po.grandTotal =
-        totalAmount +
-        (po.taxAmount ?? 0) -
-        Number(po.discountAmount ?? 0);
+        totalAmount + (po.taxAmount ?? 0) - Number(po.discountAmount ?? 0);
     }
 
     await repo.save(po);
@@ -320,7 +316,11 @@ export class PurchaseOrderService {
     return this.findById(id);
   }
 
-  async reject(id: string, approverId: string, reason?: string): Promise<any> {
+  async reject(
+    id: string,
+    approverId: string,
+    reason?: string | null,
+  ): Promise<any> {
     const repo = this.dataSource.getRepository(PurchaseOrderTypeOrmEntity);
     const po = await repo.findOne({ where: { id } });
     if (!po) throw new NotFoundException('Purchase order not found');
@@ -333,7 +333,7 @@ export class PurchaseOrderService {
     po.status = 'rejected';
     po.approvedBy = approverId;
     po.approvedAt = new Date();
-    po.rejectionReason = reason;
+    po.rejectionReason = reason ?? '';
     await repo.save(po);
 
     return this.findById(id);
@@ -404,11 +404,11 @@ export class PurchaseOrderService {
   ): Promise<void> {
     const po = await this.findById(poId);
 
-const glEntry = await this.glPostingQueue.createEntry({
-       sourceType,
-       sourceId: po.id,
-       sourceNumber: po.poNumber,
-       eventType: 'po_created',
+    const glEntry = await this.glPostingQueue.createEntry({
+      sourceType,
+      sourceId: po.id,
+      sourceNumber: po.poNumber,
+      eventType: 'po_created',
       amount: Number(po.totalAmount),
       description: `Purchase Order ${po.poNumber} - ${po.supplierName}`,
       suggestedLines: [

@@ -5,13 +5,13 @@ import { RoleTypeOrmEntity } from './role-typeorm.entity';
 @Entity('permissions')
 export class PermissionTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 100 })
-  resource: string;
+  declare resource: string;
 
   @Column({ type: 'varchar', length: 50 })
-  action: string;
+  declare action: string;
 
   @ManyToMany(() => RoleTypeOrmEntity, (role) => role.permissions)
   roles: RoleTypeOrmEntity[];

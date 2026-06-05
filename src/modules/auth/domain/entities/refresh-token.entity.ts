@@ -1,12 +1,12 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export class RefreshToken extends BaseEntity {
-  id: string;
-  userId: string;
-  tokenHash: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare userId: string;
+  declare tokenHash: string;
+  declare expiresAt: Date;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(
     props: Partial<RefreshToken> & {

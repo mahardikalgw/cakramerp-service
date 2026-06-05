@@ -4,35 +4,35 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('reconciliation_sessions')
 export class ReconciliationSessionTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  bankAccountId: string;
+  declare bankAccountId: string;
 
   @Column({ type: 'date' })
-  periodStart: Date;
+  declare periodStart: Date;
 
   @Column({ type: 'date' })
-  periodEnd: Date;
+  declare periodEnd: Date;
 
   @Column({ type: 'varchar', length: 50, default: 'in_progress' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'boolean', default: false })
-  isLocked: boolean;
+  declare isLocked: boolean;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  matchedTotal: number;
+  declare matchedTotal: number;
 
   @Column({ type: 'integer', default: 0 })
-  unmatchedGlCount: number;
+  declare unmatchedGlCount: number;
 
   @Column({ type: 'integer', default: 0 })
-  unmatchedBankCount: number;
+  declare unmatchedBankCount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  difference: number;
+  declare difference: number;
 
   @Column({ type: 'uuid' })
-  createdBy: string;
+  declare createdBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  finalizedAt: Date;
+  declare finalizedAt: Date;
 }

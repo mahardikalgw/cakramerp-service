@@ -14,7 +14,9 @@ export interface UserProvisioningPort {
   linkUserToEmployee(userId: string, employeeId: string): Promise<void>;
 }
 
-export const USER_PROVISIONING_RESULT_PORT = Symbol('USER_PROVISIONING_RESULT_PORT');
+export const USER_PROVISIONING_RESULT_PORT = Symbol(
+  'USER_PROVISIONING_RESULT_PORT',
+);
 
 export interface UserProvisioningResult {
   id: string;

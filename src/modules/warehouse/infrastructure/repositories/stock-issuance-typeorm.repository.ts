@@ -68,7 +68,8 @@ export class StockIssuanceTypeOrmRepository implements StockIssuanceRepositoryPo
       conditions.push(`si.destination_type = $${params.length}`);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const offset = (page - 1) * limit;
     const countParams = [...params];
     params.push(limit, offset);

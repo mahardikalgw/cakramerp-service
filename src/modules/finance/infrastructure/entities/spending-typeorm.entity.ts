@@ -4,35 +4,35 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('spendings')
 export class SpendingTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
-  spendingNumber: string;
+  declare spendingNumber: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'varchar', length: 100 })
-  category: string;
+  declare category: string;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 
   @Column({ type: 'varchar', length: 50, default: 'cash' })
-  paymentMethod: string;
+  declare paymentMethod: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reference: string;
+  declare reference: string;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  glPostingQueueId: string;
+  declare glPostingQueueId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 }

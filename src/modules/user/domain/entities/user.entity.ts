@@ -7,16 +7,16 @@ export enum UserStatus {
 }
 
 export class User extends BaseEntity {
-  id: string;
-  email: string;
-  passwordHash: string;
-  firstName: string;
-  lastName: string;
-  status: UserStatus;
-  roles?: string[];
-  permissions?: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare email: string;
+  declare passwordHash: string;
+  declare firstName: string;
+  declare lastName: string;
+  declare status: UserStatus;
+  declare roles?: string[];
+  declare permissions?: string[];
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(props: Partial<User> & { email: string; passwordHash: string }) {
     super();

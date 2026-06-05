@@ -1,6 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { USER_PROVISIONING_PORT, UserProvisioningPort, CreateUserDto } from '../../../../shared/kernel/domain/ports/user-provisioning.port';
+import {
+  UserProvisioningPort,
+  CreateUserDto,
+} from '../../../../shared/kernel/domain/ports/user-provisioning.port';
 import { USER_SERVICE } from '../../../../modules/user/application/ports/user-service.port';
 import type { UserServicePort } from '../../../../modules/user/application/ports/user-service.port';
 import { CreateUserCommand } from '../../../../modules/user/application/commands/create-user.command';
@@ -20,15 +23,17 @@ export class HrUserProvisioningAdapter implements UserProvisioningPort {
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<{ id: string; email: string }> {
-    const defaultPassword = this.generateDefaultPassword(dto.firstName, dto.lastName);
-    const user = await this.userService.create(new CreateUserCommand(
-      dto.email,
-      dto.password ?? defaultPassword,
-      dto.firstName,
-      dto.lastName,
-      dto.roles,
-      (dto.status ?? 'active') as 'active' | 'inactive' | 'suspended',
-    ));
+    const defaultPassword = this.generateDefaultPassword(dto.firstName);
+    const user = await this.userService.create(
+      new CreateUserCommand(
+        dto.email,
+        dto.password ?? defaultPassword,
+        dto.firstName,
+        dto.lastName,
+        dto.roles,
+        (dto.status ?? 'active') as 'active' | 'inactive' | 'suspended',
+      ),
+    );
     return { id: user.id, email: user.email };
   }
 
@@ -39,7 +44,7 @@ export class HrUserProvisioningAdapter implements UserProvisioningPort {
     );
   }
 
-  private generateDefaultPassword(firstName: string, lastName?: string): string {
+  private generateDefaultPassword(firstName: string): string {
     const timestamp = Date.now().toString().slice(-4);
     const name = (firstName || 'user').toLowerCase().replace(/[^a-z]/g, '');
     return `${name.charAt(0).toUpperCase()}${name.slice(1)}@${timestamp}`;

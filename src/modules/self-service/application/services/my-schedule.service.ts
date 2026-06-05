@@ -53,7 +53,7 @@ export class MyScheduleService implements MyScheduleServicePort {
       if (!weekMap.has(key)) {
         weekMap.set(key, []);
       }
-      weekMap.get(key).push(shift);
+      weekMap.get(key)!.push(shift);
     }
 
     const data: ScheduleWeek[] = [];

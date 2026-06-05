@@ -4,29 +4,29 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('customers')
 export class CustomerTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  declare name: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  email: string;
+  declare email: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  phone: string;
+  declare phone: string;
 
   @Column({ type: 'text', nullable: true })
-  address: string;
+  declare address: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  city: string;
+  declare city: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  contactPerson: string;
+  declare contactPerson: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  taxId: string;
+  declare taxId: string;
 
   @Column({ type: 'text', nullable: true })
-  notes: string;
+  declare notes: string;
 
   @Column({ type: 'varchar', length: 20, default: 'active' })
-  status: string;
+  declare status: string;
 }

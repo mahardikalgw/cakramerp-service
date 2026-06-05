@@ -37,7 +37,7 @@ import { CreateSalesReturnHttpDto } from '../dtos/sales-return.dto';
  * approve/deliver/invoice/cancel/convert). Caps at 5 actions per
  * 10 seconds per user.
  */
-const WRITE_THROTTLE = { 'write': { ttl: 10_000, limit: 5 } } as const;
+const WRITE_THROTTLE = { write: { ttl: 10_000, limit: 5 } } as const;
 
 @Controller('sales')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -125,7 +125,7 @@ export class SalesController {
   @Post('quotations/:id/convert-to-so')
   @Throttle(WRITE_THROTTLE)
   @RequirePermissions('sales-orders:create')
-  async convertQuotationToSO(@Param('id') id: string, @Req() req: any) {
+  async convertQuotationToSO(@Param('id') id: string) {
     const quotation = await this.quotationService.findById(id);
     if (!quotation || quotation.status !== 'accepted') {
       throw new BadRequestException(

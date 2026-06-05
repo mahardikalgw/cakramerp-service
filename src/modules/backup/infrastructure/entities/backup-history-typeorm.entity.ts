@@ -11,28 +11,28 @@ export enum BackupHistoryStatus {
 export class BackupHistoryTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
   @Index()
-  backupJobId: string;
+  declare backupJobId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  fileName: string;
+  declare fileName: string;
 
   @Column({
     type: 'enum',
     enum: BackupHistoryStatus,
   })
   @Index()
-  status: BackupHistoryStatus;
+  declare status: BackupHistoryStatus;
 
   @Column({ type: 'bigint' })
-  size: number;
+  declare size: number;
 
   @Column({ type: 'timestamp' })
   @Index()
-  completedAt: Date;
+  declare completedAt: Date;
 
   @Column({ type: 'text', nullable: true })
-  errorMessage: string | null;
+  declare errorMessage: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  filePath: string | null;
+  declare filePath: string | null;
 }

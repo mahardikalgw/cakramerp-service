@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 /**
@@ -14,11 +14,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
  */
 @Injectable()
 export class UserThrottlerGuard extends ThrottlerGuard {
-  protected async getTracker(req: Record<string, any>): Promise<string> {
+  protected getTracker(req: Record<string, any>): Promise<string> {
     const user = req?.user;
     if (user && (user.sub || user.id)) {
-      return `user:${user.sub ?? user.id}`;
+      return Promise.resolve(`user:${user.sub ?? user.id}`);
     }
-    return `ip:${req?.ip ?? 'unknown'}`;
+    return Promise.resolve(`ip:${req?.ip ?? 'unknown'}`);
   }
 }

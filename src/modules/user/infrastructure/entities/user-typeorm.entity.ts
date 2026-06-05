@@ -12,19 +12,19 @@ export enum UserStatusTypeOrm {
 export class UserTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   @Index()
-  email: string;
+  declare email: string;
 
   @Column({ type: 'varchar', length: 255, name: 'password_hash' })
-  passwordHash: string;
+  declare passwordHash: string;
 
   @Column({ type: 'varchar', length: 100, name: 'first_name' })
-  firstName: string;
+  declare firstName: string;
 
   @Column({ type: 'varchar', length: 100, name: 'last_name' })
-  lastName: string;
+  declare lastName: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  department: string | null;
+  declare department: string | null;
 
   @Column({
     type: 'enum',
@@ -32,10 +32,10 @@ export class UserTypeOrmEntity extends TypeOrmBaseEntity {
     default: UserStatusTypeOrm.ACTIVE,
   })
   @Index()
-  status: UserStatusTypeOrm;
+  declare status: UserStatusTypeOrm;
 
   @Column({ type: 'timestamp', nullable: true, name: 'last_login' })
-  lastLogin: Date;
+  declare lastLogin: Date;
 
   @ManyToMany(() => RoleTypeOrmEntity, (role) => role.users, { eager: true })
   @JoinTable({

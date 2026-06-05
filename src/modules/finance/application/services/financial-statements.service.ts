@@ -152,10 +152,10 @@ export class FinancialStatementsService implements FinancialStatementsServicePor
       ? operatingExpenses.reduce((sum, i) => sum + (i.priorAmount ?? 0), 0)
       : undefined;
     const priorGrossProfit = comparePrior
-      ? priorTotalRevenue - priorTotalCogs
+      ? (priorTotalRevenue ?? 0) - (priorTotalCogs ?? 0)
       : undefined;
     const priorNetProfit = comparePrior
-      ? priorGrossProfit - priorTotalOperatingExpenses
+      ? (priorGrossProfit ?? 0) - (priorTotalOperatingExpenses ?? 0)
       : undefined;
 
     return {

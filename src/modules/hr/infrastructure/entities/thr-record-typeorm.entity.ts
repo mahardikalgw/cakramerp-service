@@ -4,35 +4,35 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('thr_records')
 export class ThrRecordTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  employeeId: string;
+  declare employeeId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  employeeName: string;
+  declare employeeName: string;
 
   @Column({ type: 'integer' })
-  year: number;
+  declare year: number;
 
   @Column({ type: 'varchar', length: 50 })
-  employmentType: string;
+  declare employmentType: string;
 
   @Column({ type: 'integer' })
-  monthsOfService: number;
+  declare monthsOfService: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  monthlySalary: number;
+  declare monthlySalary: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  thrAmount: number;
+  declare thrAmount: number;
 
   @Column({ type: 'boolean' })
-  isProRated: boolean;
+  declare isProRated: boolean;
 
   @Column({ type: 'boolean' })
-  isExcluded: boolean;
+  declare isExcluded: boolean;
 
   @Column({ type: 'varchar', length: 50, default: 'calculated' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  confirmedAt: Date;
+  declare confirmedAt: Date;
 }

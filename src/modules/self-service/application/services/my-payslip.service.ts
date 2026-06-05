@@ -85,7 +85,8 @@ export class MyPayslipService implements MyPayslipServicePort {
   }
 
   async downloadBuktiPotong(employeeId: string, year: number): Promise<string> {
-    const expiry = Date.now() + 3600 * 1000;
-    return `/tax/1721-A1/${year}/${employeeId}.pdf?expires=${expiry}`;
+    return Promise.resolve(
+      `/tax/1721-A1/${year}/${employeeId}.pdf?expires=${Date.now() + 3600 * 1000}`,
+    );
   }
 }

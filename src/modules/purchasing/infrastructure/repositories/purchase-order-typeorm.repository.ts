@@ -58,24 +58,25 @@ export class PurchaseOrderTypeOrmRepository
     entity.id = domain.id;
     entity.poNumber = domain.orderNumber;
     entity.supplierId = domain.supplierId;
-    entity.supplierName = domain.supplierName;
-    entity.status = domain.status;
-    entity.orderDate = domain.orderDate;
-    entity.expectedDeliveryDate = domain.expectedDate;
+    entity.supplierName = domain.supplierName ?? '';
+    entity.purchaseRequestId = domain.purchaseRequestId ?? '';
+    entity.orderDate = domain.orderDate ?? new Date();
+    entity.expectedDeliveryDate = domain.expectedDate ?? null;
     entity.totalAmount = domain.totalAmount;
-    entity.notes = domain.notes;
-    entity.lines = domain.lines.map((line) => {
-      const lineEntity = new PurchaseOrderLineTypeOrmEntity();
-      lineEntity.id = line.id;
-      lineEntity.purchaseOrderId = line.purchaseOrderId ?? domain.id;
-      lineEntity.itemId = line.itemId;
-      lineEntity.itemName = line.itemName;
-      lineEntity.quantity = line.quantity;
-      lineEntity.uom = line.uom;
-      lineEntity.unitCost = line.unitCost;
-      lineEntity.totalCost = line.totalCost;
-      return lineEntity;
-    });
+    entity.notes = domain.notes ?? '';
+    entity.lines =
+      domain.lines.map((line) => {
+        const lineEntity = new PurchaseOrderLineTypeOrmEntity();
+        lineEntity.id = line.id;
+        lineEntity.purchaseOrderId = line.purchaseOrderId ?? entity.id;
+        lineEntity.itemId = line.itemId;
+        lineEntity.itemName = line.itemName;
+        lineEntity.quantity = line.quantity;
+        lineEntity.uom = line.uom;
+        lineEntity.unitCost = line.unitCost;
+        lineEntity.totalCost = line.totalCost;
+        return lineEntity;
+      }) ?? [];
     return entity;
   }
 

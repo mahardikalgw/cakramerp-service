@@ -4,29 +4,29 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('bank_statement_lines')
 export class BankStatementLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
-  reconciliationSessionId: string;
+  declare reconciliationSessionId: string;
 
   @Column({ type: 'date' })
-  date: Date;
+  declare date: Date;
 
   @Column({ type: 'varchar', length: 500 })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  debit: number;
+  declare debit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  credit: number;
+  declare credit: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  balance: number;
+  declare balance: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  reference: string;
+  declare reference: string;
 
   @Column({ type: 'uuid', nullable: true })
-  matchedJournalLineId: string;
+  declare matchedJournalLineId: string;
 
   @Column({ type: 'varchar', length: 50, default: 'unmatched' })
-  matchStatus: string;
+  declare matchStatus: string;
 }

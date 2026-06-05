@@ -1,7 +1,7 @@
 export class GoodsReceipt {
   constructor(
     public readonly props: {
-      id?: string;
+      id: string;
       grnNumber: string;
       poId?: string;
       warehouseId: string;
@@ -10,7 +10,7 @@ export class GoodsReceipt {
       receivedDate: Date;
       notes?: string;
       status: string;
-      createdBy: string;
+      createdBy?: string;
       createdAt?: Date;
     },
   ) {}

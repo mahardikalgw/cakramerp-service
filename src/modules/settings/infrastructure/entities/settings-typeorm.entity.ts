@@ -4,12 +4,12 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('settings')
 export class SettingsTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255 })
-  key: string;
+  declare key: string;
 
   @Column({ type: 'text', nullable: true })
-  value: string;
+  declare value: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   @Index()
-  category: string | null;
+  declare category: string | null;
 }

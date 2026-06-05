@@ -109,7 +109,7 @@ export class StockIssuanceService implements StockIssuanceServicePort {
     if (totalIssuanceAmount > 0) {
       await this.glPostingQueueService.createEntry({
         sourceType: 'stock_issuance',
-        sourceId: savedIssuance.id,
+        sourceId: savedIssuance.id!,
         sourceNumber: issuanceNumber,
         eventType: 'stock_issued',
         amount: totalIssuanceAmount,

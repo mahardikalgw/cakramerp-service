@@ -130,7 +130,7 @@ describe('FinancialStatementsService', () => {
 
       const retainedEarnings = result.equity.find((e) => e.code === 'RE');
       expect(retainedEarnings).toBeDefined();
-      expect(retainedEarnings.amount).toBe(4000); // 10000 - 6000
+      expect(retainedEarnings!.amount).toBe(4000); // 10000 - 6000
     });
   });
 

@@ -5,37 +5,37 @@ import { QuotationLineTypeOrmEntity } from './quotation-line-typeorm.entity';
 @Entity('quotations')
 export class QuotationTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
-  quotationNumber: string;
+  declare quotationNumber: string;
 
   @Column({ type: 'uuid' })
-  customerId: string;
+  declare customerId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  customerName: string;
+  declare customerName: string;
 
   @Column({ type: 'date' })
-  quotationDate: Date;
+  declare quotationDate: Date;
 
   @Column({ type: 'date', nullable: true })
-  validUntil: Date | null;
+  declare validUntil: Date | null;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  totalAmount: number;
+  declare totalAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  discountAmount: number;
+  declare discountAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  taxAmount: number;
+  declare taxAmount: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
-  grandTotal: number;
+  declare grandTotal: number;
 
   @Column({ type: 'text', nullable: true })
-  notes: string | null;
+  declare notes: string | null;
 
   @OneToMany(() => QuotationLineTypeOrmEntity, (line) => line.quotation, {
     cascade: true,

@@ -7,16 +7,16 @@ export enum BackupJobStatus {
 }
 
 export class BackupJob extends BaseEntity {
-  id: string;
-  name: string;
-  schedule: string;
-  status: BackupJobStatus;
-  lastRun: Date | null;
-  nextRun: Date | null;
-  lastSize: string | null;
-  retentionDays: number | null;
-  createdAt: Date;
-  updatedAt: Date;
+  declare id: string;
+  declare name: string;
+  declare schedule: string;
+  declare status: BackupJobStatus;
+  declare lastRun: Date | null;
+  declare nextRun: Date | null;
+  declare lastSize: string | null;
+  declare retentionDays: number | null;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   constructor(props: Partial<BackupJob> & { name: string; schedule: string }) {
     super();

@@ -4,53 +4,53 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 @Entity('gl_posting_queue')
 export class GlPostingQueueTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50 })
-  sourceType: string;
+  declare sourceType: string;
 
   @Column({ type: 'uuid' })
-  sourceId: string;
+  declare sourceId: string;
 
   @Column({ type: 'varchar', length: 100 })
-  sourceNumber: string;
+  declare sourceNumber: string;
 
   @Column({ type: 'varchar', length: 50 })
-  eventType: string;
+  declare eventType: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  declare amount: number;
 
   @Column({ type: 'text' })
-  description: string;
+  declare description: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  suggestedLines: Record<string, unknown>[];
+  declare suggestedLines: Record<string, unknown>[];
 
   @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string;
+  declare status: string;
 
   @Column({ type: 'uuid', nullable: true })
-  journalEntryId: string;
+  declare journalEntryId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  postedBy: string;
+  declare postedBy: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  postedAt: Date;
+  declare postedAt: Date;
 
   @Column({ type: 'uuid', nullable: true })
-  customerId: string;
+  declare customerId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  supplierId: string;
+  declare supplierId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  invoiceId: string;
+  declare invoiceId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  billingLetterId: string;
+  declare billingLetterId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  warehouseId: string;
+  declare warehouseId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  spendingId: string;
+  declare spendingId: string;
 }
