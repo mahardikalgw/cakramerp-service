@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { LabPurchasingAdapter } from './application/adapters/lab-purchasing.adapter';
 
 // Phase 1: Master Data
 import { TestingServiceController } from './infrastructure/http/controllers/testing-service.controller';
@@ -7,6 +9,7 @@ import { LaboratoryController } from './infrastructure/http/controllers/laborato
 import { SampleTypeController } from './infrastructure/http/controllers/sample-type.controller';
 import { TestingServiceService } from './application/services/testing-service.service';
 import { LaboratoryService } from './application/services/laboratory.service';
+import { SampleService } from './application/services/sample.service';
 import { SampleTypeService } from './application/services/sample-type.service';
 import { TestingServiceTypeOrmEntity } from './infrastructure/entities/testing-service-typeorm.entity';
 import { LaboratoryTypeOrmEntity } from './infrastructure/entities/laboratory-typeorm.entity';
@@ -43,7 +46,6 @@ import { LAB_PURCHASE_ORDER_REPOSITORY } from './domain/repositories/lab-purchas
 // Phase 4: Samples & Schedules
 import { SampleController } from './infrastructure/http/controllers/sample.controller';
 import { TestingScheduleController } from './infrastructure/http/controllers/testing-schedule.controller';
-import { SampleService } from './application/services/sample.service';
 import { TestingScheduleService } from './application/services/testing-schedule.service';
 import { SampleTypeOrmEntity } from './infrastructure/entities/sample-typeorm.entity';
 import { TestingScheduleTypeOrmEntity } from './infrastructure/entities/testing-schedule-typeorm.entity';
@@ -66,30 +68,108 @@ import { DailyReportTypeOrmRepository } from './infrastructure/repositories/dail
 import { TEST_RESULT_REPOSITORY } from './domain/repositories/test-result-repository.port';
 import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repository.port';
 
+// Phase 6: Activity Log
+import { LabActivityLogTypeOrmEntity } from './infrastructure/entities/lab-activity-log-typeorm.entity';
+import { LabActivityLogTypeOrmRepository } from './infrastructure/repositories/lab-activity-log-typeorm.repository';
+import { LabActivityLogService } from './application/services/lab-activity-log.service';
+import { LAB_ACTIVITY_LOG_REPOSITORY } from './domain/repositories/lab-activity-log-repository.port';
+
+// Phase 7: Lab Report Generation
+import { LabReportService } from './application/services/lab-report.service';
+
+// Phase 8: Verification & Activation
+import { VerificationController } from './infrastructure/http/controllers/verification.controller';
+import { VerificationService } from './application/services/verification.service';
+import { VerificationTypeOrmEntity } from './infrastructure/entities/verification-typeorm.entity';
+import { VerificationChecklistItemTypeOrmEntity } from './infrastructure/entities/verification-checklist-item-typeorm.entity';
+import { VerificationTypeOrmRepository } from './infrastructure/repositories/verification-typeorm.repository';
+import { VERIFICATION_REPOSITORY } from './domain/repositories/verification-repository.port';
+
+// Phase 9: Closing Module
+import { ClosingController } from './infrastructure/http/controllers/closing.controller';
+import { ClosingService } from './application/services/closing.service';
+import { ClosingTypeOrmEntity } from './infrastructure/entities/closing-typeorm.entity';
+import { ClosingChecklistItemTypeOrmEntity } from './infrastructure/entities/closing-checklist-item-typeorm.entity';
+import { ClosingTypeOrmRepository } from './infrastructure/repositories/closing-typeorm.repository';
+import { CLOSING_REPOSITORY } from './domain/repositories/closing-repository.port';
+
+// Phase 10: Report Distribution & Archive
+import { ReportDistributionController } from './infrastructure/http/controllers/report-distribution.controller';
+import { ReportDistributionService } from './application/services/report-distribution.service';
+import { ReportDistributionTypeOrmEntity } from './infrastructure/entities/report-distribution-typeorm.entity';
+import { ArchivedDocumentTypeOrmEntity } from './infrastructure/entities/archived-document-typeorm.entity';
+import { ReportDistributionTypeOrmRepository } from './infrastructure/repositories/report-distribution-typeorm.repository';
+import { ArchivedDocumentTypeOrmRepository } from './infrastructure/repositories/archived-document-typeorm.repository';
+import { REPORT_DISTRIBUTION_REPOSITORY } from './domain/repositories/report-distribution-repository.port';
+import { ARCHIVED_DOCUMENT_REPOSITORY } from './domain/repositories/report-distribution-repository.port';
+
+// Phase 11: Certificate Module
+import { LabCertificateController } from './infrastructure/http/controllers/lab-certificate.controller';
+import { LabCertificateService } from './application/services/lab-certificate.service';
+import { LabCertificateTypeOrmEntity } from './infrastructure/entities/lab-certificate-typeorm.entity';
+import { LabCertificateTypeOrmRepository } from './infrastructure/repositories/lab-certificate-typeorm.repository';
+import { LAB_CERTIFICATE_REPOSITORY } from './domain/repositories/lab-certificate-repository.port';
+
+// Phase 12: Quota Monitoring
+import { QuotaMonitoringService } from './application/services/quota-monitoring.service';
+
+// Phase 13: Dashboard
+import { LabDashboardController } from './infrastructure/http/controllers/lab-dashboard.controller';
+import { LabDashboardService } from './application/services/lab-dashboard.service';
+
+// Phase 14: Notifications
+import { NotificationController } from './infrastructure/http/controllers/notification.controller';
+import { NotificationService } from './application/services/notification.service';
+import { InAppNotificationTypeOrmEntity } from './infrastructure/entities/in-app-notification-typeorm.entity';
+import { InAppNotificationTypeOrmRepository } from './infrastructure/repositories/in-app-notification-typeorm.repository';
+import { NOTIFICATION_REPOSITORY } from './domain/repositories/notification-repository.port';
+
+// Phase 15: Payment Methods & Evidence
+import { LabPaymentController } from './infrastructure/http/controllers/lab-payment.controller';
+import { LabPaymentService } from './application/services/lab-payment.service';
+import { PaymentMethodTypeOrmEntity } from './infrastructure/entities/payment-method-typeorm.entity';
+import { PaymentEvidenceTypeOrmEntity } from './infrastructure/entities/payment-evidence-typeorm.entity';
+import { PaymentMethodTypeOrmRepository } from './infrastructure/repositories/payment-method-typeorm.repository';
+import { PaymentEvidenceTypeOrmRepository } from './infrastructure/repositories/payment-evidence-typeorm.repository';
+import { PAYMENT_METHOD_REPOSITORY } from './domain/repositories/payment-repository.port';
+import { PAYMENT_EVIDENCE_REPOSITORY } from './domain/repositories/payment-repository.port';
+import { DocumentGenerationModule } from '../shared/infrastructure/document-generation/document-generation.module';
+import { SalesModule } from '../sales/sales.module';
+import { CustomerModule } from '../customer/customer.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      // Phase 1
       TestingServiceTypeOrmEntity,
       LaboratoryTypeOrmEntity,
       SampleTypeTypeOrmEntity,
-      // Phase 2
       TestingRequestTypeOrmEntity,
       TestingRequestLineTypeOrmEntity,
-      // Phase 3
       LabContractTypeOrmEntity,
       LabContractAttachmentTypeOrmEntity,
       LabPurchaseOrderTypeOrmEntity,
       LabPurchaseOrderLineTypeOrmEntity,
-      // Phase 4
       SampleTypeOrmEntity,
       TestingScheduleTypeOrmEntity,
-      // Phase 5
       TestResultTypeOrmEntity,
       TestResultAttachmentTypeOrmEntity,
       DailyReportTypeOrmEntity,
       DailyReportLineTypeOrmEntity,
+      LabActivityLogTypeOrmEntity,
+      VerificationTypeOrmEntity,
+      VerificationChecklistItemTypeOrmEntity,
+      ClosingTypeOrmEntity,
+      ClosingChecklistItemTypeOrmEntity,
+      ReportDistributionTypeOrmEntity,
+      ArchivedDocumentTypeOrmEntity,
+      LabCertificateTypeOrmEntity,
+      InAppNotificationTypeOrmEntity,
+      PaymentMethodTypeOrmEntity,
+      PaymentEvidenceTypeOrmEntity,
     ]),
+    DocumentGenerationModule,
+    SalesModule,
+    forwardRef(() => CustomerModule),
   ],
   controllers: [
     TestingServiceController,
@@ -102,9 +182,15 @@ import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repo
     TestingScheduleController,
     TestResultController,
     DailyReportController,
+    VerificationController,
+    ClosingController,
+    ReportDistributionController,
+    LabCertificateController,
+    LabDashboardController,
+    NotificationController,
+    LabPaymentController,
   ],
   providers: [
-    // Phase 1
     {
       provide: TESTING_SERVICE_REPOSITORY,
       useClass: TestingServiceTypeOrmRepository,
@@ -114,13 +200,11 @@ import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repo
     TestingServiceService,
     LaboratoryService,
     SampleTypeService,
-    // Phase 2
     {
       provide: TESTING_REQUEST_REPOSITORY,
       useClass: TestingRequestTypeOrmRepository,
     },
     TestingRequestService,
-    // Phase 3
     {
       provide: LAB_CONTRACT_REPOSITORY,
       useClass: LabContractTypeOrmRepository,
@@ -131,7 +215,7 @@ import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repo
     },
     LabContractService,
     LabPOService,
-    // Phase 4
+    LabPurchasingAdapter,
     { provide: SAMPLE_REPOSITORY, useClass: SampleTypeOrmRepository },
     {
       provide: TESTING_SCHEDULE_REPOSITORY,
@@ -139,7 +223,6 @@ import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repo
     },
     SampleService,
     TestingScheduleService,
-    // Phase 5
     { provide: TEST_RESULT_REPOSITORY, useClass: TestResultTypeOrmRepository },
     {
       provide: DAILY_REPORT_REPOSITORY,
@@ -147,18 +230,91 @@ import { DAILY_REPORT_REPOSITORY } from './domain/repositories/daily-report-repo
     },
     TestResultService,
     DailyReportService,
+    {
+      provide: LAB_ACTIVITY_LOG_REPOSITORY,
+      useClass: LabActivityLogTypeOrmRepository,
+    },
+    LabActivityLogService,
+    LabReportService,
+    {
+      provide: VERIFICATION_REPOSITORY,
+      useClass: VerificationTypeOrmRepository,
+    },
+    VerificationService,
+    { provide: CLOSING_REPOSITORY, useClass: ClosingTypeOrmRepository },
+    ClosingService,
+    {
+      provide: REPORT_DISTRIBUTION_REPOSITORY,
+      useClass: ReportDistributionTypeOrmRepository,
+    },
+    {
+      provide: ARCHIVED_DOCUMENT_REPOSITORY,
+      useClass: ArchivedDocumentTypeOrmRepository,
+    },
+    ReportDistributionService,
+    {
+      provide: LAB_CERTIFICATE_REPOSITORY,
+      useClass: LabCertificateTypeOrmRepository,
+    },
+    LabCertificateService,
+    QuotaMonitoringService,
+    LabDashboardService,
+    {
+      provide: NOTIFICATION_REPOSITORY,
+      useClass: InAppNotificationTypeOrmRepository,
+    },
+    NotificationService,
+    {
+      provide: PAYMENT_METHOD_REPOSITORY,
+      useClass: PaymentMethodTypeOrmRepository,
+    },
+    {
+      provide: PAYMENT_EVIDENCE_REPOSITORY,
+      useClass: PaymentEvidenceTypeOrmRepository,
+    },
+    LabPaymentService,
   ],
   exports: [
+    TESTING_REQUEST_REPOSITORY,
+    LAB_CONTRACT_REPOSITORY,
+    LAB_PURCHASE_ORDER_REPOSITORY,
+    TESTING_SERVICE_REPOSITORY,
+    LABORATORY_REPOSITORY,
+    SAMPLE_TYPE_REPOSITORY,
+    SAMPLE_REPOSITORY,
+    TESTING_SCHEDULE_REPOSITORY,
+    TEST_RESULT_REPOSITORY,
+    DAILY_REPORT_REPOSITORY,
+    LAB_ACTIVITY_LOG_REPOSITORY,
+    LAB_CERTIFICATE_REPOSITORY,
+    VERIFICATION_REPOSITORY,
+    CLOSING_REPOSITORY,
+    REPORT_DISTRIBUTION_REPOSITORY,
+    ARCHIVED_DOCUMENT_REPOSITORY,
+    NOTIFICATION_REPOSITORY,
+    PAYMENT_METHOD_REPOSITORY,
+    PAYMENT_EVIDENCE_REPOSITORY,
     TestingServiceService,
     LaboratoryService,
     SampleTypeService,
     TestingRequestService,
     LabContractService,
     LabPOService,
+    LabPurchasingAdapter,
     SampleService,
     TestingScheduleService,
     TestResultService,
     DailyReportService,
+    LabActivityLogService,
+    LabReportService,
+    VerificationService,
+    ClosingService,
+    ReportDistributionService,
+    LabCertificateService,
+    QuotaMonitoringService,
+    LabDashboardService,
+    NotificationService,
+    LabPaymentService,
   ],
 })
 export class LaboratoryModule {}

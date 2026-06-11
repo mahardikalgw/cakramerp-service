@@ -45,17 +45,17 @@ export class SampleTypeOrmRepository
     entity.sampleCode = domain.sampleCode;
     entity.sampleTypeId = domain.sampleTypeId;
     entity.sampleTypeName = domain.sampleTypeName;
-    entity.testingRequestId = domain.testingRequestId ?? '';
-    entity.testingRequestNumber = domain.testingRequestNumber ?? '';
+    entity.testingRequestId = domain.testingRequestId ?? null;
+    entity.testingRequestNumber = domain.testingRequestNumber ?? null;
     entity.customerId = domain.customerId;
     entity.customerName = domain.customerName;
     entity.weight = domain.weight as any;
-    entity.location = domain.location ?? '';
-    entity.description = domain.description ?? '';
+    entity.location = domain.location ?? null;
+    entity.description = domain.description ?? null;
     entity.status = domain.status ?? 'awaiting_delivery';
     entity.receivedAt = domain.receivedAt as any;
-    entity.receivedBy = domain.receivedBy ?? '';
-    entity.notes = domain.notes ?? '';
+    entity.receivedBy = domain.receivedBy ?? null;
+    entity.notes = domain.notes ?? null;
     return entity;
   }
 

@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.gu
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
 import { DailyReportService } from '../../../application/services/daily-report.service';
+import { LabReportService } from '../../../application/services/lab-report.service';
 import {
   CreateDailyReportHttpDto,
   RevisionRequestDto,
@@ -22,7 +23,10 @@ import {
 @Controller('laboratory')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DailyReportController {
-  constructor(private readonly dailyReportService: DailyReportService) {}
+  constructor(
+    private readonly dailyReportService: DailyReportService,
+    private readonly labReportService: LabReportService,
+  ) {}
 
   @Get('daily-reports')
   @RequirePermissions('daily-reports:read')
@@ -80,5 +84,49 @@ export class DailyReportController {
   async deleteDailyReport(@Param('id') id: string) {
     await this.dailyReportService.delete(id);
     return { success: true };
+  }
+
+  // ---- Draft report generation (Phase 5) -------------------------
+
+  @Post('testing-requests/:id/generate-report')
+  @RequirePermissions('daily-reports:create')
+  async generateDraftReport(
+    @Param('id') testingRequestId: string,
+    @Req() req: any,
+  ) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.labReportService.generateDraftReport(
+      testingRequestId,
+      user.id,
+      userName,
+    );
+  }
+
+  @Post('daily-reports/:id/finalize')
+  @RequirePermissions('daily-reports:approve')
+  async finalizeReport(@Param('id') reportId: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.labReportService.finalizeDraftReport(
+      reportId,
+      user.id,
+      userName,
+    );
+  }
+
+  @Get('daily-reports/:id/documents')
+  @RequirePermissions('daily-reports:read')
+  async getReportDocuments(@Param('id') reportId: string) {
+    return this.labReportService.getReportDocuments(reportId);
+  }
+
+  @Get('daily-reports/:id/download')
+  @RequirePermissions('daily-reports:read')
+  async getDocumentDownloadUrl(@Query('documentId') documentId: string) {
+    const url = await this.labReportService.getDocumentDownloadUrl(documentId);
+    return { url };
   }
 }

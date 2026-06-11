@@ -4,12 +4,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { PurchaseRequestTypeOrmEntity } from '../../infrastructure/entities/purchase-request-typeorm.entity';
 import { PurchaseRequestLineTypeOrmEntity } from '../../infrastructure/entities/purchase-request-line-typeorm.entity';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class PurchaseRequestService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly docHelper: DocumentGenerationHelper,
+  ) {}
 
   async findAll(filters?: {
     search?: string;
@@ -254,6 +260,15 @@ export class PurchaseRequestService {
     pr.approvedBy = approverId;
     pr.approvedAt = new Date();
     await repo.save(pr);
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.PURCHASE_REQUEST,
+      entityId: id,
+      tenantId: 'default',
+      requestedBy: approverId,
+      outputFormat: 'pdf',
+    });
 
     return this.findById(id);
   }

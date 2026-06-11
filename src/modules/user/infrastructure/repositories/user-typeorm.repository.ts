@@ -7,6 +7,10 @@ import {
   UserStatusTypeOrm,
 } from '../entities/user-typeorm.entity';
 import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class UserTypeOrmRepository
@@ -73,6 +77,53 @@ export class UserTypeOrmRepository
   async existsByEmail(email: string): Promise<boolean> {
     const count = await this.repository.count({ where: { email } });
     return count > 0;
+  }
+
+  async findAll(options?: FindOptions): Promise<FindResult<User>> {
+    const limit = options?.limit ?? 20;
+    const page = options?.page ?? 1;
+    const offset = options?.offset ?? (page - 1) * limit;
+
+    const qb = this.repository
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.roles', 'r')
+      .leftJoinAndSelect('r.permissions', 'p');
+
+    if (options?.filters?.search) {
+      const search = options.filters.search;
+      qb.andWhere(
+        `(u.firstName ILIKE :search OR u.lastName ILIKE :search OR u.email ILIKE :search)`,
+        { search: `%${search}%` },
+      );
+    }
+
+    if (options?.filters?.status) {
+      qb.andWhere('u.status = :status', { status: options.filters.status });
+    }
+
+    if (options?.filters?.role) {
+      qb.andWhere('r.name = :role', { role: options.filters.role });
+    }
+
+    const [entities, total] = await qb
+      .orderBy('u.createdAt', 'DESC')
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: entities.map((e) => this.toDomain(e)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async findById(id: string): Promise<User | null> {

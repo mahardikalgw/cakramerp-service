@@ -12,10 +12,18 @@ export class TelemetryService implements OnModuleInit {
     return process.env.OTEL_SERVICE_NAME || 'cakramerp-service';
   }
 
-  private get exporterEndpoint(): string {
+  private get traceEndpoint(): string {
     return (
       process.env.OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318/v1/traces'
     );
+  }
+
+  private get metricsEndpoint(): string {
+    // Derive metrics endpoint from trace endpoint base or use explicit env var
+    const base = process.env.OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318';
+    // Strip trailing path if it contains /v1/traces
+    const baseUrl = base.replace('/v1/traces', '');
+    return process.env.OTEL_METRICS_ENDPOINT || `${baseUrl}/v1/metrics`;
   }
 
   async onModuleInit(): Promise<void> {
@@ -26,40 +34,98 @@ export class TelemetryService implements OnModuleInit {
       return;
     }
 
-    this.logger.log('OpenTelemetry is enabled. Bootstrapping tracing...');
+    this.logger.log(
+      'OpenTelemetry is enabled. Bootstrapping tracing + metrics...',
+    );
+
     const { NodeSDK } = await import('@opentelemetry/sdk-node');
-    const { JaegerExporter } = await import('@opentelemetry/exporter-jaeger');
+    const { OTLPTraceExporter } =
+      await import('@opentelemetry/exporter-trace-otlp-http');
+    const { OTLPMetricExporter } =
+      await import('@opentelemetry/exporter-metrics-otlp-http');
+    const { PeriodicExportingMetricReader } =
+      await import('@opentelemetry/sdk-metrics');
+    const { resourceFromAttributes } = await import('@opentelemetry/resources');
+    const {
+      ATTR_SERVICE_NAME,
+      ATTR_SERVICE_VERSION,
+      ATTR_DEPLOYMENT_ENVIRONMENT_NAME,
+    } = await import('@opentelemetry/semantic-conventions');
     const { getNodeAutoInstrumentations } =
       await import('@opentelemetry/auto-instrumentations-node');
     const { NestInstrumentation } =
       await import('@opentelemetry/instrumentation-nestjs-core');
+    const {
+      W3CTraceContextPropagator,
+      CompositePropagator,
+      W3CBaggagePropagator,
+    } = await import('@opentelemetry/core');
+
+    const resource = resourceFromAttributes({
+      [ATTR_SERVICE_NAME]: this.serviceName,
+      [ATTR_SERVICE_VERSION]: process.env.npm_package_version || '0.0.1',
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: process.env.NODE_ENV || 'development',
+    });
+
+    const traceExporter = new OTLPTraceExporter({
+      url: this.traceEndpoint,
+    });
+
+    const metricExporter = new OTLPMetricExporter({
+      url: this.metricsEndpoint,
+    });
 
     const sdk = new NodeSDK({
-      serviceName: this.serviceName,
-      traceExporter: new JaegerExporter({
-        endpoint: this.exporterEndpoint,
+      resource,
+      traceExporter,
+      metricReader: new PeriodicExportingMetricReader({
+        exporter: metricExporter,
+        exportIntervalMillis: 15_000,
+      }),
+      textMapPropagator: new CompositePropagator({
+        propagators: [
+          new W3CTraceContextPropagator(),
+          new W3CBaggagePropagator(),
+        ],
       }),
       instrumentations: [
         getNodeAutoInstrumentations({
+          '@opentelemetry/instrumentation-fs': { enabled: false },
           '@opentelemetry/instrumentation-http': {
-            ignoreIncomingRequestHook: (req) =>
-              ['/health', '/health/live', '/health/ready'].includes(
-                req.url ?? '',
-              ),
+            ignoreIncomingRequestHook: (req) => {
+              const ignored = [
+                '/health',
+                '/health/live',
+                '/health/ready',
+                '/metrics',
+              ];
+              return ignored.includes(req.url ?? '');
+            },
           },
-          '@opentelemetry/instrumentation-express': {
-            enabled: true,
-          },
+          '@opentelemetry/instrumentation-express': { enabled: true },
+          '@opentelemetry/instrumentation-pg': { enabled: true },
         }),
         new NestInstrumentation(),
       ],
     });
 
     process.on('SIGTERM', () => {
-      sdk.shutdown().catch(() => {});
+      sdk
+        .shutdown()
+        .then(() => this.logger.log('OpenTelemetry SDK shut down.'))
+        .catch((err) => this.logger.error('Error shutting down OTel SDK', err));
+    });
+
+    process.on('SIGINT', () => {
+      sdk
+        .shutdown()
+        .then(() => this.logger.log('OpenTelemetry SDK shut down.'))
+        .catch((err) => this.logger.error('Error shutting down OTel SDK', err));
     });
 
     await sdk.start();
-    this.logger.log('OpenTelemetry tracing started.');
+    this.logger.log(
+      `OpenTelemetry started. Traces -> ${this.traceEndpoint}, Metrics -> ${this.metricsEndpoint}`,
+    );
   }
 }

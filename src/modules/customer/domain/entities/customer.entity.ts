@@ -11,6 +11,10 @@ export class Customer extends BaseEntity {
   declare taxId: string;
   declare notes: string;
   declare status: 'active' | 'inactive';
+  // Customer portal fields
+  declare userId?: string;
+  declare portalAccess?: boolean;
+  declare portalRegisteredAt?: Date;
   declare createdAt: Date;
   declare updatedAt: Date;
 

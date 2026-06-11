@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { MyLeaveServicePort } from '../ports/my-leave-service.port';
 import {
   LEAVE_TYPE_REPOSITORY,
@@ -17,6 +18,8 @@ import type {
   LeaveRequestRepositoryPort,
 } from '../../domain/repositories/self-service-repository.port';
 import { AttendanceRecordTypeOrmEntity } from '../../../hr/infrastructure/entities/attendance-record-typeorm.entity';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class MyLeaveService implements MyLeaveServicePort {
@@ -28,6 +31,7 @@ export class MyLeaveService implements MyLeaveServicePort {
     private readonly leaveBalanceRepo: LeaveBalanceRepositoryPort,
     @Inject(LEAVE_REQUEST_REPOSITORY)
     private readonly leaveRequestRepo: LeaveRequestRepositoryPort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
   async getLeaveBalance(employeeId: string, year: number): Promise<any[]> {
@@ -94,6 +98,15 @@ export class MyLeaveService implements MyLeaveServicePort {
       reason: data.reason,
       attachmentPath: data.attachmentPath || null,
       status: 'pending',
+    });
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.LEAVE_REQUEST,
+      entityId: leaveRequest.id,
+      tenantId: 'default',
+      requestedBy: employeeId,
+      outputFormat: 'pdf',
     });
 
     return leaveRequest;

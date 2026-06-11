@@ -5,9 +5,12 @@ import * as bcryptjs from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { USER_REPOSITORY } from '../../../user/domain/repositories/user-repository.port';
 import { AUTH_REPOSITORY } from '../../domain/repositories/auth-repository.port';
+import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { ROLE_REPOSITORY } from '../../../iam/domain/repositories/role-repository.port';
 import { LoginCommand } from '../commands/login.command';
 import { RegisterCommand } from '../commands/register.command';
 import { User } from '../../../user/domain/entities/user.entity';
+import { Role } from '../../../iam/domain/entities/role.entity';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
 
 jest.mock('bcryptjs');
@@ -29,6 +32,14 @@ describe('AuthService', () => {
     deleteByUserId: jest.fn(),
   };
 
+  const mockRoleAssigner = {
+    assignRoles: jest.fn(),
+  };
+
+  const mockRoleRepository = {
+    findByName: jest.fn(),
+  };
+
   const mockJwtService = {
     sign: jest.fn(),
     verify: jest.fn(),
@@ -40,6 +51,8 @@ describe('AuthService', () => {
         AuthService,
         { provide: USER_REPOSITORY, useValue: mockUserRepository },
         { provide: AUTH_REPOSITORY, useValue: mockAuthRepository },
+        { provide: USER_ROLE_ASSIGNER_PORT, useValue: mockRoleAssigner },
+        { provide: ROLE_REPOSITORY, useValue: mockRoleRepository },
         { provide: JwtService, useValue: mockJwtService },
       ],
     }).compile();
@@ -53,7 +66,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should register a new user and return tokens', async () => {
+    it('should register a new user, assign customer role, and return tokens', async () => {
       const command = new RegisterCommand(
         'test@example.com',
         'Pass123!',
@@ -70,6 +83,22 @@ describe('AuthService', () => {
         lastName: command.lastName,
       });
       mockUserRepository.save.mockResolvedValue(savedUser);
+      const customerRole = new Role({
+        id: 'customer-role-id',
+        name: 'customer',
+      });
+      mockRoleRepository.findByName.mockResolvedValue(customerRole);
+      mockRoleAssigner.assignRoles.mockResolvedValue(undefined);
+      const userWithRole = new User({
+        id: 'user-1',
+        email: command.email,
+        passwordHash: 'hashed-password',
+        firstName: command.firstName,
+        lastName: command.lastName,
+        roles: ['customer'],
+        permissions: [],
+      });
+      mockUserRepository.findById.mockResolvedValue(userWithRole);
       mockJwtService.sign
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token');
@@ -82,6 +111,11 @@ describe('AuthService', () => {
         'test@example.com',
       );
       expect(mockUserRepository.save).toHaveBeenCalled();
+      expect(mockRoleRepository.findByName).toHaveBeenCalledWith('customer');
+      expect(mockRoleAssigner.assignRoles).toHaveBeenCalledWith('user-1', [
+        'customer-role-id',
+      ]);
+      expect(mockUserRepository.findById).toHaveBeenCalledWith('user-1');
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
       expect(result.expiresIn).toBe(900);

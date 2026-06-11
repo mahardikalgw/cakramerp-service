@@ -62,9 +62,9 @@ export class LabContractTypeOrmRepository
     const entity = new LabContractTypeOrmEntity();
     entity.id = domain.id;
     entity.contractNumber = domain.contractNumber;
-    entity.customerId = domain.customerId ?? '';
+    entity.customerId = domain.customerId || (null as any);
     entity.customerName = domain.customerName ?? '';
-    entity.projectId = domain.projectId ?? '';
+    entity.projectId = domain.projectId || (null as any);
     entity.projectName = domain.projectName ?? '';
     entity.startDate =
       domain.startDate instanceof Date

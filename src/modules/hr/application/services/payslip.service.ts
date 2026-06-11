@@ -1,13 +1,17 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port';
 import type { PayrollRepositoryPort } from '../../domain/repositories/payroll-repository.port';
 import type { PaySlipServicePort } from '../ports/payslip-service.port';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class PaySlipService implements PaySlipServicePort {
   constructor(
     @Inject(PAYROLL_REPOSITORY)
     private readonly payrollRepo: PayrollRepositoryPort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
   async generatePaySlips(
@@ -21,6 +25,30 @@ export class PaySlipService implements PaySlipServicePort {
     if (details.length === 0) {
       throw new BadRequestException('No payroll details found for this run');
     }
+
+    for (const detail of details) {
+      void this.docHelper.generateAsync({
+        requestId: uuidv4(),
+        documentType: DOCUMENT_TYPES.PAYSLIP,
+        entityId: detail.id,
+        tenantId: 'default',
+        requestedBy: 'system',
+        outputFormat: 'pdf',
+        parameters: {
+          payrollRunId,
+          employeeId: detail.employeeId,
+        },
+      });
+    }
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.PAYROLL_SUMMARY,
+      entityId: payrollRunId,
+      tenantId: 'default',
+      requestedBy: 'system',
+      outputFormat: 'pdf',
+    });
 
     const path = `payslips/${run.year}-${String(run.month).padStart(2, '0')}/all-payslips.csv`;
 

@@ -29,6 +29,7 @@ export class TestingRequestTypeOrmRepository
       id: entity.id,
       requestNumber: entity.requestNumber,
       customerId: entity.customerId,
+      customerName: (entity as any).customerName ?? undefined,
       projectName: entity.projectName,
       projectLocation: entity.projectLocation,
       testingType: entity.testingType,
@@ -40,6 +41,35 @@ export class TestingRequestTypeOrmRepository
       approvedBy: entity.approvedBy,
       approvedAt: entity.approvedAt,
       rejectionReason: entity.rejectionReason,
+      submittedBy: (entity.submittedBy as 'admin' | 'customer') ?? 'admin',
+      customerUserId: entity.customerUserId ?? undefined,
+      projectAddress: entity.projectAddress ?? undefined,
+      preferredScheduleDate: entity.preferredScheduleDate ?? undefined,
+      priority: (entity.priority as 'normal' | 'urgent') ?? 'normal',
+      billingType: (entity.billingType as 'contract' | 'cash') ?? undefined,
+      testingServiceId: entity.testingServiceId ?? undefined,
+      serviceName: entity.serviceName ?? undefined,
+      labContractId: entity.labContractId ?? undefined,
+      labPurchaseOrderId: entity.labPurchaseOrderId ?? undefined,
+      salesOrderId: entity.salesOrderId ?? undefined,
+      assignedLaboranId: entity.assignedLaboranId ?? undefined,
+      assignedLaboranName: entity.assignedLaboranName ?? undefined,
+      assignedAt: entity.assignedAt ?? undefined,
+      assignmentNotes: entity.assignmentNotes ?? undefined,
+      additionalNotes: entity.additionalNotes ?? undefined,
+      invoiceDocumentUrl: entity.invoiceDocumentUrl ?? undefined,
+      poDocumentUrl: entity.poDocumentUrl ?? undefined,
+      signedDocumentUrl: entity.signedDocumentUrl ?? undefined,
+      signedDocumentFilename: entity.signedDocumentFilename ?? undefined,
+      signedDocumentUploadedAt: entity.signedDocumentUploadedAt ?? undefined,
+      paymentProofUrl: entity.paymentProofUrl ?? undefined,
+      paymentProofFilename: entity.paymentProofFilename ?? undefined,
+      paymentProofUploadedAt: entity.paymentProofUploadedAt ?? undefined,
+      documentVerifiedAt: entity.documentVerifiedAt ?? undefined,
+      documentVerifiedBy: entity.documentVerifiedBy ?? undefined,
+      quotaGranted: entity.quotaGranted ?? false,
+      quotaGrantedAt: entity.quotaGrantedAt ?? undefined,
+      quotaGrantedBy: entity.quotaGrantedBy ?? undefined,
       lines: Array.isArray(entity.lines)
         ? entity.lines.map(
             (line) =>
@@ -48,6 +78,8 @@ export class TestingRequestTypeOrmRepository
                 testingRequestId: line.testingRequestId,
                 testingServiceId: line.testingServiceId,
                 serviceName: line.serviceName,
+                sampleCode: line.sampleCode ?? null,
+                sampleDescription: line.sampleDescription ?? null,
                 sampleQuantity: line.sampleQuantity,
                 notes: line.notes,
                 createdAt: line.createdAt,
@@ -64,7 +96,7 @@ export class TestingRequestTypeOrmRepository
     const entity = new TestingRequestTypeOrmEntity();
     entity.id = domain.id;
     entity.requestNumber = domain.requestNumber;
-    entity.customerId = domain.customerId ?? '';
+    entity.customerId = domain.customerId || (null as any);
     entity.projectName = domain.projectName ?? '';
     entity.projectLocation = domain.projectLocation ?? '';
     entity.testingType = domain.testingType ?? '';
@@ -82,18 +114,71 @@ export class TestingRequestTypeOrmRepository
         : new Date(domain.approvedAt)
       : undefined;
     entity.rejectionReason = domain.rejectionReason ?? '';
+    entity.submittedBy = domain.submittedBy ?? 'admin';
+    entity.customerUserId = domain.customerUserId ?? null;
+    entity.projectAddress = domain.projectAddress ?? null;
+    entity.preferredScheduleDate = domain.preferredScheduleDate
+      ? domain.preferredScheduleDate instanceof Date
+        ? domain.preferredScheduleDate
+        : new Date(domain.preferredScheduleDate)
+      : null;
+    entity.priority = domain.priority ?? 'normal';
+    entity.billingType = domain.billingType ?? null;
+    entity.testingServiceId = domain.testingServiceId ?? null;
+    entity.serviceName = domain.serviceName ?? null;
+    entity.labContractId = domain.labContractId ?? null;
+    entity.labPurchaseOrderId = domain.labPurchaseOrderId ?? null;
+    entity.salesOrderId = domain.salesOrderId ?? null;
+    entity.additionalNotes = domain.additionalNotes ?? null;
+    entity.invoiceDocumentUrl = domain.invoiceDocumentUrl ?? null;
+    entity.poDocumentUrl = domain.poDocumentUrl ?? null;
+    entity.signedDocumentUrl = domain.signedDocumentUrl ?? null;
+    entity.signedDocumentFilename = domain.signedDocumentFilename ?? null;
+    entity.signedDocumentUploadedAt = domain.signedDocumentUploadedAt ?? null;
+    entity.paymentProofUrl = domain.paymentProofUrl ?? null;
+    entity.paymentProofFilename = domain.paymentProofFilename ?? null;
+    entity.paymentProofUploadedAt = domain.paymentProofUploadedAt ?? null;
+    entity.documentVerifiedAt = domain.documentVerifiedAt ?? null;
+    entity.documentVerifiedBy = domain.documentVerifiedBy ?? null;
+    entity.quotaGranted = domain.quotaGranted ?? false;
+    entity.quotaGrantedAt = domain.quotaGrantedAt ?? null;
+    entity.quotaGrantedBy = domain.quotaGrantedBy ?? null;
+    entity.assignedLaboranId = domain.assignedLaboranId ?? null;
+    entity.assignedLaboranName = domain.assignedLaboranName ?? null;
+    entity.assignedAt = domain.assignedAt ?? null;
+    entity.assignmentNotes = domain.assignmentNotes ?? null;
     entity.lines =
       domain.lines?.map((line) => {
         const lineEntity = new TestingRequestLineTypeOrmEntity();
         lineEntity.id = line.id;
-        lineEntity.testingRequestId = line.testingRequestId ?? '';
+        lineEntity.testingRequestId = line.testingRequestId || (null as any);
         lineEntity.testingServiceId = line.testingServiceId;
         lineEntity.serviceName = line.serviceName;
+        lineEntity.sampleCode = line.sampleCode ?? null;
+        lineEntity.sampleDescription = line.sampleDescription ?? null;
         lineEntity.sampleQuantity = line.sampleQuantity;
         lineEntity.notes = line.notes ?? '';
         return lineEntity;
       }) ?? [];
     return entity;
+  }
+
+  async findById(id: string): Promise<TestingRequest | null> {
+    const entity = await this.repository.findOne({
+      where: { id } as any,
+      relations: ['lines'],
+    });
+    if (!entity) return null;
+
+    const customerRows = await this.dataSource.query(
+      `SELECT name FROM customers WHERE id = $1`,
+      [entity.customerId],
+    );
+    if (customerRows?.length > 0) {
+      (entity as any).customerName = customerRows[0].name;
+    }
+
+    return this.toDomain(entity);
   }
 
   async findByRequestNumber(
@@ -103,7 +188,17 @@ export class TestingRequestTypeOrmRepository
       where: { requestNumber },
       relations: ['lines'],
     });
-    return entity ? this.toDomain(entity) : null;
+    if (!entity) return null;
+
+    const customerRows = await this.dataSource.query(
+      `SELECT name FROM customers WHERE id = $1`,
+      [entity.customerId],
+    );
+    if (customerRows?.length > 0) {
+      (entity as any).customerName = customerRows[0].name;
+    }
+
+    return this.toDomain(entity);
   }
 
   async getLastRequestNumber(): Promise<string | null> {
@@ -115,5 +210,11 @@ export class TestingRequestTypeOrmRepository
 
     const row = await query.getRawOne();
     return row?.requestNumber ?? null;
+  }
+
+  async deleteLinesByRequestId(requestId: string): Promise<void> {
+    await this.dataSource
+      .getRepository(TestingRequestLineTypeOrmEntity)
+      .delete({ testingRequestId: requestId });
   }
 }

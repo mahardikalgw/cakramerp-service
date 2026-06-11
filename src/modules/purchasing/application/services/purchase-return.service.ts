@@ -5,10 +5,13 @@ import {
   Inject,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { PurchaseReturnTypeOrmEntity } from '../../infrastructure/entities/purchase-return-typeorm.entity';
 import { PurchaseReturnLineTypeOrmEntity } from '../../infrastructure/entities/purchase-return-line-typeorm.entity';
 import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
 import type { GlPostingQueueServicePort } from '../../../finance/application/ports/gl-posting-queue-service.port';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class PurchaseReturnService {
@@ -16,6 +19,7 @@ export class PurchaseReturnService {
     private readonly dataSource: DataSource,
     @Inject(GL_POSTING_QUEUE_SERVICE)
     private readonly glPostingQueueService: GlPostingQueueServicePort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
   async findAll(filters?: {
@@ -248,6 +252,15 @@ export class PurchaseReturnService {
     pr.approvedBy = approverId;
     pr.approvedAt = new Date();
     await repo.save(pr);
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.PURCHASE_RETURN,
+      entityId: id,
+      tenantId: 'default',
+      requestedBy: approverId,
+      outputFormat: 'pdf',
+    });
 
     // Re-enqueue the GL posting with a clearer approved event so finance
     // can post it as a credit memo.

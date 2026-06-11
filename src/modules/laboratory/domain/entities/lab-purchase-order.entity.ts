@@ -37,6 +37,8 @@ export class LabPurchaseOrder extends BaseEntity {
   declare sampleQuantity: number;
   declare totalAmount: number;
   declare status: LabPOStatus;
+  declare purchaseOrderId?: string | null;
+  declare documentUrl?: string | null;
   declare createdBy?: string;
   declare signedBy?: string;
   declare signedAt?: Date;

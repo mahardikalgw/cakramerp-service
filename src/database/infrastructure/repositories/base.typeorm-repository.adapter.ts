@@ -28,9 +28,9 @@ export abstract class BaseTypeOrmRepositoryAdapter<
     const offset = options?.offset ?? (page - 1) * limit;
 
     const [entities, total] = await this.repository.findAndCount({
+      where: options?.filters as any,
       take: limit,
       skip: offset,
-
       order: options?.orderBy
         ? ({ [options.orderBy]: options.orderDirection ?? 'ASC' } as any)
         : undefined,

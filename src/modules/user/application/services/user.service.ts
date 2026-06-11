@@ -62,10 +62,12 @@ export class UserService implements UserServicePort {
     limit = 20,
     status?: string,
     role?: string,
+    search?: string,
   ): Promise<FindResult<User>> {
     const filters: Record<string, string> = {};
     if (status) filters.status = status;
     if (role) filters.role = role;
+    if (search) filters.search = search;
     return this.userRepository.findAll({ page, limit, filters });
   }
 

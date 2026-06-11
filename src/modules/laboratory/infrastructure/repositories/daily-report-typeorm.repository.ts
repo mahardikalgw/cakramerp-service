@@ -59,7 +59,7 @@ export class DailyReportTypeOrmRepository
 
   toEntity(domain: DailyReport): DailyReportTypeOrmEntity {
     const entity = new DailyReportTypeOrmEntity();
-    entity.id = domain.id;
+    if (domain.id) entity.id = domain.id;
     entity.reportNumber = domain.reportNumber;
     entity.reportDate =
       domain.reportDate instanceof Date
@@ -71,14 +71,14 @@ export class DailyReportTypeOrmRepository
     entity.customerName = domain.customerName;
     entity.status = domain.status ?? 'draft';
     entity.submittedAt = domain.submittedAt as any;
-    entity.approvedById = domain.approvedById ?? '';
+    entity.approvedById = domain.approvedById || (null as any);
     entity.approvedAt = domain.approvedAt as any;
     entity.rejectionReason = domain.rejectionReason ?? '';
     entity.lines =
       domain.lines?.map((line) => {
         const lineEntity = new DailyReportLineTypeOrmEntity();
-        lineEntity.id = line.id;
-        lineEntity.dailyReportId = line.dailyReportId;
+        if (line.id) lineEntity.id = line.id;
+        if (line.dailyReportId) lineEntity.dailyReportId = line.dailyReportId;
         lineEntity.testResultId = line.testResultId;
         lineEntity.resultNumber = line.resultNumber;
         lineEntity.sampleCode = line.sampleCode;

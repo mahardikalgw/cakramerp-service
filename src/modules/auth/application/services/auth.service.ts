@@ -9,6 +9,10 @@ import * as bcryptjs from 'bcryptjs';
 import { User } from '../../../user/domain/entities/user.entity';
 import type { UserRepositoryPort } from '../../../user/domain/repositories/user-repository.port';
 import { USER_REPOSITORY } from '../../../user/domain/repositories/user-repository.port';
+import type { UserRoleAssignerPort } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import { USER_ROLE_ASSIGNER_PORT } from '../../../../shared/kernel/domain/ports/user-role-assigner.port';
+import type { RoleRepositoryPort } from '../../../iam/domain/repositories/role-repository.port';
+import { ROLE_REPOSITORY } from '../../../iam/domain/repositories/role-repository.port';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
 import type { AuthRepositoryPort } from '../../domain/repositories/auth-repository.port';
 import { AUTH_REPOSITORY } from '../../domain/repositories/auth-repository.port';
@@ -25,6 +29,10 @@ export class AuthService implements AuthServicePort {
     private readonly userRepository: UserRepositoryPort,
     @Inject(AUTH_REPOSITORY)
     private readonly authRepository: AuthRepositoryPort,
+    @Inject(USER_ROLE_ASSIGNER_PORT)
+    private readonly roleAssigner: UserRoleAssignerPort,
+    @Inject(ROLE_REPOSITORY)
+    private readonly roleRepository: RoleRepositoryPort,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -43,7 +51,13 @@ export class AuthService implements AuthServicePort {
     });
 
     const saved = await this.userRepository.save(user);
-    return this.generateTokens(saved.id, saved.email, undefined);
+    await this.assignDefaultRole(saved.id);
+    const userWithRoles = await this.userRepository.findById(saved.id);
+    return this.generateTokens(
+      saved.id,
+      saved.email,
+      userWithRoles ?? undefined,
+    );
   }
 
   async login(command: LoginCommand): Promise<AuthTokensResult> {
@@ -64,8 +78,8 @@ export class AuthService implements AuthServicePort {
   }
 
   async refresh(refreshToken: string): Promise<AuthTokensResult> {
-    const tokenHash = await this.hashToken(refreshToken);
-    const stored = await this.authRepository.findByTokenHash(tokenHash);
+    // Find by iterating tokens - bcrypt hash is non-deterministic, we pass raw token
+    const stored = await this.authRepository.findByTokenHash(refreshToken);
 
     if (!stored || stored.isExpired()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -81,8 +95,7 @@ export class AuthService implements AuthServicePort {
   }
 
   async logout(refreshToken: string): Promise<void> {
-    const tokenHash = await this.hashToken(refreshToken);
-    const stored = await this.authRepository.findByTokenHash(tokenHash);
+    const stored = await this.authRepository.findByTokenHash(refreshToken);
     if (stored) {
       await this.authRepository.delete(stored.id);
     }
@@ -114,6 +127,17 @@ export class AuthService implements AuthServicePort {
     await this.authRepository.save(refresh);
 
     return new AuthTokensResult(accessToken, refreshToken, 900, user);
+  }
+
+  private async assignDefaultRole(userId: string): Promise<void> {
+    try {
+      const role = await this.roleRepository.findByName('customer');
+      if (role) {
+        await this.roleAssigner.assignRoles(userId, [role.id]);
+      }
+    } catch {
+      // Role assignment is non-blocking; role can be assigned manually later
+    }
   }
 
   private async hashToken(token: string): Promise<string> {

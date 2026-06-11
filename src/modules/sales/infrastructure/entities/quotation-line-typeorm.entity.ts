@@ -10,7 +10,7 @@ export class QuotationLineTypeOrmEntity extends TypeOrmBaseEntity {
   @ManyToOne(() => QuotationTypeOrmEntity, (quotation) => quotation.lines, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'quotationId' })
+  @JoinColumn({ name: 'quotation_id' })
   declare quotation: QuotationTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })

@@ -1,6 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { ARInvoiceServicePort } from '../ports/ar-invoice-service.port';
 import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   AR_INVOICE_LINE_REPOSITORY,
   JOURNAL_ENTRY_REPOSITORY,
@@ -22,6 +23,8 @@ import { Repository, DataSource } from 'typeorm';
 import { CreateARInvoiceCommand } from '../commands/create-ar-invoice.command';
 import { UpdateARInvoiceCommand } from '../commands/update-ar-invoice.command';
 import { RecordPaymentCommand } from '../commands/record-payment.command';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 export interface InvoiceWithLines {
   id: string;
@@ -72,6 +75,7 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     private readonly journalLineRepo: JournalEntryLineRepositoryPort,
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepo: AccountRepositoryPort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {
     this.invoiceRepo = dataSource.getRepository(ARInvoiceTypeOrmEntity);
     this.queueRepo = dataSource.getRepository(GlPostingQueueTypeOrmEntity);
@@ -261,6 +265,15 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     const lines = await this.lineRepo.findByInvoiceId(id);
 
     await this.enqueueGlPosting(saved, 'invoice_issued');
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.SALES_INVOICE,
+      entityId: id,
+      tenantId: 'default',
+      requestedBy: 'system',
+      outputFormat: 'pdf',
+    });
 
     return this.toInvoiceWithLines(saved, lines);
   }

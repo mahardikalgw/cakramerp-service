@@ -8,7 +8,7 @@ export class PurchaseRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
   declare purchaseRequestId: string;
 
   @ManyToOne(() => PurchaseRequestTypeOrmEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'purchaseRequestId' })
+  @JoinColumn({ name: 'purchase_request_id' })
   declare purchaseRequest: PurchaseRequestTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })

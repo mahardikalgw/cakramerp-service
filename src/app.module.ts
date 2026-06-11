@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -10,6 +10,8 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { QueueModule } from './queues/queue.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
+import { MetricsInterceptor } from './telemetry/metrics.interceptor';
+import { traceContextMixin } from './telemetry/trace-context.mixin';
 import { UserModule } from './modules/user';
 import { AuthModule } from './modules/auth';
 import { IAMModule } from './modules/iam';
@@ -28,6 +30,7 @@ import { AssetModule } from './modules/asset/asset.module';
 import { LaboratoryModule } from './modules/laboratory/laboratory.module';
 import { SpendingModule } from './modules/spending/spending.module';
 import { HealthModule } from './modules/shared/infrastructure/health/health.module';
+import { DocumentGenerationModule } from './modules/shared/infrastructure/document-generation/document-generation.module';
 import { UserThrottlerGuard } from './modules/shared/infrastructure/guards/user-throttler.guard';
 import { envConfig } from './config/env.config';
 
@@ -41,6 +44,8 @@ import { envConfig } from './config/env.config';
             : undefined,
         level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
         autoLogging: true,
+        // Inject OTel trace_id + span_id into every log entry
+        mixin: traceContextMixin,
         serializers: {
           req(req) {
             return { method: req.method, url: req.url };
@@ -70,6 +75,7 @@ import { envConfig } from './config/env.config';
     QueueModule,
     TelemetryModule,
     HealthModule,
+    DocumentGenerationModule,
     UserModule,
     AuthModule,
     IAMModule,
@@ -94,6 +100,10 @@ import { envConfig } from './config/env.config';
     {
       provide: APP_GUARD,
       useClass: UserThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

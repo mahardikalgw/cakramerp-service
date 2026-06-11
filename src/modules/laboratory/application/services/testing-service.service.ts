@@ -35,6 +35,7 @@ export class TestingServiceService {
     unitPrice: number;
     measurementUnit?: string;
     description?: string;
+    isActive?: boolean;
   }): Promise<TestingService> {
     const existing = await this.repository.findByCode(dto.code);
     if (existing) {
@@ -50,7 +51,7 @@ export class TestingServiceService {
       unitPrice: dto.unitPrice,
       measurementUnit: dto.measurementUnit,
       description: dto.description,
-      isActive: true,
+      isActive: dto.isActive ?? true,
     });
     return this.repository.save(entity);
   }

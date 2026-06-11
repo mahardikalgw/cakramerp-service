@@ -10,7 +10,7 @@ export class PurchaseReturnLineTypeOrmEntity extends TypeOrmBaseEntity {
   @ManyToOne(() => PurchaseReturnTypeOrmEntity, (ret) => ret.lines, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'purchaseReturnId' })
+  @JoinColumn({ name: 'purchase_return_id' })
   declare purchaseReturn: PurchaseReturnTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })

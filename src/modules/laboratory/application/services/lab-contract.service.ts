@@ -1,5 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { LabContract } from '../../domain/entities/lab-contract.entity';
+import {
+  LabContract,
+  LabContractAttachment,
+} from '../../domain/entities/lab-contract.entity';
 import type { LabContractRepositoryPort } from '../../domain/repositories/lab-contract-repository.port';
 import { LAB_CONTRACT_REPOSITORY } from '../../domain/repositories/lab-contract-repository.port';
 
@@ -117,6 +120,53 @@ export class LabContractService {
     existing.status = 'signed';
     existing.approvedBy = userId;
     existing.approvedAt = new Date();
+    return this.repository.save(existing);
+  }
+
+  async submitForReview(id: string): Promise<LabContract> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new Error('Contract not found');
+    if (existing.status !== 'draft')
+      throw new Error('Only draft contracts can be submitted for review');
+    existing.status = 'review';
+    return this.repository.save(existing);
+  }
+
+  async activate(id: string): Promise<LabContract> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new Error('Contract not found');
+    if (existing.status !== 'signed')
+      throw new Error('Only signed contracts can be activated');
+    existing.status = 'active';
+    return this.repository.save(existing);
+  }
+
+  async close(id: string, userId: string): Promise<LabContract> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new Error('Contract not found');
+    if (existing.status !== 'active')
+      throw new Error('Only active contracts can be closed');
+    existing.status = 'closed';
+    return this.repository.save(existing);
+  }
+
+  async uploadAttachment(
+    id: string,
+    fileName: string,
+    fileUrl: string,
+    fileType?: string,
+  ): Promise<LabContract> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new Error('Contract not found');
+
+    const attachment = new LabContractAttachment({
+      labContractId: id,
+      fileName,
+      fileUrl,
+      fileType: fileType ?? null,
+    });
+
+    existing.attachments = [...(existing.attachments ?? []), attachment];
     return this.repository.save(existing);
   }
 

@@ -57,7 +57,14 @@ function makeService(opts: {
       return opts.glEntry ?? { id: 'glq-1' };
     }),
   };
-  const svc = new PurchaseReturnService(dataSource, glPostingQueueService);
+  const docHelper: any = {
+    generateAsync: jest.fn().mockResolvedValue({ id: 'doc-1' }),
+  };
+  const svc = new PurchaseReturnService(
+    dataSource,
+    glPostingQueueService,
+    docHelper,
+  );
   return {
     svc,
     repo,

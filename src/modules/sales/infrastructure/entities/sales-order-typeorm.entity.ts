@@ -46,7 +46,7 @@ export class SalesOrderTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'text', nullable: true })
   declare notes: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   declare approvedBy: string | null;
 
   @Column({ type: 'timestamp', nullable: true })

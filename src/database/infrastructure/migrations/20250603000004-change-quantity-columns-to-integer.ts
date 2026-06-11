@@ -4,6 +4,19 @@ export class ChangeQuantityColumnsToInteger20250603000002 implements MigrationIn
   name = 'ChangeQuantityColumnsToInteger20250603000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Ensure all columns exist before ALTER TYPE (safeguard for IF NOT EXISTS tables)
+    await queryRunner.query(`
+      ALTER TABLE purchase_order_lines ADD COLUMN IF NOT EXISTS received_quantity NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE sales_order_lines ADD COLUMN IF NOT EXISTS delivered_quantity NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE goods_receipt_lines ADD COLUMN IF NOT EXISTS po_qty NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE goods_receipt_lines ADD COLUMN IF NOT EXISTS received_qty NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE goods_receipt_lines ADD COLUMN IF NOT EXISTS discrepancy_qty NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE stock_ledger ADD COLUMN IF NOT EXISTS balance_after NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE stock_opname_lines ADD COLUMN IF NOT EXISTS system_qty NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE stock_opname_lines ADD COLUMN IF NOT EXISTS actual_qty NUMERIC(18,4) DEFAULT 0;
+      ALTER TABLE stock_opname_lines ADD COLUMN IF NOT EXISTS variance_qty NUMERIC(18,4) DEFAULT 0;
+    `);
+
     // ─── PURCHASING TABLES ─────────────────────────────────────────────
     await queryRunner.query(`
       ALTER TABLE purchase_request_lines

@@ -19,6 +19,8 @@ import {
   CreateTestingRequestHttpDto,
   UpdateTestingRequestHttpDto,
   ApproveRejectDto,
+  AssignLaboranDto,
+  UploadDocumentDto,
 } from '../dtos/testing-request.dto';
 
 @Controller('laboratory')
@@ -70,8 +72,12 @@ export class TestingRequestController {
   @Patch('testing-requests/:id/approve')
   @RequirePermissions('testing-requests:approve')
   async approveTestingRequest(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user?.id ?? 'unknown';
-    return this.testingRequestService.approve(id, userId);
+    const user = req.user ?? {};
+    return this.testingRequestService.approve(
+      id,
+      user.id ?? 'unknown',
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+    );
   }
 
   @Patch('testing-requests/:id/reject')
@@ -81,10 +87,101 @@ export class TestingRequestController {
     @Body() dto: ApproveRejectDto,
     @Req() req: any,
   ) {
+    const user = req.user ?? {};
     return this.testingRequestService.reject(
       id,
-      req.user?.id ?? 'unknown',
+      user.id ?? 'unknown',
       dto.rejectionReason,
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+    );
+  }
+
+  @Patch('testing-requests/:id/assign')
+  @RequirePermissions('testing-requests:assign')
+  async assignLaboran(
+    @Param('id') id: string,
+    @Body() dto: AssignLaboranDto,
+    @Req() req: any,
+  ) {
+    const user = req.user ?? {};
+    return this.testingRequestService.assignLaboran(
+      id,
+      dto.laboranId,
+      dto.laboranName,
+      user.id ?? 'unknown',
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+      dto.notes,
+    );
+  }
+
+  @Get('my/assignments')
+  @RequirePermissions('testing-requests:read')
+  async getMyAssignments(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const laboranId = req.user?.id;
+    return this.testingRequestService.findByLaboranId(laboranId, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get('testing-requests/:id/timeline')
+  @RequirePermissions('testing-requests:read')
+  async getTimeline(@Param('id') id: string) {
+    return this.testingRequestService.getTimeline(id);
+  }
+
+  @Patch('testing-requests/:id/upload-signed')
+  @RequirePermissions('testing-requests:upload-document')
+  async uploadSignedDocument(
+    @Param('id') id: string,
+    @Body() dto: UploadDocumentDto,
+    @Req() req: any,
+  ) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.uploadSignedDocument(
+      id,
+      dto.fileUrl,
+      dto.fileName,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
+
+  @Patch('testing-requests/:id/upload-payment-proof')
+  @RequirePermissions('testing-requests:upload-document')
+  async uploadPaymentProof(
+    @Param('id') id: string,
+    @Body() dto: UploadDocumentDto,
+    @Req() req: any,
+  ) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.uploadPaymentProof(
+      id,
+      dto.fileUrl,
+      dto.fileName,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
+
+  @Patch('testing-requests/:id/verify-documents')
+  @RequirePermissions('testing-requests:verify-documents')
+  async verifyDocumentsAndGrantQuota(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.verifyDocumentsAndGrantQuota(
+      id,
+      user.id ?? 'unknown',
+      userName,
     );
   }
 

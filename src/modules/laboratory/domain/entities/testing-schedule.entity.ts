@@ -10,8 +10,8 @@ export class TestingSchedule extends BaseEntity {
   declare id: string;
   declare scheduleDate: Date | string;
   declare timeSlot: string;
-  declare laboratoryId: string;
-  declare laboratoryName: string;
+  declare laboratoryId: string | null;
+  declare laboratoryName: string | null;
   declare testingRequestId: string | null;
   declare testingRequestNumber: string | null;
   declare sampleId: string | null;
@@ -27,8 +27,6 @@ export class TestingSchedule extends BaseEntity {
     props: Partial<TestingSchedule> & {
       scheduleDate: Date | string;
       timeSlot: string;
-      laboratoryId: string;
-      laboratoryName: string;
     },
   ) {
     super();

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleService } from './application/services/role.service';
 import { PermissionService } from './application/services/permission.service';
@@ -21,7 +21,7 @@ import { AuditModule } from '../audit/audit.module';
   imports: [
     TypeOrmModule.forFeature([RoleTypeOrmEntity, PermissionTypeOrmEntity]),
     UserModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
     AuditModule,
   ],
   controllers: [IAMController],
@@ -45,6 +45,12 @@ import { AuditModule } from '../audit/audit.module';
       useClass: PermissionTypeOrmRepository,
     },
   ],
-  exports: [ROLE_SERVICE, PERMISSION_SERVICE, RolesGuard, PermissionsGuard],
+  exports: [
+    ROLE_SERVICE,
+    PERMISSION_SERVICE,
+    ROLE_REPOSITORY,
+    RolesGuard,
+    PermissionsGuard,
+  ],
 })
 export class IAMModule {}

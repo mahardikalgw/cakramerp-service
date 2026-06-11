@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,15 +13,21 @@ import {
   CreateSalesOrderHttpDto,
   UpdateSalesOrderHttpDto,
 } from '../../infrastructure/http/dtos/sales-order.dto';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class SalesOrderService {
+  private readonly logger = new Logger(SalesOrderService.name);
   private readonly soRepo: Repository<SalesOrderTypeOrmEntity>;
   private readonly soLineRepo: Repository<SalesOrderLineTypeOrmEntity>;
   private readonly quotationRepo: Repository<QuotationTypeOrmEntity>;
   private readonly quotationLineRepo: Repository<QuotationLineTypeOrmEntity>;
 
-  constructor(private readonly dataSource: DataSource) {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly docHelper: DocumentGenerationHelper,
+  ) {
     this.soRepo = dataSource.getRepository(SalesOrderTypeOrmEntity);
     this.soLineRepo = dataSource.getRepository(SalesOrderLineTypeOrmEntity);
     this.quotationRepo = dataSource.getRepository(QuotationTypeOrmEntity);
@@ -133,7 +140,7 @@ export class SalesOrderService {
           description: line.description ?? null,
           quantity: line.quantity,
           deliveredQuantity: 0,
-          uom: line.uom ?? null,
+          uom: line.uom ?? 'pcs',
           unitPrice: line.unitPrice,
           taxPercent: line.taxPercent ?? 0,
           amount: lineAmount - lineDiscount + lineTax,
@@ -254,7 +261,7 @@ export class SalesOrderService {
     return this.findById(id);
   }
 
-  async approve(id: string): Promise<SalesOrderTypeOrmEntity> {
+  async approve(id: string, userId?: string): Promise<SalesOrderTypeOrmEntity> {
     const entity = await this.soRepo.findOne({ where: { id } });
     if (!entity) throw new NotFoundException('Sales order not found');
     if (entity.status !== 'draft') {
@@ -262,9 +269,20 @@ export class SalesOrderService {
     }
 
     entity.status = 'approved';
-    entity.approvedBy = 'system';
+    entity.approvedBy = userId ?? 'system';
     entity.approvedAt = new Date();
     await this.soRepo.save(entity);
+
+    // Generate SO document synchronously via REST
+    try {
+      await this.docHelper.generateDocument({
+        documentType: DOCUMENT_TYPES.SALES_ORDER,
+        outputFormat: 'pdf',
+      });
+    } catch {
+      this.logger.warn(`SO document generation failed (non-blocking) for SO ${id}`);
+    }
+
     return this.findById(id);
   }
 

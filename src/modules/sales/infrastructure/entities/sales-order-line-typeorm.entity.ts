@@ -10,7 +10,7 @@ export class SalesOrderLineTypeOrmEntity extends TypeOrmBaseEntity {
   @ManyToOne(() => SalesOrderTypeOrmEntity, (order) => order.lines, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'salesOrderId' })
+  @JoinColumn({ name: 'sales_order_id' })
   declare salesOrder: SalesOrderTypeOrmEntity;
 
   @Column({ type: 'uuid', nullable: true })

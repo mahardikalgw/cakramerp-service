@@ -10,10 +10,10 @@ export class PurchaseOrder extends BaseEntity {
   declare supplierName: string;
   declare status: 'draft' | 'confirmed' | 'received' | 'closed' | 'cancelled';
   declare orderDate: Date;
-  expectedDate: Date | null;
+  declare expectedDate: Date | null;
   declare totalAmount: number;
-  notes: string | null;
-  purchaseRequestId?: string;
+  declare notes: string | null;
+  declare purchaseRequestId?: string;
   declare lines: PurchaseOrderLine[];
   paymentTermDays?: number;
   discountAmount?: number;

@@ -4,19 +4,25 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { QuotationTypeOrmEntity } from '../../infrastructure/entities/quotation-typeorm.entity';
 import { QuotationLineTypeOrmEntity } from '../../infrastructure/entities/quotation-line-typeorm.entity';
 import {
   CreateQuotationHttpDto,
   UpdateQuotationHttpDto,
 } from '../../infrastructure/http/dtos/quotation.dto';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class QuotationService {
   private readonly quotationRepo: Repository<QuotationTypeOrmEntity>;
   private readonly lineRepo: Repository<QuotationLineTypeOrmEntity>;
 
-  constructor(private readonly dataSource: DataSource) {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly docHelper: DocumentGenerationHelper,
+  ) {
     this.quotationRepo = dataSource.getRepository(QuotationTypeOrmEntity);
     this.lineRepo = dataSource.getRepository(QuotationLineTypeOrmEntity);
   }
@@ -212,6 +218,16 @@ export class QuotationService {
     }
     entity.status = 'sent';
     await this.quotationRepo.save(entity);
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.QUOTATION,
+      entityId: id,
+      tenantId: 'default',
+      requestedBy: 'system',
+      outputFormat: 'pdf',
+    });
+
     return this.findById(id);
   }
 

@@ -10,6 +10,7 @@ import { BACKUP_JOB_REPOSITORY } from './domain/repositories/backup-job-reposito
 import { BACKUP_HISTORY_REPOSITORY } from './domain/repositories/backup-history-repository.port';
 import { BACKUP_SERVICE } from './application/ports/backup-service.port';
 import { UserModule } from '../user/user.module';
+import { IAMModule } from '../iam/iam.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from '../user/user.module';
       BackupHistoryTypeOrmEntity,
     ]),
     UserModule,
+    IAMModule,
   ],
   controllers: [AdminBackupController],
   providers: [

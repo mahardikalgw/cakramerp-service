@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
+import * as bcryptjs from 'bcryptjs';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
 import { AuthRepositoryPort } from '../../domain/repositories/auth-repository.port';
 import { RefreshTokenTypeOrmEntity } from '../entities/refresh-token-typeorm.entity';
@@ -40,10 +41,18 @@ export class AuthTypeOrmRepository
   }
 
   async findByTokenHash(hash: string): Promise<RefreshToken | null> {
-    const entity = await this.repository.findOne({
-      where: { tokenHash: hash },
+    // bcrypt generates a different hash each time, so we must use compare
+    // Load recent unexpired tokens and use bcrypt.compare
+    const entities = await this.repository.find({
+      where: {},
+      order: { createdAt: 'DESC' },
+      take: 100,
     });
-    return entity ? this.toDomain(entity) : null;
+    for (const entity of entities) {
+      const match = await bcryptjs.compare(hash, entity.tokenHash);
+      if (match) return this.toDomain(entity);
+    }
+    return null;
   }
 
   async deleteByUserId(userId: string): Promise<void> {

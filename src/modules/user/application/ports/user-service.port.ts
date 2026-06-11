@@ -13,6 +13,7 @@ export interface UserServicePort {
     limit?: number,
     status?: string,
     role?: string,
+    search?: string,
   ): Promise<FindResult<User>>;
   findById(id: string): Promise<User>;
   findByEmail(email: string): Promise<User>;

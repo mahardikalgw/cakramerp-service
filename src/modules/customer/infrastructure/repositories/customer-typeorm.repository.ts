@@ -57,6 +57,14 @@ export class CustomerTypeOrmRepository implements CustomerRepositoryPort {
     return this.repo.create(data);
   }
 
+  async findByUserId(userId: string): Promise<CustomerTypeOrmEntity | null> {
+    return this.repo.findOne({ where: { userId } });
+  }
+
+  async findByEmail(email: string): Promise<CustomerTypeOrmEntity | null> {
+    return this.repo.findOne({ where: { email } });
+  }
+
   async delete(id: string): Promise<void> {
     await this.repo.delete(id);
   }

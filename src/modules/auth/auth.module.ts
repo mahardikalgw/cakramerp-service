@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './application/services/auth.service';
@@ -12,6 +12,7 @@ import { JwtRefreshGuard } from './infrastructure/guards/jwt-refresh.guard';
 import { AUTH_REPOSITORY } from './domain/repositories/auth-repository.port';
 import { AUTH_SERVICE } from './application/ports/auth-service.port';
 import { UserModule } from '../user/user.module';
+import { IAMModule } from '../iam/iam.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UserModule } from '../user/user.module';
     }),
     TypeOrmModule.forFeature([RefreshTokenTypeOrmEntity]),
     UserModule,
+    forwardRef(() => IAMModule),
   ],
   controllers: [AuthController],
   providers: [

@@ -28,10 +28,20 @@ export const envConfig = {
     password: process.env.REDIS_PASSWORD || undefined,
     ttl: parseInt(process.env.CACHE_TTL || '300', 10),
   },
+  minio: {
+    endpoint: process.env.MINIO_ENDPOINT || 'localhost',
+    port: parseInt(process.env.MINIO_PORT || '9000', 10),
+    accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+    secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+    bucket: process.env.MINIO_BUCKET || 'documents',
+  },
   otel: {
     enabled: process.env.OTEL_ENABLED === 'true',
     exporterEndpoint:
       process.env.OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318/v1/traces',
     serviceName: process.env.OTEL_SERVICE_NAME || 'cakramerp-service',
+  },
+  documentService: {
+    url: process.env.DOCUMENT_SERVICE_URL || 'http://localhost:8080',
   },
 };

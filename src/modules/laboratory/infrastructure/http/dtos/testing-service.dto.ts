@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  Min,
+} from 'class-validator';
 
 export class CreateTestingServiceHttpDto {
   @IsString()
@@ -18,6 +24,10 @@ export class CreateTestingServiceHttpDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class UpdateTestingServiceHttpDto {

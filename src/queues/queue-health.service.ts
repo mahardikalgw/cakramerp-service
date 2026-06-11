@@ -22,9 +22,14 @@ export class QueueHealthService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    const host = envConfig.redis?.host ?? 'localhost';
+    const port = envConfig.redis?.port ?? 6379;
+    const password = envConfig.redis?.password;
     const redisUrl =
       envConfig.redis?.url ??
-      `redis://${envConfig.redis?.host ?? 'localhost'}:${envConfig.redis?.port ?? 6379}`;
+      (password
+        ? `redis://:${password}@${host}:${port}`
+        : `redis://${host}:${port}`);
     this.redis = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       lazyConnect: true,

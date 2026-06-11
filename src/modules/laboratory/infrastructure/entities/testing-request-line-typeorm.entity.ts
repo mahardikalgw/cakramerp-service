@@ -7,11 +7,17 @@ export class TestingRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })
   declare testingRequestId: string;
 
-  @Column({ type: 'uuid' })
-  declare testingServiceId: string;
+  @Column({ type: 'uuid', nullable: true })
+  declare testingServiceId: string | null;
 
-  @Column({ type: 'varchar', length: 255 })
-  declare serviceName: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare serviceName: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true, name: 'sample_code' })
+  declare sampleCode: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'sample_description' })
+  declare sampleDescription: string | null;
 
   @Column({ type: 'int', nullable: true })
   declare sampleQuantity: number;

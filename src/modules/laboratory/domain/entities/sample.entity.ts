@@ -9,8 +9,8 @@ export type SampleStatus =
 export class Sample extends BaseEntity {
   declare id: string;
   declare sampleCode: string;
-  declare sampleTypeId: string;
-  declare sampleTypeName: string;
+  declare sampleTypeId: string | null;
+  declare sampleTypeName: string | null;
   declare testingRequestId: string | null;
   declare testingRequestNumber: string | null;
   declare customerId: string;
@@ -28,8 +28,6 @@ export class Sample extends BaseEntity {
   constructor(
     props: Partial<Sample> & {
       sampleCode: string;
-      sampleTypeId: string;
-      sampleTypeName: string;
       customerId: string;
       customerName: string;
     },

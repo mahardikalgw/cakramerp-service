@@ -5,11 +5,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { MyOvertimeServicePort } from '../ports/my-overtime-service.port';
 import { OVERTIME_REQUEST_REPOSITORY } from '../../domain/repositories/self-service-repository.port';
 import type { OvertimeRequestRepositoryPort } from '../../domain/repositories/self-service-repository.port';
 import { GlPostingQueueTypeOrmEntity } from '../../../finance/infrastructure/entities/gl-posting-queue-typeorm.entity';
 import { EmployeeTypeOrmEntity } from '../../../hr/infrastructure/entities/employee-typeorm.entity';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class MyOvertimeService implements MyOvertimeServicePort {
@@ -17,6 +20,7 @@ export class MyOvertimeService implements MyOvertimeServicePort {
     private readonly dataSource: DataSource,
     @Inject(OVERTIME_REQUEST_REPOSITORY)
     private readonly overtimeRequestRepo: OvertimeRequestRepositoryPort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
   async getRequests(
@@ -41,7 +45,7 @@ export class MyOvertimeService implements MyOvertimeServicePort {
       throw new BadRequestException('End time must be after start time');
     }
 
-    return this.overtimeRequestRepo.create({
+    const request = await this.overtimeRequestRepo.create({
       employeeId,
       date: new Date(data.date),
       startTime: data.startTime,
@@ -51,6 +55,17 @@ export class MyOvertimeService implements MyOvertimeServicePort {
       projectReference: data.projectReference || null,
       status: 'pending',
     });
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.OVERTIME_REQUEST,
+      entityId: request.id,
+      tenantId: 'default',
+      requestedBy: employeeId,
+      outputFormat: 'pdf',
+    });
+
+    return request;
   }
 
   async getPendingForSupervisor(supervisorId: string): Promise<any[]> {

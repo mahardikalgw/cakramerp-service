@@ -5,11 +5,14 @@ import {
   Inject,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { PurchaseOrderTypeOrmEntity } from '../../infrastructure/entities/purchase-order-typeorm.entity';
 import { PurchaseOrderLineTypeOrmEntity } from '../../infrastructure/entities/purchase-order-line-typeorm.entity';
 import { PurchaseRequestLineTypeOrmEntity } from '../../infrastructure/entities/purchase-request-line-typeorm.entity';
 import { GL_POSTING_QUEUE_PORT } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
 import type { GlPostingQueuePort } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
+import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 
 @Injectable()
 export class PurchaseOrderService {
@@ -17,6 +20,7 @@ export class PurchaseOrderService {
     private readonly dataSource: DataSource,
     @Inject(GL_POSTING_QUEUE_PORT)
     private readonly glPostingQueue: GlPostingQueuePort,
+    private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
   async findAll(filters?: {
@@ -312,6 +316,15 @@ export class PurchaseOrderService {
     po.approvedBy = approverId;
     po.approvedAt = new Date();
     await repo.save(po);
+
+    void this.docHelper.generateAsync({
+      requestId: uuidv4(),
+      documentType: DOCUMENT_TYPES.PURCHASE_ORDER,
+      entityId: id,
+      tenantId: 'default',
+      requestedBy: approverId,
+      outputFormat: 'pdf',
+    });
 
     return this.findById(id);
   }

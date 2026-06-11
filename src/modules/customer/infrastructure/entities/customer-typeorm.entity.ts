@@ -29,4 +29,14 @@ export class CustomerTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 20, default: 'active' })
   declare status: string;
+
+  // Customer portal fields
+  @Column({ type: 'uuid', nullable: true, name: 'user_id' })
+  declare userId: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'portal_access' })
+  declare portalAccess: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'portal_registered_at' })
+  declare portalRegisteredAt: Date | null;
 }

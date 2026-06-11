@@ -50,13 +50,13 @@ export class TestingScheduleTypeOrmRepository
     entity.timeSlot = domain.timeSlot;
     entity.laboratoryId = domain.laboratoryId;
     entity.laboratoryName = domain.laboratoryName;
-    entity.testingRequestId = domain.testingRequestId ?? '';
-    entity.testingRequestNumber = domain.testingRequestNumber ?? '';
-    entity.sampleId = domain.sampleId ?? '';
-    entity.sampleCode = domain.sampleCode ?? '';
-    entity.technicianId = domain.technicianId ?? '';
-    entity.technicianName = domain.technicianName ?? '';
-    entity.notes = domain.notes ?? '';
+    entity.testingRequestId = domain.testingRequestId ?? null;
+    entity.testingRequestNumber = domain.testingRequestNumber ?? null;
+    entity.sampleId = domain.sampleId ?? null;
+    entity.sampleCode = domain.sampleCode ?? null;
+    entity.technicianId = domain.technicianId ?? null;
+    entity.technicianName = domain.technicianName ?? null;
+    entity.notes = domain.notes ?? null;
     entity.status = domain.status ?? 'scheduled';
     return entity;
   }

@@ -31,6 +31,12 @@ export class LabPurchaseOrderTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   declare signedAt: Date;
 
+  @Column({ type: 'uuid', nullable: true })
+  declare purchaseOrderId: string;
+
+  @Column({ type: 'text', nullable: true, name: 'document_url' })
+  declare documentUrl: string | null;
+
   @OneToMany(
     () => LabPurchaseOrderLineTypeOrmEntity,
     (line) => line.labPurchaseOrder,

@@ -52,6 +52,7 @@ export class LabPOController {
       customerId: dto.customerId,
       customerName: dto.customerName ?? '',
       totalAmount: dto.totalAmount,
+      purchaseOrderId: dto.purchaseOrderId,
       sampleQuantity: dto.sampleQuantity,
       lines: dto.lines,
     });
@@ -71,6 +72,25 @@ export class LabPOController {
   async signPurchaseOrder(@Param('id') id: string, @Req() req: any) {
     const userId = req.user?.id ?? 'unknown';
     return this.labPOService.sign(id, userId);
+  }
+
+  @Patch('purchase-orders/:id/record-payment')
+  @RequirePermissions('purchase-orders:approve')
+  async recordPayment(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user?.id ?? 'unknown';
+    return this.labPOService.recordPayment(id, userId);
+  }
+
+  @Patch('purchase-orders/:id/activate')
+  @RequirePermissions('purchase-orders:approve')
+  async activatePurchaseOrder(@Param('id') id: string) {
+    return this.labPOService.activate(id);
+  }
+
+  @Patch('purchase-orders/:id/close')
+  @RequirePermissions('purchase-orders:approve')
+  async closePurchaseOrder(@Param('id') id: string) {
+    return this.labPOService.close(id);
   }
 
   @Delete('purchase-orders/:id')

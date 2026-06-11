@@ -16,6 +16,7 @@ export class TypeOrmConfigFactory {
       entities: [
         __dirname +
           '/../../../modules/**/infrastructure/entities/*.entity{.ts,.js}',
+        __dirname + '/../../../modules/**/infrastructure/**/*.entity{.ts,.js}',
       ],
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       migrationsRun: false,

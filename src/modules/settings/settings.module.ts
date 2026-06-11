@@ -7,9 +7,14 @@ import { SettingsTypeOrmEntity } from './infrastructure/entities/settings-typeor
 import { SETTINGS_REPOSITORY } from './domain/repositories/settings-repository.port';
 import { SETTINGS_SERVICE } from './application/ports/settings-service.port';
 import { UserModule } from '../user/user.module';
+import { IAMModule } from '../iam/iam.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SettingsTypeOrmEntity]), UserModule],
+  imports: [
+    TypeOrmModule.forFeature([SettingsTypeOrmEntity]),
+    UserModule,
+    IAMModule,
+  ],
   controllers: [AdminSettingsController],
   providers: [
     {

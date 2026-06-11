@@ -9,32 +9,32 @@ export class TestingScheduleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50 })
   declare timeSlot: string;
 
-  @Column({ type: 'uuid' })
-  declare laboratoryId: string;
-
-  @Column({ type: 'varchar', length: 255 })
-  declare laboratoryName: string;
-
   @Column({ type: 'uuid', nullable: true })
-  declare testingRequestId: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  declare testingRequestNumber: string;
-
-  @Column({ type: 'uuid', nullable: true })
-  declare sampleId: string;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  declare sampleCode: string;
-
-  @Column({ type: 'uuid', nullable: true })
-  declare technicianId: string;
+  declare laboratoryId: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  declare technicianName: string;
+  declare laboratoryName: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare testingRequestId: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  declare testingRequestNumber: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare sampleId: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  declare sampleCode: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare technicianId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare technicianName: string | null;
 
   @Column({ type: 'text', nullable: true })
-  declare notes: string;
+  declare notes: string | null;
 
   @Column({ type: 'varchar', length: 50, default: 'scheduled' })
   declare status: string;

@@ -244,6 +244,22 @@ export class CreatePurchasingAndSales20250602000001 implements MigrationInterfac
 
     // ─── INDEXES ───────────────────────────────────────────────────────
 
+    // Ensure FK columns exist before creating indexes (safeguard for IF NOT EXISTS tables)
+    await queryRunner.query(`
+      ALTER TABLE purchase_request_lines ADD COLUMN IF NOT EXISTS purchase_request_id UUID;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS purchase_request_id UUID;
+      ALTER TABLE purchase_order_lines ADD COLUMN IF NOT EXISTS purchase_order_id UUID;
+      ALTER TABLE purchase_returns ADD COLUMN IF NOT EXISTS supplier_id UUID;
+      ALTER TABLE purchase_return_lines ADD COLUMN IF NOT EXISTS purchase_return_id UUID;
+      ALTER TABLE quotations ADD COLUMN IF NOT EXISTS customer_id UUID;
+      ALTER TABLE quotation_lines ADD COLUMN IF NOT EXISTS quotation_id UUID;
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS customer_id UUID;
+      ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS quotation_id UUID;
+      ALTER TABLE sales_order_lines ADD COLUMN IF NOT EXISTS sales_order_id UUID;
+      ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS customer_id UUID;
+      ALTER TABLE sales_return_lines ADD COLUMN IF NOT EXISTS sales_return_id UUID;
+    `);
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS idx_pr_status ON purchase_requests(status);
       CREATE INDEX IF NOT EXISTS idx_pr_department ON purchase_requests(department_id);

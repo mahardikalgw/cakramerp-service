@@ -38,6 +38,10 @@ export class CreateLabPOHttpDto {
   customerName?: string;
 
   @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string | null;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   totalAmount?: number;

@@ -10,9 +10,8 @@ import {
 import { Type } from 'class-transformer';
 
 export class TestingRequestLineDto {
-  @IsOptional()
   @IsUUID()
-  testingServiceId?: string;
+  testingServiceId: string;
 
   @IsString()
   serviceName: string;
@@ -100,4 +99,24 @@ export class ApproveRejectDto {
   @IsOptional()
   @IsString()
   rejectionReason?: string;
+}
+
+export class AssignLaboranDto {
+  @IsUUID()
+  laboranId: string;
+
+  @IsString()
+  laboranName: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class UploadDocumentDto {
+  @IsString()
+  fileUrl: string;
+
+  @IsString()
+  fileName: string;
 }

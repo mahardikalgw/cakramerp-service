@@ -54,6 +54,8 @@ export class LabPurchaseOrderTypeOrmRepository
         : [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      purchaseOrderId: entity.purchaseOrderId ?? null,
+      documentUrl: entity.documentUrl ?? null,
     });
   }
 
@@ -61,7 +63,7 @@ export class LabPurchaseOrderTypeOrmRepository
     const entity = new LabPurchaseOrderTypeOrmEntity();
     entity.id = domain.id;
     entity.poNumber = domain.poNumber;
-    entity.customerId = domain.customerId ?? '';
+    entity.customerId = domain.customerId || (null as any);
     entity.customerName = domain.customerName ?? '';
     entity.totalAmount = domain.totalAmount;
     entity.sampleQuantity = domain.sampleQuantity ?? 0;
@@ -73,7 +75,8 @@ export class LabPurchaseOrderTypeOrmRepository
       domain.lines?.map((line) => {
         const lineEntity = new LabPurchaseOrderLineTypeOrmEntity();
         lineEntity.id = line.id;
-        lineEntity.labPurchaseOrderId = line.labPurchaseOrderId ?? '';
+        lineEntity.labPurchaseOrderId =
+          line.labPurchaseOrderId || (null as any);
         lineEntity.testingServiceId = line.testingServiceId;
         lineEntity.serviceName = line.serviceName;
         lineEntity.quantity = line.quantity;
@@ -81,6 +84,8 @@ export class LabPurchaseOrderTypeOrmRepository
         lineEntity.total = line.total;
         return lineEntity;
       }) ?? [];
+    entity.purchaseOrderId = domain.purchaseOrderId ?? (null as any);
+    entity.documentUrl = domain.documentUrl ?? null;
     return entity;
   }
 
