@@ -58,6 +58,7 @@ export class SampleService {
     customerId: string;
     customerName: string;
     weight?: number;
+    quantity?: number;
     location?: string;
     description?: string;
     notes?: string;
@@ -77,6 +78,7 @@ export class SampleService {
       customerId: dto.customerId,
       customerName: dto.customerName,
       weight: dto.weight,
+      quantity: dto.quantity,
       location: dto.location,
       description: dto.description,
       notes: dto.notes,
@@ -90,6 +92,7 @@ export class SampleService {
     id: string,
     dto: {
       weight?: number;
+      quantity?: number;
       location?: string;
       description?: string;
       notes?: string;

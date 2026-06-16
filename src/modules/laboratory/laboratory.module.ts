@@ -42,6 +42,9 @@ import { LabContractTypeOrmRepository } from './infrastructure/repositories/lab-
 import { LabPurchaseOrderTypeOrmRepository } from './infrastructure/repositories/lab-purchase-order-typeorm.repository';
 import { LAB_CONTRACT_REPOSITORY } from './domain/repositories/lab-contract-repository.port';
 import { LAB_PURCHASE_ORDER_REPOSITORY } from './domain/repositories/lab-purchase-order-repository.port';
+import { SampleQuotaTypeOrmEntity } from './infrastructure/entities/sample-quota-typeorm.entity';
+import { SampleQuotaTypeOrmRepository } from './infrastructure/repositories/sample-quota-typeorm.repository';
+import { SAMPLE_QUOTA_REPOSITORY } from './domain/repositories/sample-quota-repository.port';
 
 // Phase 4: Samples & Schedules
 import { SampleController } from './infrastructure/http/controllers/sample.controller';
@@ -93,6 +96,13 @@ import { ClosingChecklistItemTypeOrmEntity } from './infrastructure/entities/clo
 import { ClosingTypeOrmRepository } from './infrastructure/repositories/closing-typeorm.repository';
 import { CLOSING_REPOSITORY } from './domain/repositories/closing-repository.port';
 
+// Phase 10: Contract Invoice Module
+import { ContractInvoiceTypeOrmEntity } from './infrastructure/entities/contract-invoice-typeorm.entity';
+import { ContractInvoiceTypeOrmRepository } from './infrastructure/repositories/contract-invoice-typeorm.repository';
+import { CONTRACT_INVOICE_REPOSITORY } from './domain/repositories/contract-invoice-repository.port';
+import { ContractInvoiceService } from './application/services/contract-invoice.service';
+import { ContractInvoiceController } from './infrastructure/http/controllers/contract-invoice.controller';
+
 // Phase 10: Report Distribution & Archive
 import { ReportDistributionController } from './infrastructure/http/controllers/report-distribution.controller';
 import { ReportDistributionService } from './application/services/report-distribution.service';
@@ -120,9 +130,18 @@ import { LabDashboardService } from './application/services/lab-dashboard.servic
 // Phase 14: Notifications
 import { NotificationController } from './infrastructure/http/controllers/notification.controller';
 import { NotificationService } from './application/services/notification.service';
-import { InAppNotificationTypeOrmEntity } from './infrastructure/entities/in-app-notification-typeorm.entity';
-import { InAppNotificationTypeOrmRepository } from './infrastructure/repositories/in-app-notification-typeorm.repository';
+import { NotificationEventService } from './application/services/notification-event.service';
+import { EmailNotificationService } from './application/services/email-notification.service';
+import { PushNotificationService } from './application/services/push-notification.service';
+import { NotificationTypeOrmEntity } from './infrastructure/entities/notification-typeorm.entity';
+import { DeviceTokenTypeOrmEntity } from './infrastructure/entities/device-token-typeorm.entity';
+import { EmailDeliveryLogTypeOrmEntity } from './infrastructure/entities/email-delivery-log-typeorm.entity';
+import { NotificationTypeOrmRepository } from './infrastructure/repositories/notification-typeorm.repository';
+import { DeviceTokenTypeOrmRepository } from './infrastructure/repositories/device-token-typeorm.repository';
+import { EmailDeliveryLogTypeOrmRepository } from './infrastructure/repositories/email-delivery-log-typeorm.repository';
 import { NOTIFICATION_REPOSITORY } from './domain/repositories/notification-repository.port';
+import { DEVICE_TOKEN_REPOSITORY } from './domain/repositories/device-token-repository.port';
+import { EMAIL_DELIVERY_LOG_REPOSITORY } from './domain/repositories/email-delivery-log-repository.port';
 
 // Phase 15: Payment Methods & Evidence
 import { LabPaymentController } from './infrastructure/http/controllers/lab-payment.controller';
@@ -136,6 +155,38 @@ import { PAYMENT_EVIDENCE_REPOSITORY } from './domain/repositories/payment-repos
 import { DocumentGenerationModule } from '../shared/infrastructure/document-generation/document-generation.module';
 import { SalesModule } from '../sales/sales.module';
 import { CustomerModule } from '../customer/customer.module';
+import { UserModule } from '../user/user.module';
+
+// Phase 16: Post-Approval Workflow
+import { PostApprovalLabContractController } from './infrastructure/http/controllers/post-approval-lab-contract.controller';
+import { PostApprovalTestingScheduleController } from './infrastructure/http/controllers/post-approval-testing-schedule.controller';
+import { PostApprovalTestingResultController } from './infrastructure/http/controllers/post-approval-testing-result.controller';
+import { PostApprovalDocumentArchiveController } from './infrastructure/http/controllers/post-approval-document-archive.controller';
+import { PostApprovalLabContractService } from './application/services/post-approval-lab-contract.service';
+import { PostApprovalTestingScheduleService } from './application/services/post-approval-testing-schedule.service';
+import { PostApprovalTestingResultService } from './application/services/post-approval-testing-result.service';
+import { PostApprovalDocumentArchiveService } from './application/services/post-approval-document-archive.service';
+import { PostApprovalLabContractTypeOrmRepository } from './infrastructure/repositories/post-approval-lab-contract-typeorm.repository';
+import { LabContractSampleTypeOrmRepository } from './infrastructure/repositories/lab-contract-sample-typeorm.repository';
+import { PostApprovalTestingScheduleTypeOrmRepository } from './infrastructure/repositories/post-approval-testing-schedule-typeorm.repository';
+import { PostApprovalTestingResultTypeOrmRepository } from './infrastructure/repositories/post-approval-testing-result-typeorm.repository';
+import { PostApprovalDocumentArchiveTypeOrmRepository } from './infrastructure/repositories/post-approval-document-archive-typeorm.repository';
+import { POST_APPROVAL_LAB_CONTRACT_REPOSITORY } from './domain/repositories/post-approval-lab-contract-repository.port';
+import { POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY } from './domain/repositories/post-approval-testing-schedule-repository.port';
+import { POST_APPROVAL_TESTING_RESULT_REPOSITORY } from './domain/repositories/post-approval-testing-result-repository.port';
+import { POST_APPROVAL_DOCUMENT_ARCHIVE_REPOSITORY } from './domain/repositories/post-approval-document-archive-repository.port';
+import { LAB_CONTRACT_SAMPLE_REPOSITORY } from './infrastructure/repositories/lab-contract-sample-typeorm.repository';
+import { PostApprovalLabContractSampleTypeOrmEntity } from './infrastructure/entities/post-approval-lab-contract-sample-typeorm.entity';
+import { PostApprovalDocumentArchiveTypeOrmEntity } from './infrastructure/entities/post-approval-document-archive-typeorm.entity';
+
+// Phase 17: Lab Schedule Samples
+import { LabScheduleSampleTypeOrmEntity } from './infrastructure/entities/lab-schedule-sample-typeorm.entity';
+import { LabScheduleSampleTypeOrmRepository } from './infrastructure/repositories/lab-schedule-sample-typeorm.repository';
+import { LAB_SCHEDULE_SAMPLE_REPOSITORY } from './domain/repositories/lab-schedule-sample-repository.port';
+
+// Phase 18: Contract Cron Jobs
+import { ContractSigningDeadlineJob } from './application/jobs/contract-signing-deadline.job';
+import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-billing.job';
 
 @Module({
   imports: [
@@ -149,6 +200,7 @@ import { CustomerModule } from '../customer/customer.module';
       LabContractAttachmentTypeOrmEntity,
       LabPurchaseOrderTypeOrmEntity,
       LabPurchaseOrderLineTypeOrmEntity,
+      SampleQuotaTypeOrmEntity,
       SampleTypeOrmEntity,
       TestingScheduleTypeOrmEntity,
       TestResultTypeOrmEntity,
@@ -163,13 +215,20 @@ import { CustomerModule } from '../customer/customer.module';
       ReportDistributionTypeOrmEntity,
       ArchivedDocumentTypeOrmEntity,
       LabCertificateTypeOrmEntity,
-      InAppNotificationTypeOrmEntity,
+      NotificationTypeOrmEntity,
+      DeviceTokenTypeOrmEntity,
+      EmailDeliveryLogTypeOrmEntity,
       PaymentMethodTypeOrmEntity,
       PaymentEvidenceTypeOrmEntity,
+      PostApprovalLabContractSampleTypeOrmEntity,
+      PostApprovalDocumentArchiveTypeOrmEntity,
+      LabScheduleSampleTypeOrmEntity,
+      ContractInvoiceTypeOrmEntity,
     ]),
     DocumentGenerationModule,
     SalesModule,
     forwardRef(() => CustomerModule),
+    UserModule,
   ],
   controllers: [
     TestingServiceController,
@@ -189,6 +248,11 @@ import { CustomerModule } from '../customer/customer.module';
     LabDashboardController,
     NotificationController,
     LabPaymentController,
+    PostApprovalLabContractController,
+    PostApprovalTestingScheduleController,
+    PostApprovalTestingResultController,
+    PostApprovalDocumentArchiveController,
+    ContractInvoiceController,
   ],
   providers: [
     {
@@ -212,6 +276,10 @@ import { CustomerModule } from '../customer/customer.module';
     {
       provide: LAB_PURCHASE_ORDER_REPOSITORY,
       useClass: LabPurchaseOrderTypeOrmRepository,
+    },
+    {
+      provide: SAMPLE_QUOTA_REPOSITORY,
+      useClass: SampleQuotaTypeOrmRepository,
     },
     LabContractService,
     LabPOService,
@@ -261,9 +329,20 @@ import { CustomerModule } from '../customer/customer.module';
     LabDashboardService,
     {
       provide: NOTIFICATION_REPOSITORY,
-      useClass: InAppNotificationTypeOrmRepository,
+      useClass: NotificationTypeOrmRepository,
     },
+    {
+      provide: DEVICE_TOKEN_REPOSITORY,
+      useClass: DeviceTokenTypeOrmRepository,
+    },
+    {
+      provide: EMAIL_DELIVERY_LOG_REPOSITORY,
+      useClass: EmailDeliveryLogTypeOrmRepository,
+    },
+    EmailNotificationService,
+    PushNotificationService,
     NotificationService,
+    NotificationEventService,
     {
       provide: PAYMENT_METHOD_REPOSITORY,
       useClass: PaymentMethodTypeOrmRepository,
@@ -273,11 +352,47 @@ import { CustomerModule } from '../customer/customer.module';
       useClass: PaymentEvidenceTypeOrmRepository,
     },
     LabPaymentService,
+    PostApprovalLabContractService,
+    PostApprovalTestingScheduleService,
+    {
+      provide: POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY,
+      useClass: PostApprovalTestingScheduleTypeOrmRepository,
+    },
+    {
+      provide: POST_APPROVAL_TESTING_RESULT_REPOSITORY,
+      useClass: PostApprovalTestingResultTypeOrmRepository,
+    },
+    PostApprovalTestingResultService,
+    {
+      provide: POST_APPROVAL_DOCUMENT_ARCHIVE_REPOSITORY,
+      useClass: PostApprovalDocumentArchiveTypeOrmRepository,
+    },
+    PostApprovalDocumentArchiveService,
+    {
+      provide: POST_APPROVAL_LAB_CONTRACT_REPOSITORY,
+      useClass: PostApprovalLabContractTypeOrmRepository,
+    },
+    {
+      provide: CONTRACT_INVOICE_REPOSITORY,
+      useClass: ContractInvoiceTypeOrmRepository,
+    },
+    ContractInvoiceService,
+    {
+      provide: LAB_CONTRACT_SAMPLE_REPOSITORY,
+      useClass: LabContractSampleTypeOrmRepository,
+    },
+    {
+      provide: LAB_SCHEDULE_SAMPLE_REPOSITORY,
+      useClass: LabScheduleSampleTypeOrmRepository,
+    },
+    ContractSigningDeadlineJob,
+    ContractMonthlyBillingJob,
   ],
   exports: [
     TESTING_REQUEST_REPOSITORY,
     LAB_CONTRACT_REPOSITORY,
     LAB_PURCHASE_ORDER_REPOSITORY,
+    SAMPLE_QUOTA_REPOSITORY,
     TESTING_SERVICE_REPOSITORY,
     LABORATORY_REPOSITORY,
     SAMPLE_TYPE_REPOSITORY,
@@ -292,6 +407,10 @@ import { CustomerModule } from '../customer/customer.module';
     REPORT_DISTRIBUTION_REPOSITORY,
     ARCHIVED_DOCUMENT_REPOSITORY,
     NOTIFICATION_REPOSITORY,
+    DEVICE_TOKEN_REPOSITORY,
+    EMAIL_DELIVERY_LOG_REPOSITORY,
+    NotificationService,
+    NotificationEventService,
     PAYMENT_METHOD_REPOSITORY,
     PAYMENT_EVIDENCE_REPOSITORY,
     TestingServiceService,
@@ -315,6 +434,17 @@ import { CustomerModule } from '../customer/customer.module';
     LabDashboardService,
     NotificationService,
     LabPaymentService,
+    PostApprovalLabContractService,
+    PostApprovalTestingScheduleService,
+    PostApprovalTestingResultService,
+    PostApprovalDocumentArchiveService,
+    POST_APPROVAL_LAB_CONTRACT_REPOSITORY,
+    POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY,
+    POST_APPROVAL_TESTING_RESULT_REPOSITORY,
+    POST_APPROVAL_DOCUMENT_ARCHIVE_REPOSITORY,
+    LAB_SCHEDULE_SAMPLE_REPOSITORY,
+    CONTRACT_INVOICE_REPOSITORY,
+    ContractInvoiceService,
   ],
 })
 export class LaboratoryModule {}

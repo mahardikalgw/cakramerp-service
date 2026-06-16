@@ -2,7 +2,6 @@ import {
   Injectable,
   Inject,
   ConflictException,
-  UnauthorizedException,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -18,6 +17,8 @@ import type { CustomerRepositoryPort } from '../../domain/repositories/customer-
 import { CUSTOMER_REPOSITORY } from '../../domain/repositories/customer-repository.port';
 import type { TestingRequestRepositoryPort } from '../../../laboratory/domain/repositories/testing-request-repository.port';
 import { TESTING_REQUEST_REPOSITORY } from '../../../laboratory/domain/repositories/testing-request-repository.port';
+import type { SampleQuotaRepositoryPort } from '../../../laboratory/domain/repositories/sample-quota-repository.port';
+import { SAMPLE_QUOTA_REPOSITORY } from '../../../laboratory/domain/repositories/sample-quota-repository.port';
 import type { LabContractRepositoryPort } from '../../../laboratory/domain/repositories/lab-contract-repository.port';
 import { LAB_CONTRACT_REPOSITORY } from '../../../laboratory/domain/repositories/lab-contract-repository.port';
 import type { LabPurchaseOrderRepositoryPort } from '../../../laboratory/domain/repositories/lab-purchase-order-repository.port';
@@ -37,13 +38,11 @@ import type { SampleRepositoryPort } from '../../../laboratory/domain/repositori
 import { SAMPLE_REPOSITORY } from '../../../laboratory/domain/repositories/sample-repository.port';
 import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 import { MinioClientService } from '../../../shared/infrastructure/document-generation/minio-client.service';
-import { envConfig } from '../../../../config/env.config';
 import type {
   CustomerRegisterDto,
   CreatePortalTestingRequestDto,
   UpdatePortalTestingRequestDto,
 } from '../../infrastructure/http/dtos/customer-portal.dto';
-
 @Injectable()
 export class CustomerPortalService {
   constructor(
@@ -69,15 +68,18 @@ export class CustomerPortalService {
     private readonly dailyReportRepo: DailyReportRepositoryPort,
     @Inject(SAMPLE_REPOSITORY)
     private readonly sampleRepo: SampleRepositoryPort,
+    @Inject(SAMPLE_QUOTA_REPOSITORY)
+    private readonly sampleQuotaRepo: SampleQuotaRepositoryPort,
     private readonly jwtService: JwtService,
     private readonly docHelper: DocumentGenerationHelper,
     private readonly minioService: MinioClientService,
   ) {}
 
-  /** Self-registration: create user + customer record + assign 'customer' role */
+  /** Self-registration: create user + customer record + assign 'customer' role.
+   *  Returns success flag; caller must use the unified /auth/login endpoint to obtain JWT. */
   async register(
     dto: CustomerRegisterDto,
-  ): Promise<{ accessToken: string; customer: any }> {
+  ): Promise<{ success: true; email: string }> {
     // Check email uniqueness
     const exists = await this.userRepo.existsByEmail(dto.email);
     if (exists) {
@@ -114,31 +116,9 @@ export class CustomerPortalService {
       portalAccess: true,
       portalRegisteredAt: new Date(),
     });
-    const savedCustomer = await this.customerRepo.save(customer);
+    await this.customerRepo.save(customer);
 
-    const accessToken = this.generateToken(savedUser.id, dto.email);
-    return { accessToken, customer: savedCustomer };
-  }
-
-  /** Login — validates password, returns JWT */
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ accessToken: string; customer: any }> {
-    const user = await this.userRepo.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-
-    const valid = await bcryptjs.compare(password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Invalid credentials');
-
-    if (!user.roles?.includes('customer')) {
-      throw new ForbiddenException(
-        'This endpoint is for customer accounts only',
-      );
-    }
-
-    const customer = await this.customerRepo.findByUserId?.(user.id);
-    return { accessToken: this.generateToken(user.id, email), customer };
+    return { success: true, email: dto.email };
   }
 
   /** Get customer profile for logged-in user */
@@ -179,34 +159,43 @@ export class CustomerPortalService {
   ): Promise<TestingRequest> {
     const customer = await this.getCustomerByUserId(userId);
 
+    const lines = dto.lines ?? [];
+    const isNewContract = dto.billingType === 'contract' && !dto.existingContractId;
+
+    if (isNewContract) {
+      if (!dto.scopeOfTesting || !dto.contractEstimation || !dto.contractTempoMonths) {
+        throw new BadRequestException(
+          'New contract requests require scopeOfTesting, contractEstimation, and contractTempoMonths',
+        );
+      }
+    } else if (lines.length < 1) {
+      throw new BadRequestException('At least one sample line is required');
+    }
+
     let labContractId: string | null = null;
     let labPurchaseOrderId: string | null = null;
 
     if (dto.billingType === 'contract') {
-      if (!dto.labContractId)
-        throw new BadRequestException(
-          'labContractId is required for contract billing type',
-        );
-      const contract = await this.contractRepo.findById(dto.labContractId);
-      if (!contract) throw new NotFoundException('Contract not found');
-      if (contract.customerId !== (customer.id as string))
-        throw new ForbiddenException(
-          'Contract does not belong to this customer',
-        );
-      if (contract.status !== 'active')
-        throw new BadRequestException('Only active contracts can be used');
-      if ((contract.remainingQuota ?? 0) <= 0)
-        throw new BadRequestException('Contract quota is exhausted');
-      labContractId = contract.id;
+      if (dto.existingContractId) {
+        const contract = await this.contractRepo.findById(dto.existingContractId);
+        if (!contract) throw new NotFoundException('Contract not found');
+        if (contract.customerId !== (customer.id as string))
+          throw new ForbiddenException('Contract does not belong to this customer');
+        if (contract.status !== 'active')
+          throw new BadRequestException('Only active contracts can be used');
+        if (contract.expiresAt && new Date(contract.expiresAt) < new Date())
+          throw new BadRequestException(`Contract has expired`);
+        labContractId = contract.id;
+      }
     } else if (dto.billingType === 'cash') {
-      const firstLineServiceId = dto.lines[0]?.testingServiceId ?? '';
-      const firstLineServiceName = dto.lines[0]?.serviceName ?? '';
+      const firstLineServiceId = lines[0]?.testingServiceId ?? '';
+      const firstLineServiceName = lines[0]?.serviceName ?? '';
       const lastPONumber = await this.poRepo.getLastPONumber();
       const poNumber = this.generatePONumber(lastPONumber);
 
       let totalAmount = 0;
       const poLines = await Promise.all(
-        (dto.lines ?? []).map(async (line) => {
+        lines.map(async (line) => {
           const service = line.testingServiceId
             ? await this.testingServiceRepo
                 .findById(line.testingServiceId)
@@ -265,9 +254,12 @@ export class CustomerPortalService {
       submittedBy: 'customer',
       customerUserId: userId,
       billingType: dto.billingType ?? 'cash',
+      scopeOfTesting: dto.scopeOfTesting ?? null,
+      contractEstimation: dto.contractEstimation ?? null,
+      contractTempoMonths: dto.contractTempoMonths ?? null,
       labContractId,
       labPurchaseOrderId,
-      lines: dto.lines.map((line) => ({
+      lines: lines.map((line) => ({
         id: undefined,
         createdAt: undefined,
         updatedAt: undefined,
@@ -286,7 +278,7 @@ export class CustomerPortalService {
     // Create samples for each line
     let sampleSeq = 1;
 
-    for (const line of dto.lines) {
+    for (const line of lines) {
       const sample = new Sample({
         sampleCode:
           line.sampleCode ??
@@ -361,6 +353,15 @@ export class CustomerPortalService {
         enriched.invoiceDocumentReady = doc?.status === 'completed';
       } catch {
         enriched.invoiceDocumentReady = false;
+      }
+    }
+
+    // Include sample quotas if granted
+    if (request.quotaGranted) {
+      try {
+        enriched.sampleQuotas = await this.sampleQuotaRepo.findByTestingRequestId(request.id);
+      } catch {
+        enriched.sampleQuotas = [];
       }
     }
 
@@ -451,12 +452,47 @@ export class CustomerPortalService {
     });
   }
 
-  async uploadSignedDocument(
+  async uploadSignedContract(
     userId: string,
     requestId: string,
-    fileUrl: string,
-    fileName: string,
+    file: any,
   ): Promise<TestingRequest> {
+    if (!file) throw new BadRequestException('File is required');
+    const request = await this.getMyTestingRequest(userId, requestId);
+
+    if (request.billingType !== 'contract') {
+      throw new BadRequestException('Signed contract upload is only for contract billing requests');
+    }
+    if (request.status !== 'approved') {
+      throw new BadRequestException('Signed contract can only be uploaded for approved requests');
+    }
+    if (request.signedContractUrl) {
+      throw new BadRequestException('Signed contract has already been uploaded');
+    }
+    if (request.contractSigningDeadline && new Date(request.contractSigningDeadline) < new Date()) {
+      throw new BadRequestException('Contract signing deadline has passed');
+    }
+
+    const objectName = `signed-contracts/${requestId}/${Date.now()}_${file.originalname}`;
+    const minioPath = await this.minioService.uploadFile(
+      'documents',
+      objectName,
+      file.buffer,
+      file.mimetype,
+    );
+    request.signedContractUrl = minioPath;
+    request.signedContractUploadedAt = new Date();
+    const saved = await this.testingRequestRepo.save(request);
+
+    return saved;
+  }
+
+  async uploadSignedDocumentFile(
+    userId: string,
+    requestId: string,
+    file: any,
+  ): Promise<TestingRequest> {
+    if (!file) throw new BadRequestException('File is required');
     const request = await this.getMyTestingRequest(userId, requestId);
     if (request.billingType !== 'cash') {
       throw new BadRequestException(
@@ -468,18 +504,25 @@ export class CustomerPortalService {
         'Signed document can only be uploaded for approved requests',
       );
     }
-    request.signedDocumentUrl = fileUrl;
-    request.signedDocumentFilename = fileName;
+    const objectName = `signed-documents/${requestId}/${Date.now()}_${file.originalname}`;
+    const minioPath = await this.minioService.uploadFile(
+      'documents',
+      objectName,
+      file.buffer,
+      file.mimetype,
+    );
+    request.signedDocumentUrl = minioPath;
+    request.signedDocumentFilename = file.originalname;
     request.signedDocumentUploadedAt = new Date();
     return this.testingRequestRepo.save(request);
   }
 
-  async uploadPaymentProof(
+  async uploadPaymentProofFile(
     userId: string,
     requestId: string,
-    fileUrl: string,
-    fileName: string,
+    file: any,
   ): Promise<TestingRequest> {
+    if (!file) throw new BadRequestException('File is required');
     const request = await this.getMyTestingRequest(userId, requestId);
     if (request.billingType !== 'cash') {
       throw new BadRequestException(
@@ -491,10 +534,44 @@ export class CustomerPortalService {
         'Payment proof can only be uploaded for approved requests',
       );
     }
-    request.paymentProofUrl = fileUrl;
-    request.paymentProofFilename = fileName;
+    const objectName = `payment-proofs/${requestId}/${Date.now()}_${file.originalname}`;
+    const minioPath = await this.minioService.uploadFile(
+      'documents',
+      objectName,
+      file.buffer,
+      file.mimetype,
+    );
+    request.paymentProofUrl = minioPath;
+    request.paymentProofFilename = file.originalname;
     request.paymentProofUploadedAt = new Date();
     return this.testingRequestRepo.save(request);
+  }
+
+  async getSignedDocumentUrl(userId: string, requestId: string) {
+    const request = await this.getMyTestingRequest(userId, requestId);
+    if (!request.signedDocumentUrl) {
+      throw new NotFoundException('No signed document uploaded');
+    }
+    // Backward compat: if it's an external URL, return as-is
+    if (request.signedDocumentUrl.startsWith('http')) {
+      return { url: request.signedDocumentUrl, filename: request.signedDocumentFilename };
+    }
+    const objectName = request.signedDocumentUrl.replace('documents/', '');
+    const url = await this.minioService.getPresignedUrl('documents', objectName, 3600);
+    return { url, filename: request.signedDocumentFilename };
+  }
+
+  async getPaymentProofUrl(userId: string, requestId: string) {
+    const request = await this.getMyTestingRequest(userId, requestId);
+    if (!request.paymentProofUrl) {
+      throw new NotFoundException('No payment proof uploaded');
+    }
+    if (request.paymentProofUrl.startsWith('http')) {
+      return { url: request.paymentProofUrl, filename: request.paymentProofFilename };
+    }
+    const objectName = request.paymentProofUrl.replace('documents/', '');
+    const url = await this.minioService.getPresignedUrl('documents', objectName, 3600);
+    return { url, filename: request.paymentProofFilename };
   }
 
   async getMyContracts(userId: string) {
@@ -554,6 +631,33 @@ export class CustomerPortalService {
     };
   }
 
+  async getInvoiceDocumentUrl(userId: string, requestId: string) {
+    const customer = await this.getCustomerByUserId(userId);
+    const request = await this.testingRequestRepo.findById(requestId);
+    if (!request) throw new NotFoundException('Testing request not found');
+    if (request.customerId !== customer.id)
+      throw new ForbiddenException('Access denied');
+    if (!request.invoiceDocumentUrl)
+      throw new NotFoundException('Invoice document not yet generated');
+
+    const doc = await this.docHelper.getDocument(request.invoiceDocumentUrl);
+    if (!doc || doc.status !== 'completed') {
+      throw new NotFoundException('Invoice document not ready');
+    }
+
+    const url = await this.minioService.getPresignedUrl(
+      doc.minioBucket,
+      doc.minioPath.replace(`${doc.minioBucket}/`, ''),
+      3600,
+    );
+
+    return {
+      url,
+      filename: doc.fileName,
+      expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    };
+  }
+
   async getDashboard(userId: string) {
     const customer = await this.getCustomerByUserId(userId);
     const myRequests = await this.testingRequestRepo.findAll({
@@ -598,13 +702,6 @@ export class CustomerPortalService {
   }
 
   // ---- private helpers ----
-
-  private generateToken(userId: string, email: string): string {
-    return this.jwtService.sign(
-      { sub: userId, email },
-      { secret: envConfig.jwt.secret, expiresIn: '7d' },
-    );
-  }
 
   private generateRequestNumber(lastNumber: string | null): string {
     const year = new Date().getFullYear();

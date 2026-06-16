@@ -6,8 +6,9 @@ import {
   UseGuards,
   HttpCode,
   Inject,
+  Req,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import type { AuthServicePort } from '../../../application/ports/auth-service.port';
 import { AUTH_SERVICE } from '../../../application/ports/auth-service.port';
 import type { UserRepositoryPort } from '../../../../user/domain/repositories/user-repository.port';
@@ -32,7 +33,11 @@ export class AuthController {
 
   @Post('register')
   @UseGuards(ThrottlerGuard)
-  async register(@Body() dto: RegisterHttpDto): Promise<TokenResponseDto> {
+  @Throttle({ default: { limit: 100, ttl: 60_000 } })
+  async register(
+    @Body() dto: RegisterHttpDto,
+    @Req() req: any,
+  ): Promise<TokenResponseDto> {
     const command = new RegisterCommand(
       dto.email,
       dto.password,
@@ -46,8 +51,13 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @UseGuards(ThrottlerGuard)
-  async login(@Body() dto: LoginHttpDto): Promise<TokenResponseDto> {
-    const command = new LoginCommand(dto.email, dto.password);
+  @Throttle({ default: { limit: 100, ttl: 60_000 } })
+  async login(
+    @Body() dto: LoginHttpDto,
+    @Req() req: any,
+  ): Promise<TokenResponseDto> {
+    const ipAddress = req.ip ?? req.connection?.remoteAddress;
+    const command = new LoginCommand(dto.email, dto.password, ipAddress);
     const result = await this.authService.login(command);
     return TokenResponseDto.fromResult(result);
   }
@@ -57,8 +67,14 @@ export class AuthController {
   @HttpCode(200)
   async refresh(
     @Body('refreshToken') refreshToken: string,
+    @Req() req: any,
   ): Promise<TokenResponseDto> {
-    const result = await this.authService.refresh(refreshToken);
+    const ipAddress = req.ip ?? req.connection?.remoteAddress;
+    const userAgent = req.headers?.['user-agent'];
+    const result = await this.authService.refresh(refreshToken, {
+      ipAddress,
+      userAgent,
+    });
     return TokenResponseDto.fromResult(result);
   }
 

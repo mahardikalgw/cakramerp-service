@@ -53,12 +53,13 @@ export class UserController {
     @Query('page', new ParseIntPipe({ optional: true })) page = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit = 20,
     @Query('search') search?: string,
+    @Query('role') role?: string,
   ) {
     const result = await this.userService.findAll(
       page,
       limit,
       undefined,
-      undefined,
+      role,
       search,
     );
     return {

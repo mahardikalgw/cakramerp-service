@@ -39,6 +39,7 @@ export class LabContractTypeOrmRepository
       createdBy: entity.createdBy,
       approvedBy: entity.approvedBy,
       approvedAt: entity.approvedAt,
+      expiresAt: entity.expiresAt ?? null,
       attachments: Array.isArray(entity.attachments)
         ? entity.attachments.map(
             (a) =>
@@ -84,6 +85,9 @@ export class LabContractTypeOrmRepository
     entity.approvedAt = domain.approvedAt
       ? new Date(domain.approvedAt)
       : new Date();
+    entity.expiresAt = domain.expiresAt
+      ? new Date(domain.expiresAt)
+      : null as any;
     entity.attachments = domain.attachments?.map((a) => {
       const attEntity = new LabContractAttachmentTypeOrmEntity();
       attEntity.id = a.id;

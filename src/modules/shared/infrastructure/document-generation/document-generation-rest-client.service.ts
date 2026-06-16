@@ -40,13 +40,24 @@ export class DocumentGenerationRestClient {
       `Calling document service sync: POST ${url} for ${request.documentType}`,
     );
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+    } catch (err: any) {
+      this.logger.warn(
+        `Document service unavailable at ${url}: ${err?.message ?? err}`,
+      );
+      return {
+        status: 'failed',
+        errorMessage: `Document service unavailable: ${err?.message ?? 'ECONNREFUSED'}`,
+      };
+    }
 
     let body: SyncDocumentResponse;
     try {

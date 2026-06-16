@@ -27,6 +27,9 @@ export class SampleTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'decimal', precision: 18, scale: 4, nullable: true })
   declare weight: number | null;
 
+  @Column({ type: 'decimal', precision: 18, scale: 4, nullable: true })
+  declare quantity: number | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   declare location: string | null;
 

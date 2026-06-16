@@ -8,4 +8,7 @@ export interface TestResultRepositoryPort extends RepositoryPort<TestResult> {
   getLastResultNumber(): Promise<string | null>;
   findBySampleId(sampleId: string): Promise<TestResult[]>;
   findByTestingRequestId(testingRequestId: string): Promise<TestResult[]>;
+  findCompletedByContractAndPeriod(
+    contractId: string, periodStart: Date, periodEnd: Date,
+  ): Promise<TestResult[]>;
 }

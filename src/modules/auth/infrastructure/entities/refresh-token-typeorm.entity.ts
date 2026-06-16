@@ -12,4 +12,10 @@ export class RefreshTokenTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'timestamptz', name: 'expires_at' })
   declare expiresAt: Date;
+
+  @Column({ type: 'varchar', length: 45, nullable: true, name: 'ip_address' })
+  declare ipAddress?: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'user_agent' })
+  declare userAgent?: string;
 }

@@ -7,6 +7,11 @@ export enum AuditAction {
   LOGIN = 'login',
   LOGOUT = 'logout',
   EXPORT = 'export',
+  LOGIN_FAILED = 'login_failed',
+  PASSWORD_CHANGE = 'password_change',
+  ROLE_CHANGE = 'role_change',
+  DATA_EXPORT = 'data_export',
+  ADMIN_ACTION = 'admin_action',
 }
 
 export class AuditLog extends BaseEntity {

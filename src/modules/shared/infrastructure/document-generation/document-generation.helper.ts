@@ -77,13 +77,28 @@ export class DocumentGenerationHelper {
       params.entityId = request.entityId;
     }
 
-    const result = await this.restClient.generateSync({
-      documentType: request.documentType,
-      entityId: request.entityId,
-      outputFormat: request.outputFormat || 'pdf',
-      watermark: request.watermark,
-      parameters: params,
-    });
+    let result: Awaited<ReturnType<typeof this.restClient.generateSync>>;
+    try {
+      result = await this.restClient.generateSync({
+        documentType: request.documentType,
+        entityId: request.entityId,
+        outputFormat: request.outputFormat || 'pdf',
+        watermark: request.watermark,
+        parameters: params,
+      });
+    } catch (err: any) {
+      this.logger.warn(
+        `Document generation skipped (service unavailable): ${err?.message ?? err}`,
+      );
+      return {} as GeneratedDocumentTypeOrmEntity;
+    }
+
+    if (result.status === 'failed') {
+      this.logger.warn(
+        `Document generation failed (non-fatal): ${result.errorMessage}`,
+      );
+      return {} as GeneratedDocumentTypeOrmEntity;
+    }
 
     const partial: Partial<GeneratedDocumentTypeOrmEntity> = {
       documentType: request.documentType,
@@ -135,9 +150,13 @@ export class DocumentGenerationHelper {
 
   async getDownloadUrl(documentId: string): Promise<string> {
     const doc = await this.getDocument(documentId);
-    return this.minioClient.getPresignedUrl(
+    const url = await this.minioClient.getPresignedUrl(
       doc.minioBucket,
       doc.minioPath.replace(`${doc.minioBucket}/`, ''),
     );
+    if (!url) {
+      throw new NotFoundException('Presigned document URL is not available');
+    }
+    return url;
   }
 }

@@ -10,7 +10,8 @@ export type TestingRequestStatus =
   | 'testing'
   | 'report_draft'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'active_contract';
 
 export class TestingRequestLine extends BaseEntity {
   declare id: string;
@@ -82,6 +83,18 @@ export class TestingRequest extends BaseEntity {
   declare assignedLaboranName?: string;
   declare assignedAt?: Date;
   declare assignmentNotes?: string;
+
+  // Contract billing fields
+  declare scopeOfTesting?: string | null;
+  declare contractEstimation?: number | null;
+  declare contractTempoMonths?: number | null;
+  declare signedContractUrl?: string | null;
+  declare signedContractUploadedAt?: Date | null;
+  declare contractSigningDeadline?: Date | null;
+  declare contractConfirmedAt?: Date | null;
+  declare contractConfirmedBy?: string | null;
+  declare isUnlimited?: boolean;
+
   declare lines: TestingRequestLine[];
   declare createdAt: Date;
   declare updatedAt: Date;

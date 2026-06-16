@@ -45,6 +45,7 @@ export class LabContract extends BaseEntity {
   declare createdBy?: string;
   declare approvedBy?: string;
   declare approvedAt?: Date;
+  declare expiresAt?: Date | null;
   declare attachments: LabContractAttachment[];
   declare createdAt: Date;
   declare updatedAt: Date;

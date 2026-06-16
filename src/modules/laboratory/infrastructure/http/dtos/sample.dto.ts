@@ -27,6 +27,11 @@ export class CreateSampleHttpDto {
   weight?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity?: number;
+
+  @IsOptional()
   @IsString()
   location?: string;
 
@@ -44,6 +49,11 @@ export class UpdateSampleHttpDto {
   @IsNumber()
   @Min(0)
   weight?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity?: number;
 
   @IsOptional()
   @IsString()

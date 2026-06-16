@@ -10,6 +10,7 @@ import {
   NOTIFICATION_QUEUE_NAME,
 } from './audit-log.constants';
 import { QueueHealthService } from './queue-health.service';
+import { AuditModule } from '../modules/audit/audit.module';
 
 const redisUrl = envConfig.redis?.url;
 const connection = redisUrl
@@ -33,6 +34,7 @@ const connection = redisUrl
       { name: AUDIT_LOG_QUEUE_NAME },
       { name: NOTIFICATION_QUEUE_NAME },
     ),
+    AuditModule,
   ],
   providers: [
     GlPostingProcessor,

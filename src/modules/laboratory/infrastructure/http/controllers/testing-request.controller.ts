@@ -9,8 +9,12 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Req,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
@@ -136,18 +140,21 @@ export class TestingRequestController {
 
   @Patch('testing-requests/:id/upload-signed')
   @RequirePermissions('testing-requests:upload-document')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadSignedDocument(
     @Param('id') id: string,
-    @Body() dto: UploadDocumentDto,
+    @UploadedFile() file: any,
     @Req() req: any,
   ) {
     const user = req.user ?? {};
     const userName =
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
-    return this.testingRequestService.uploadSignedDocument(
+    return this.testingRequestService.uploadSignedDocumentFile(
       id,
-      dto.fileUrl,
-      dto.fileName,
+      file,
       user.id ?? 'unknown',
       userName,
     );
@@ -155,21 +162,36 @@ export class TestingRequestController {
 
   @Patch('testing-requests/:id/upload-payment-proof')
   @RequirePermissions('testing-requests:upload-document')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadPaymentProof(
     @Param('id') id: string,
-    @Body() dto: UploadDocumentDto,
+    @UploadedFile() file: any,
     @Req() req: any,
   ) {
     const user = req.user ?? {};
     const userName =
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
-    return this.testingRequestService.uploadPaymentProof(
+    return this.testingRequestService.uploadPaymentProofFile(
       id,
-      dto.fileUrl,
-      dto.fileName,
+      file,
       user.id ?? 'unknown',
       userName,
     );
+  }
+
+  @Get('testing-requests/:id/download-signed')
+  @RequirePermissions('testing-requests:read')
+  async downloadSigned(@Param('id') id: string) {
+    return this.testingRequestService.getSignedDownloadUrl(id);
+  }
+
+  @Get('testing-requests/:id/download-payment-proof')
+  @RequirePermissions('testing-requests:read')
+  async downloadPaymentProof(@Param('id') id: string) {
+    return this.testingRequestService.getPaymentProofDownloadUrl(id);
   }
 
   @Patch('testing-requests/:id/verify-documents')
@@ -185,10 +207,36 @@ export class TestingRequestController {
     );
   }
 
+  @Get('testing-requests/:id/download-po')
+  @RequirePermissions('testing-requests:read')
+  async downloadPO(@Param('id') id: string) {
+    return this.testingRequestService.getPoDownloadUrl(id);
+  }
+
+  @Get('testing-requests/:id/download-invoice')
+  @RequirePermissions('testing-requests:read')
+  async downloadInvoice(@Param('id') id: string) {
+    return this.testingRequestService.getInvoiceDownloadUrl(id);
+  }
+
   @Delete('testing-requests/:id')
   @RequirePermissions('testing-requests:delete')
   async deleteTestingRequest(@Param('id') id: string) {
     await this.testingRequestService.delete(id);
     return { success: true };
   }
+
+  @Patch('testing-requests/:id/confirm-signed-contract')
+  @RequirePermissions('testing-requests:approve')
+  async confirmSignedContract(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.confirmSignedContract(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
 }
+

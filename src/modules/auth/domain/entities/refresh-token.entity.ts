@@ -5,6 +5,8 @@ export class RefreshToken extends BaseEntity {
   declare userId: string;
   declare tokenHash: string;
   declare expiresAt: Date;
+  declare ipAddress?: string;
+  declare userAgent?: string;
   declare createdAt: Date;
   declare updatedAt: Date;
 
@@ -21,5 +23,15 @@ export class RefreshToken extends BaseEntity {
 
   isExpired(): boolean {
     return new Date() > this.expiresAt;
+  }
+
+  isSessionValid(ipAddress?: string, userAgent?: string): boolean {
+    if (this.ipAddress && ipAddress && this.ipAddress !== ipAddress) {
+      return false;
+    }
+    if (this.userAgent && userAgent && this.userAgent !== userAgent) {
+      return false;
+    }
+    return true;
   }
 }

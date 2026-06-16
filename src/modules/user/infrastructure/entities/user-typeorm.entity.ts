@@ -37,6 +37,18 @@ export class UserTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'timestamp', nullable: true, name: 'last_login' })
   declare lastLogin: Date;
 
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'mfa_secret' })
+  declare mfaSecret: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'mfa_enabled' })
+  declare mfaEnabled: boolean;
+
+  @Column({ type: 'text', nullable: true, name: 'mfa_backup_codes' })
+  declare mfaBackupCodes: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'mfa_enabled_at' })
+  declare mfaEnabledAt: Date | null;
+
   @ManyToMany(() => RoleTypeOrmEntity, (role) => role.users, { eager: true })
   @JoinTable({
     name: 'user_roles',

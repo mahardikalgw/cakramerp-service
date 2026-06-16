@@ -8,6 +8,7 @@ import {
 import { TestingRequestTypeOrmEntity } from '../entities/testing-request-typeorm.entity';
 import { TestingRequestLineTypeOrmEntity } from '../entities/testing-request-line-typeorm.entity';
 import { TestingRequestRepositoryPort } from '../../domain/repositories/testing-request-repository.port';
+import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class TestingRequestTypeOrmRepository
@@ -70,6 +71,15 @@ export class TestingRequestTypeOrmRepository
       quotaGranted: entity.quotaGranted ?? false,
       quotaGrantedAt: entity.quotaGrantedAt ?? undefined,
       quotaGrantedBy: entity.quotaGrantedBy ?? undefined,
+      scopeOfTesting: entity.scopeOfTesting ?? undefined,
+      contractEstimation: entity.contractEstimation ?? undefined,
+      contractTempoMonths: entity.contractTempoMonths ?? undefined,
+      signedContractUrl: entity.signedContractUrl ?? undefined,
+      signedContractUploadedAt: entity.signedContractUploadedAt ?? undefined,
+      contractSigningDeadline: entity.contractSigningDeadline ?? undefined,
+      contractConfirmedAt: entity.contractConfirmedAt ?? undefined,
+      contractConfirmedBy: entity.contractConfirmedBy ?? undefined,
+      isUnlimited: entity.isUnlimited ?? false,
       lines: Array.isArray(entity.lines)
         ? entity.lines.map(
             (line) =>
@@ -143,6 +153,15 @@ export class TestingRequestTypeOrmRepository
     entity.quotaGranted = domain.quotaGranted ?? false;
     entity.quotaGrantedAt = domain.quotaGrantedAt ?? null;
     entity.quotaGrantedBy = domain.quotaGrantedBy ?? null;
+    entity.scopeOfTesting = domain.scopeOfTesting ?? null;
+    entity.contractEstimation = domain.contractEstimation ?? null;
+    entity.contractTempoMonths = domain.contractTempoMonths ?? null;
+    entity.signedContractUrl = domain.signedContractUrl ?? null;
+    entity.signedContractUploadedAt = domain.signedContractUploadedAt ?? null;
+    entity.contractSigningDeadline = domain.contractSigningDeadline ?? null;
+    entity.contractConfirmedAt = domain.contractConfirmedAt ?? null;
+    entity.contractConfirmedBy = domain.contractConfirmedBy ?? null;
+    entity.isUnlimited = domain.isUnlimited ?? false;
     entity.assignedLaboranId = domain.assignedLaboranId ?? null;
     entity.assignedLaboranName = domain.assignedLaboranName ?? null;
     entity.assignedAt = domain.assignedAt ?? null;
@@ -216,5 +235,16 @@ export class TestingRequestTypeOrmRepository
     await this.dataSource
       .getRepository(TestingRequestLineTypeOrmEntity)
       .delete({ testingRequestId: requestId });
+  }
+
+  async findExpiredUnsignedContracts(now: Date): Promise<TestingRequest[]> {
+    const entities = await this.repository.createQueryBuilder('r')
+      .where('r.billing_type = :bt', { bt: 'contract' })
+      .andWhere('r.status = :status', { status: 'approved' })
+      .andWhere('r.contract_signing_deadline IS NOT NULL')
+      .andWhere('r.contract_signing_deadline < :now', { now })
+      .andWhere('r.signed_contract_url IS NULL')
+      .getMany();
+    return entities.map(e => this.toDomain(e));
   }
 }

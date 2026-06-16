@@ -7,4 +7,5 @@ export interface TestingRequestRepositoryPort extends RepositoryPort<TestingRequ
   findByRequestNumber(requestNumber: string): Promise<TestingRequest | null>;
   getLastRequestNumber(): Promise<string | null>;
   deleteLinesByRequestId(requestId: string): Promise<void>;
+  findExpiredUnsignedContracts(now: Date): Promise<TestingRequest[]>;
 }

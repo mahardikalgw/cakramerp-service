@@ -191,6 +191,34 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'text', nullable: true, name: 'assignment_notes' })
   declare assignmentNotes: string | null;
 
+  // Contract billing fields
+  @Column({ type: 'text', nullable: true, name: 'scope_of_testing' })
+  declare scopeOfTesting: string | null;
+
+  @Column({ type: 'int', nullable: true, name: 'contract_estimation' })
+  declare contractEstimation: number | null;
+
+  @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
+  declare contractTempoMonths: number | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'signed_contract_url' })
+  declare signedContractUrl: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'signed_contract_uploaded_at' })
+  declare signedContractUploadedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'contract_signing_deadline' })
+  declare contractSigningDeadline: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'contract_confirmed_at' })
+  declare contractConfirmedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'contract_confirmed_by' })
+  declare contractConfirmedBy: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'is_unlimited' })
+  declare isUnlimited: boolean;
+
   @OneToMany(
     () => TestingRequestLineTypeOrmEntity,
     (line) => line.testingRequest,

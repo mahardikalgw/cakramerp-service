@@ -4,7 +4,7 @@ import { PurchaseOrderLineTypeOrmEntity } from './purchase-order-line-typeorm.en
 
 @Entity('purchase_orders')
 export class PurchaseOrderTypeOrmEntity extends TypeOrmBaseEntity {
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, name: 'order_number' })
   declare poNumber: string;
 
   @Column({ type: 'uuid' })
@@ -19,7 +19,7 @@ export class PurchaseOrderTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'date' })
   declare orderDate: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: true, name: 'expected_date' })
   declare expectedDeliveryDate: Date | null;
 
   @Column({ type: 'varchar', length: 50, default: 'draft' })

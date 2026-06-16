@@ -8,13 +8,15 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Req,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { CustomerPortalService } from '../../../application/services/customer-portal.service';
 import {
   CustomerRegisterDto,
-  CustomerLoginDto,
   UpdatePortalProfileDto,
   CreatePortalTestingRequestDto,
   UpdatePortalTestingRequestDto,
@@ -30,11 +32,6 @@ export class CustomerPortalController {
   @Post('register')
   async register(@Body() dto: CustomerRegisterDto) {
     return this.portalService.register(dto);
-  }
-
-  @Post('login')
-  async login(@Body() dto: CustomerLoginDto) {
-    return this.portalService.login(dto.email, dto.password);
   }
 
   // ---- Profile ----------------------------------------------------
@@ -129,18 +126,6 @@ export class CustomerPortalController {
     return this.portalService.getMyReports(req.user.id, id);
   }
 
-  @Get('lab/contracts')
-  @UseGuards(JwtAuthGuard)
-  async getMyContracts(@Req() req: any) {
-    return this.portalService.getMyContracts(req.user.id);
-  }
-
-  @Get('lab/contracts/:id')
-  @UseGuards(JwtAuthGuard)
-  async getMyContract(@Req() req: any, @Param('id') id: string) {
-    return this.portalService.getMyContract(req.user.id, id);
-  }
-
   @Get('lab/purchase-orders')
   @UseGuards(JwtAuthGuard)
   async getMyPurchaseOrders(@Req() req: any) {
@@ -153,6 +138,12 @@ export class CustomerPortalController {
     return this.portalService.getLabPODocumentUrl(req.user.id, id);
   }
 
+  @Get('lab/testing-requests/:id/invoice-document')
+  @UseGuards(JwtAuthGuard)
+  async getInvoiceDocument(@Req() req: any, @Param('id') id: string) {
+    return this.portalService.getInvoiceDocumentUrl(req.user.id, id);
+  }
+
   @Get('lab/purchase-orders/:id')
   @UseGuards(JwtAuthGuard)
   async getMyPurchaseOrder(@Req() req: any, @Param('id') id: string) {
@@ -161,32 +152,40 @@ export class CustomerPortalController {
 
   @Patch('lab/testing-requests/:id/upload-signed')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadSignedDocument(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() dto: UploadPortalDocumentDto,
+    @UploadedFile() file: any,
   ) {
-    return this.portalService.uploadSignedDocument(
-      req.user.id,
-      id,
-      dto.fileUrl,
-      dto.fileName,
-    );
+    return this.portalService.uploadSignedDocumentFile(req.user.id, id, file);
   }
 
   @Patch('lab/testing-requests/:id/upload-payment-proof')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadPaymentProof(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() dto: UploadPortalDocumentDto,
+    @UploadedFile() file: any,
   ) {
-    return this.portalService.uploadPaymentProof(
-      req.user.id,
-      id,
-      dto.fileUrl,
-      dto.fileName,
-    );
+    return this.portalService.uploadPaymentProofFile(req.user.id, id, file);
+  }
+
+  @Get('lab/testing-requests/:id/signed-document')
+  @UseGuards(JwtAuthGuard)
+  async getSignedDocument(@Req() req: any, @Param('id') id: string) {
+    return this.portalService.getSignedDocumentUrl(req.user.id, id);
+  }
+
+  @Get('lab/testing-requests/:id/payment-proof')
+  @UseGuards(JwtAuthGuard)
+  async getPaymentProof(@Req() req: any, @Param('id') id: string) {
+    return this.portalService.getPaymentProofUrl(req.user.id, id);
   }
 
   @Get('dashboard')

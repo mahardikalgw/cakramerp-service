@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcryptjs from 'bcryptjs';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { User } from '../../../user/domain/entities/user.entity';
 import type { UserRepositoryPort } from '../../../user/domain/repositories/user-repository.port';
 import { USER_REPOSITORY } from '../../../user/domain/repositories/user-repository.port';
@@ -21,6 +23,7 @@ import { RegisterCommand } from '../commands/register.command';
 import { AuthTokensResult } from '../results/auth-tokens.result';
 import { AuthServicePort } from '../ports/auth-service.port';
 import { envConfig } from '../../../../config/env.config';
+import { AUDIT_LOG_QUEUE_NAME } from '../../../../queues/audit-log.constants';
 
 @Injectable()
 export class AuthService implements AuthServicePort {
@@ -34,6 +37,8 @@ export class AuthService implements AuthServicePort {
     @Inject(ROLE_REPOSITORY)
     private readonly roleRepository: RoleRepositoryPort,
     private readonly jwtService: JwtService,
+    @InjectQueue(AUDIT_LOG_QUEUE_NAME)
+    private readonly auditLogQueue: Queue,
   ) {}
 
   async register(command: RegisterCommand): Promise<AuthTokensResult> {
@@ -63,26 +68,63 @@ export class AuthService implements AuthServicePort {
   async login(command: LoginCommand): Promise<AuthTokensResult> {
     const user = await this.userRepository.findByEmail(command.email);
     if (!user) {
+      await this.enqueueAuditLog({
+        userId: 'unknown',
+        userName: command.email,
+        action: 'login_failed',
+        module: 'auth',
+        recordId: '',
+        ipAddress: command.ipAddress,
+        payload: { reason: 'user_not_found', email: command.email },
+      }).catch(() => {});
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const valid = await bcryptjs.compare(command.password, user.passwordHash);
     if (!valid) {
+      await this.enqueueAuditLog({
+        userId: user.id,
+        userName: user.email,
+        action: 'login_failed',
+        module: 'auth',
+        recordId: user.id,
+        ipAddress: command.ipAddress,
+        payload: { reason: 'invalid_password' },
+      }).catch(() => {});
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Fetch user with roles and permissions
     const userWithRoles = await this.userRepository.findById(user.id);
 
-    return this.generateTokens(user.id, user.email, userWithRoles ?? undefined);
+    return this.generateTokens(user.id, user.email, userWithRoles ?? undefined, {
+      ipAddress: command.ipAddress,
+    });
   }
 
-  async refresh(refreshToken: string): Promise<AuthTokensResult> {
-    // Find by iterating tokens - bcrypt hash is non-deterministic, we pass raw token
+  async refresh(
+    refreshToken: string,
+    sessionInfo?: { ipAddress?: string; userAgent?: string },
+  ): Promise<AuthTokensResult> {
     const stored = await this.authRepository.findByTokenHash(refreshToken);
 
     if (!stored || stored.isExpired()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // Session binding check: reject if IP or user agent changed
+    if (!stored.isSessionValid(sessionInfo?.ipAddress, sessionInfo?.userAgent)) {
+      await this.authRepository.delete(stored.id);
+      await this.enqueueAuditLog({
+        userId: stored.userId,
+        userName: 'unknown',
+        action: 'login_failed',
+        module: 'auth',
+        recordId: stored.userId,
+        ipAddress: sessionInfo?.ipAddress,
+        payload: { reason: 'session_binding_mismatch' },
+      }).catch(() => {});
+      throw new UnauthorizedException('Session expired — IP or device changed');
     }
 
     const user = await this.userRepository.findById(stored.userId);
@@ -91,7 +133,7 @@ export class AuthService implements AuthServicePort {
     }
 
     await this.authRepository.delete(stored.id);
-    return this.generateTokens(user.id, user.email, user);
+    return this.generateTokens(user.id, user.email, user, sessionInfo);
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -105,6 +147,7 @@ export class AuthService implements AuthServicePort {
     userId: string,
     email: string,
     user?: User,
+    sessionInfo?: { ipAddress?: string; userAgent?: string },
   ): Promise<AuthTokensResult> {
     const payload = { sub: userId, email };
     const accessToken = this.jwtService.sign(payload, {
@@ -123,6 +166,8 @@ export class AuthService implements AuthServicePort {
       userId,
       tokenHash,
       expiresAt,
+      ipAddress: sessionInfo?.ipAddress,
+      userAgent: sessionInfo?.userAgent,
     });
     await this.authRepository.save(refresh);
 
@@ -142,5 +187,20 @@ export class AuthService implements AuthServicePort {
 
   private async hashToken(token: string): Promise<string> {
     return bcryptjs.hash(token, 10);
+  }
+
+  private async enqueueAuditLog(data: {
+    userId: string;
+    userName: string;
+    action: string;
+    module: string;
+    recordId: string;
+    ipAddress?: string;
+    payload?: Record<string, unknown>;
+  }): Promise<void> {
+    await this.auditLogQueue.add('audit-log', data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 },
+    });
   }
 }

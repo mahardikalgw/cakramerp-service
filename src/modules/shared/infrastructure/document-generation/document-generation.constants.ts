@@ -59,6 +59,9 @@ export const DOCUMENT_TYPES = {
   SAMPLE_TRACKING: 'sample_tracking',
   LAB_DRAFT_REPORT: 'lab_draft_report',
   LAB_FINAL_REPORT: 'lab_final_report',
+  LAB_POST_APPROVAL_CONTRACT: 'lab_post_approval_contract',
+  LAB_TAX_INVOICE: 'lab_tax_invoice',
+  TESTING_RESULT_CERTIFICATE_POST: 'testing_result_certificate_post',
 
   // Asset
   ASSET_REGISTER: 'asset_register',

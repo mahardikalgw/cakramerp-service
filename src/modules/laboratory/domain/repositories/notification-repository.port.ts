@@ -1,14 +1,15 @@
-import { InAppNotification } from '../entities/notification.entity';
+import { Notification } from '../entities/notification.entity';
 import { RepositoryPort } from '../../../../shared/kernel/domain/repositories/repository.port';
 
-export interface NotificationRepositoryPort extends RepositoryPort<InAppNotification> {
-  findByUserId(
-    userId: string,
+export interface NotificationRepositoryPort extends RepositoryPort<Notification> {
+  findByRecipientUserId(
+    recipientUserId: string,
     options?: { unreadOnly?: boolean; page?: number; limit?: number },
-  ): Promise<InAppNotification[]>;
-  countUnreadByUserId(userId: string): Promise<number>;
-  markAsRead(id: string): Promise<InAppNotification | null>;
-  markAllAsRead(userId: string): Promise<number>;
+  ): Promise<Notification[]>;
+  countUnreadByRecipientUserId(recipientUserId: string): Promise<number>;
+  markAsRead(id: string): Promise<Notification | null>;
+  markAllAsRead(recipientUserId: string): Promise<number>;
+  markAsReadByIdAndRecipient(id: string, recipientUserId: string): Promise<boolean>;
 }
 
 export const NOTIFICATION_REPOSITORY = Symbol('NOTIFICATION_REPOSITORY');

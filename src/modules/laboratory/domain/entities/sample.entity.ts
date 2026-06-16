@@ -16,6 +16,7 @@ export class Sample extends BaseEntity {
   declare customerId: string;
   declare customerName: string;
   declare weight: number | null;
+  declare quantity: number | null;
   declare location: string | null;
   declare description: string | null;
   declare status: SampleStatus;

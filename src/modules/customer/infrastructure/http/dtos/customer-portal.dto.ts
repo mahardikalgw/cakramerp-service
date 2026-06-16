@@ -117,6 +117,24 @@ export class CreatePortalTestingRequestDto {
   @IsUUID()
   labContractId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  existingContractId?: string;
+
+  @IsOptional()
+  @IsString()
+  scopeOfTesting?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  contractEstimation?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  contractTempoMonths?: number;
+
   @IsString()
   projectName: string;
 
@@ -151,10 +169,11 @@ export class CreatePortalTestingRequestDto {
   @IsString()
   additionalNotes?: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PortalTestingRequestLineDto)
-  lines: PortalTestingRequestLineDto[];
+  lines?: PortalTestingRequestLineDto[];
 }
 
 export class UpdatePortalTestingRequestDto {

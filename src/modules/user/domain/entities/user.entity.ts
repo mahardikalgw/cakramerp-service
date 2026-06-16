@@ -13,6 +13,10 @@ export class User extends BaseEntity {
   declare firstName: string;
   declare lastName: string;
   declare status: UserStatus;
+  declare mfaSecret?: string | null;
+  declare mfaEnabled: boolean;
+  declare mfaBackupCodes?: string | null;
+  declare mfaEnabledAt?: Date | null;
   declare roles?: string[];
   declare permissions?: string[];
   declare createdAt: Date;
@@ -22,6 +26,7 @@ export class User extends BaseEntity {
     super();
     Object.assign(this, props);
     this.status = props.status ?? UserStatus.ACTIVE;
+    this.mfaEnabled = props.mfaEnabled ?? false;
   }
 
   get fullName(): string {

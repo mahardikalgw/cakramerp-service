@@ -28,6 +28,7 @@ export class SampleTypeOrmRepository
       customerId: entity.customerId,
       customerName: entity.customerName,
       weight: entity.weight ? Number(entity.weight) : null,
+      quantity: entity.quantity ? Number(entity.quantity) : null,
       location: entity.location,
       description: entity.description,
       status: entity.status as Sample['status'],
@@ -50,6 +51,7 @@ export class SampleTypeOrmRepository
     entity.customerId = domain.customerId;
     entity.customerName = domain.customerName;
     entity.weight = domain.weight as any;
+    entity.quantity = domain.quantity as any;
     entity.location = domain.location ?? null;
     entity.description = domain.description ?? null;
     entity.status = domain.status ?? 'awaiting_delivery';
@@ -67,10 +69,12 @@ export class SampleTypeOrmRepository
   }
 
   async getLastSampleCode(): Promise<string | null> {
+    const year = new Date().getFullYear();
     const row = await this.repository
       .createQueryBuilder('s')
       .select('s.sample_code', 'sampleCode')
-      .orderBy('s.sample_code', 'DESC')
+      .where("s.sample_code LIKE :prefix", { prefix: `SPL-${year}-%` })
+      .orderBy('s.created_at', 'DESC')
       .limit(1)
       .getRawOne();
     return row?.sampleCode ?? null;

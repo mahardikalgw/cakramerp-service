@@ -7,6 +7,9 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   declare contractNumber: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  declare testingRequestId: string;
+
   @Column({ type: 'uuid' })
   declare customerId: string;
 
@@ -18,6 +21,15 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   declare projectName: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  declare projectLocation: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  declare testingType: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  declare billingType: string;
 
   @Column({ type: 'date', nullable: true })
   declare startDate: Date;
@@ -37,6 +49,24 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'int', nullable: true })
   declare remainingQuota: number;
 
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  declare baseAmount: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 11 })
+  declare taxPercent: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  declare taxAmount: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  declare totalAmount: number;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  declare contractDocumentUrl: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  declare taxInvoiceUrl: string;
+
   @Column({ type: 'varchar', length: 50, default: 'draft' })
   declare status: string;
 
@@ -49,13 +79,52 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   declare approvedAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  declare generatedAt: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare generatedBy: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare generatedByName: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  declare expiresAt: Date;
+
+  @Column({ type: 'boolean', default: false, name: 'is_unlimited' })
+  declare isUnlimited: boolean;
+
+  @Column({ type: 'date', nullable: true, name: 'billing_start_date' })
+  declare billingStartDate: Date | null;
+
+  @Column({ type: 'date', nullable: true, name: 'last_billing_date' })
+  declare lastBillingDate: Date | null;
+
+  @Column({ type: 'text', nullable: true, name: 'scope_of_testing' })
+  declare scopeOfTesting: string | null;
+
+  @Column({ type: 'int', nullable: true, name: 'contract_estimation' })
+  declare contractEstimation: number | null;
+
+  @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
+  declare contractTempoMonths: number | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'signed_contract_url' })
+  declare signedContractUrl: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'contract_signing_deadline' })
+  declare contractSigningDeadline: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'contract_confirmed_at' })
+  declare contractConfirmedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'contract_confirmed_by' })
+  declare contractConfirmedBy: string | null;
+
   @OneToMany(
     () => LabContractAttachmentTypeOrmEntity,
     (attachment) => attachment.labContract,
-    {
-      cascade: true,
-      eager: true,
-    },
+    { cascade: true, eager: true },
   )
   attachments: LabContractAttachmentTypeOrmEntity[];
 }

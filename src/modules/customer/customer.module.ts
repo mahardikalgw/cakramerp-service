@@ -7,6 +7,7 @@ import { CustomerService } from './application/services/customer.service';
 import { CustomerPortalService } from './application/services/customer-portal.service';
 import { CustomerController } from './infrastructure/http/controllers/customer.controller';
 import { CustomerPortalController } from './infrastructure/http/controllers/customer-portal.controller';
+import { CustomerPortalLabController } from './infrastructure/http/controllers/customer-portal-lab.controller';
 import { CUSTOMER_REPOSITORY } from './domain/repositories/customer-repository.port';
 import { CUSTOMER_SERVICE } from './application/ports/customer-service.port';
 import { UserModule } from '../user/user.module';
@@ -22,7 +23,7 @@ import { LaboratoryModule } from '../laboratory/laboratory.module';
     UserModule,
     forwardRef(() => LaboratoryModule),
   ],
-  controllers: [CustomerController, CustomerPortalController],
+  controllers: [CustomerController, CustomerPortalController, CustomerPortalLabController],
   providers: [
     {
       provide: CUSTOMER_REPOSITORY,

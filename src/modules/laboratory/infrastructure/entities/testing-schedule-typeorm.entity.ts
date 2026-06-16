@@ -3,10 +3,10 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 
 @Entity('testing_schedules')
 export class TestingScheduleTypeOrmEntity extends TypeOrmBaseEntity {
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   declare scheduleDate: Date;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   declare timeSlot: string;
 
   @Column({ type: 'uuid', nullable: true })
@@ -38,4 +38,43 @@ export class TestingScheduleTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 50, default: 'scheduled' })
   declare status: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare contractId: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare createdBy: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare createdByName: string;
+
+  @Column({ type: 'date', nullable: true })
+  declare scheduledDate: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  declare scheduledTime: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare scheduledLocation: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  declare qtySamples: number;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare laboranId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare laboranName: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  declare confirmedBy: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare confirmedByName: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  declare confirmedAt: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  declare statusNotes: string | null;
 }
