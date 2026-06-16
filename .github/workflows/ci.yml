@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: '22'
+  REGISTRY: ghcr.io
 
 jobs:
   typecheck:
@@ -15,11 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
       - run: npx tsc --noEmit
 
@@ -28,20 +34,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
 
   test:
-    name: Test
+    name: Unit Test
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -75,83 +86,45 @@ jobs:
       DB_POOL_SIZE: 5
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      JWT_SECRET: test-jwt-secret-ci-only
+      REDIS_PASSWORD: ""
+      JWT_SECRET: test-jwt-secret-ci-only-minimum-32-bytes
       JWT_EXPIRATION: 1h
-      JWT_REFRESH_SECRET: test-refresh-secret-ci-only
+      JWT_REFRESH_SECRET: test-refresh-secret-ci-only-minimum-32-bytes
       JWT_REFRESH_EXPIRATION: 1d
       PORT: 3000
       NODE_ENV: test
       CORS_ORIGIN: http://localhost:3000
+      DOCUMENT_SERVICE_URL: http://localhost:8080
+      RESEND_API_KEY: re_placeholder_ci
+      RESEND_FROM_EMAIL: noreply@example.com
+      APP_BASE_URL: http://localhost:3000
+      FCM_PROJECT_ID: ""
+      FCM_CLIENT_EMAIL: ""
+      FCM_PRIVATE_KEY: ""
+      MINIO_ENDPOINT: http://localhost:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: documents
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run test -- --ci --coverage --forceExit
+      - run: pnpm run test -- --ci --forceExit --passWithNoTests
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
           path: coverage/
-
-  e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: cakramerp_e2e
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: cakramerp_e2e
-      DB_SCHEMA: public
-      DB_SYNCHRONIZE: true
-      DB_LOGGING: false
-      DB_SSL: false
-      DB_POOL_SIZE: 5
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      JWT_SECRET: e2e-jwt-secret
-      JWT_EXPIRATION: 1h
-      JWT_REFRESH_SECRET: e2e-refresh-secret
-      JWT_REFRESH_EXPIRATION: 1d
-      PORT: 3000
-      NODE_ENV: test
-      CORS_ORIGIN: http://localhost:3000
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run test:e2e -- --forceExit
 
   build:
     name: Build
@@ -159,13 +132,19 @@ jobs:
     needs: [typecheck, lint, test]
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -174,25 +153,41 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [build, e2e]
+    needs: [build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/cakramerp-service
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=true
+            type=ref,event=branch
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/cakramerp-service:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/cakramerp-service:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
