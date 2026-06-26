@@ -277,6 +277,7 @@ export class SalesOrderService {
     try {
       await this.docHelper.generateDocument({
         documentType: DOCUMENT_TYPES.SALES_ORDER,
+        entityId: id,
         outputFormat: 'pdf',
       });
     } catch {
