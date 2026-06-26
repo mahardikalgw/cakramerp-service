@@ -8,6 +8,7 @@ import { CustomerPortalService } from './application/services/customer-portal.se
 import { CustomerController } from './infrastructure/http/controllers/customer.controller';
 import { CustomerPortalController } from './infrastructure/http/controllers/customer-portal.controller';
 import { CustomerPortalLabController } from './infrastructure/http/controllers/customer-portal-lab.controller';
+import { PortalContractTestInvoiceController } from './infrastructure/http/controllers/portal-contract-test-invoice.controller';
 import { CUSTOMER_REPOSITORY } from './domain/repositories/customer-repository.port';
 import { CUSTOMER_SERVICE } from './application/ports/customer-service.port';
 import { UserModule } from '../user/user.module';
@@ -23,7 +24,7 @@ import { LaboratoryModule } from '../laboratory/laboratory.module';
     UserModule,
     forwardRef(() => LaboratoryModule),
   ],
-  controllers: [CustomerController, CustomerPortalController, CustomerPortalLabController],
+  controllers: [CustomerController, CustomerPortalController, CustomerPortalLabController, PortalContractTestInvoiceController],
   providers: [
     {
       provide: CUSTOMER_REPOSITORY,

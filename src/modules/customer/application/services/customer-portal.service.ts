@@ -305,13 +305,14 @@ export class CustomerPortalService {
   /** List customer's own testing requests */
   async getMyTestingRequests(
     userId: string,
-    options?: { status?: string; page?: number; limit?: number },
+    options?: { status?: string; search?: string; page?: number; limit?: number },
   ) {
     const customer = await this.getCustomerByUserId(userId);
     const filters: Record<string, any> = { customerId: customer.id };
     if (options?.status) filters.status = options.status;
     return this.testingRequestRepo.findAll({
       filters,
+      search: options?.search,
       page: options?.page,
       limit: options?.limit,
     });
@@ -494,9 +495,9 @@ export class CustomerPortalService {
   ): Promise<TestingRequest> {
     if (!file) throw new BadRequestException('File is required');
     const request = await this.getMyTestingRequest(userId, requestId);
-    if (request.billingType !== 'cash') {
+    if (request.billingType !== 'cash' && request.billingType !== 'contract') {
       throw new BadRequestException(
-        'Signed document upload is only required for cash billing requests',
+        'Document upload is not required for this billing type',
       );
     }
     if (!['approved'].includes(request.status)) {
@@ -524,9 +525,10 @@ export class CustomerPortalService {
   ): Promise<TestingRequest> {
     if (!file) throw new BadRequestException('File is required');
     const request = await this.getMyTestingRequest(userId, requestId);
-    if (request.billingType !== 'cash') {
+    // Allow payment proof upload for both cash (signed PO payment) and contract (down payment)
+    if (request.billingType !== 'cash' && request.billingType !== 'contract') {
       throw new BadRequestException(
-        'Payment proof upload is only required for cash billing requests',
+        'Payment proof upload is not required for this billing type',
       );
     }
     if (!['approved'].includes(request.status)) {

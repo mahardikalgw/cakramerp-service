@@ -1,12 +1,9 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type PostApprovalLabContractStatus =
-  | 'draft'
   | 'active'
-  | 'in_progress'
   | 'completed'
-  | 'cancelled'
-  | 'awaiting_signature';
+  | 'closed';
 
 export type LabContractSampleStatus =
   | 'pending'
@@ -62,6 +59,10 @@ export class PostApprovalLabContract extends BaseEntity {
   declare taxPercent: number;
   declare taxAmount: number;
   declare totalAmount: number;
+  // Initial fee paid upfront at contract generation, excluding tax.
+  // For contract-billing flows this equals the down-payment base amount
+  // entered by admin (excluding tax). Null/0 for cash-billing contracts.
+  declare initialFee: number | null;
   declare contractDocumentUrl: string | null;
   declare taxInvoiceUrl: string | null;
   declare status: PostApprovalLabContractStatus;
@@ -79,6 +80,9 @@ export class PostApprovalLabContract extends BaseEntity {
   declare contractSigningDeadline: Date | null;
   declare contractConfirmedAt: Date | null;
   declare contractConfirmedBy: string | null;
+  declare closedAt: Date | null;
+  declare closedBy: string | null;
+  declare closedByName: string | null;
   declare lines: LabContractSample[];
   declare createdAt: Date;
   declare updatedAt: Date;

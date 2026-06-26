@@ -19,6 +19,7 @@ export interface UserServicePort {
   findByEmail(email: string): Promise<User>;
   update(id: string, command: UpdateUserCommand): Promise<User>;
   changePassword(command: ChangePasswordCommand): Promise<void>;
+  forceSetPassword(userId: string, newPassword: string): Promise<void>;
   delete(id: string): Promise<void>;
   deactivate(id: string): Promise<void>;
   logAuditAction(data: {

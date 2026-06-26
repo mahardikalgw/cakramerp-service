@@ -36,11 +36,13 @@ export class TestingRequestController {
   @RequirePermissions('testing-requests:read')
   async listTestingRequests(
     @Query('status') status?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.testingRequestService.findAll({
       status,
+      search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -75,12 +77,17 @@ export class TestingRequestController {
 
   @Patch('testing-requests/:id/approve')
   @RequirePermissions('testing-requests:approve')
-  async approveTestingRequest(@Param('id') id: string, @Req() req: any) {
+  async approveTestingRequest(
+    @Param('id') id: string,
+    @Body() dto: ApproveRejectDto,
+    @Req() req: any,
+  ) {
     const user = req.user ?? {};
     return this.testingRequestService.approve(
       id,
       user.id ?? 'unknown',
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+      dto.downPaymentAmount,
     );
   }
 
@@ -207,6 +214,18 @@ export class TestingRequestController {
     );
   }
 
+  @Get('testing-requests/:id/download-contract')
+  @RequirePermissions('testing-requests:read')
+  async downloadContractDocument(@Param('id') id: string) {
+    return this.testingRequestService.getContractDocumentDownloadUrl(id);
+  }
+
+  @Get('testing-requests/:id/download-tax-invoice')
+  @RequirePermissions('testing-requests:read')
+  async downloadTaxInvoice(@Param('id') id: string) {
+    return this.testingRequestService.getTaxInvoiceDownloadUrl(id);
+  }
+
   @Get('testing-requests/:id/download-po')
   @RequirePermissions('testing-requests:read')
   async downloadPO(@Param('id') id: string) {
@@ -224,6 +243,14 @@ export class TestingRequestController {
   async deleteTestingRequest(@Param('id') id: string) {
     await this.testingRequestService.delete(id);
     return { success: true };
+  }
+
+  @Patch('testing-requests/:id/confirm-dp-payment')
+  @RequirePermissions('testing-requests:approve')
+  async confirmDpPayment(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.confirmDpPayment(id, user.id ?? 'unknown', userName);
   }
 
   @Patch('testing-requests/:id/confirm-signed-contract')

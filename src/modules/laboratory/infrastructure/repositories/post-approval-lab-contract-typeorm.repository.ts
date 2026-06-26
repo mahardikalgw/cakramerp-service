@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, ILike, Or, Repository } from 'typeorm';
 import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
 import { PostApprovalLabContract, LabContractSample } from '../../domain/entities/post-approval-lab-contract.entity';
 import { LabContractTypeOrmEntity } from '../entities/lab-contract-typeorm.entity';
@@ -58,14 +58,27 @@ export class PostApprovalLabContractTypeOrmRepository
     const limit = options?.limit ?? 20;
     const page = options?.page ?? 1;
     const skip = (page - 1) * limit;
+    const search = options?.search;
+
+    let where: any = options?.filters ?? {};
+
+    if (search && search.trim()) {
+      const term = `%${search.trim()}%`;
+      const baseFilters = options?.filters ?? {};
+      where = [
+        { ...baseFilters, contractNumber: ILike(term) },
+        { ...baseFilters, projectName: ILike(term) },
+        { ...baseFilters, customerName: ILike(term) },
+      ];
+    }
 
     const [entities, total] = await this.repository.findAndCount({
-      where: options?.filters as any,
+      where,
       take: limit,
       skip,
       order: options?.orderBy
         ? ({ [options.orderBy]: options.orderDirection ?? 'ASC' } as any)
-        : undefined,
+        : { createdAt: 'DESC' } as any,
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -101,6 +114,7 @@ export class PostApprovalLabContractTypeOrmRepository
       taxPercent: Number(entity.taxPercent) ?? 11,
       taxAmount: Number(entity.taxAmount) ?? 0,
       totalAmount: Number(entity.totalAmount) ?? 0,
+      initialFee: Number((entity as any).initialFee) ?? 0,
       contractDocumentUrl: entity.contractDocumentUrl,
       taxInvoiceUrl: entity.taxInvoiceUrl,
       status: entity.status as PostApprovalLabContract['status'],
@@ -118,6 +132,9 @@ export class PostApprovalLabContractTypeOrmRepository
       contractSigningDeadline: entity.contractSigningDeadline ?? null,
       contractConfirmedAt: entity.contractConfirmedAt ?? null,
       contractConfirmedBy: entity.contractConfirmedBy ?? null,
+      closedAt: (entity as any).closedAt ?? null,
+      closedBy: (entity as any).closedBy ?? null,
+      closedByName: (entity as any).closedByName ?? null,
       lines: [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -142,6 +159,7 @@ export class PostApprovalLabContractTypeOrmRepository
     entity.taxPercent = domain.taxPercent ?? 11;
     entity.taxAmount = domain.taxAmount ?? 0;
     entity.totalAmount = domain.totalAmount ?? 0;
+    (entity as any).initialFee = domain.initialFee ?? 0;
     entity.contractDocumentUrl = domain.contractDocumentUrl ?? '';
     entity.taxInvoiceUrl = domain.taxInvoiceUrl ?? '';
     entity.status = domain.status;
@@ -159,6 +177,9 @@ export class PostApprovalLabContractTypeOrmRepository
     entity.contractSigningDeadline = domain.contractSigningDeadline as any;
     entity.contractConfirmedAt = domain.contractConfirmedAt as any;
     entity.contractConfirmedBy = domain.contractConfirmedBy ?? null;
+    (entity as any).closedAt = domain.closedAt ?? null;
+    (entity as any).closedBy = domain.closedBy ?? null;
+    (entity as any).closedByName = domain.closedByName ?? null;
     return entity;
   }
 

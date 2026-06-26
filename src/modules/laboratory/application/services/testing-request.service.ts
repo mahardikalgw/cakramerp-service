@@ -12,6 +12,7 @@ import type { LabContractRepositoryPort } from '../../domain/repositories/lab-co
 import { LAB_CONTRACT_REPOSITORY } from '../../domain/repositories/lab-contract-repository.port';
 import type { LabPurchaseOrderRepositoryPort } from '../../domain/repositories/lab-purchase-order-repository.port';
 import { LAB_PURCHASE_ORDER_REPOSITORY } from '../../domain/repositories/lab-purchase-order-repository.port';
+import { LabPurchaseOrder } from '../../domain/entities/lab-purchase-order.entity';
 import { LabActivityLogService } from './lab-activity-log.service';
 import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
@@ -67,6 +68,7 @@ export class TestingRequestService {
   async findAll(options?: {
     status?: string;
     customerId?: string;
+    search?: string;
     page?: number;
     limit?: number;
   }) {
@@ -76,6 +78,7 @@ export class TestingRequestService {
 
     return this.repository.findAll({
       filters,
+      search: options?.search,
       page: options?.page,
       limit: options?.limit,
     });
@@ -117,6 +120,18 @@ export class TestingRequestService {
     return `REQ-${year}-${seq.toString().padStart(5, '0')}`;
   }
 
+  private generatePONumber(lastNumber: string | null): string {
+    const year = new Date().getFullYear();
+    let seq = 1;
+    if (lastNumber) {
+      const match = lastNumber.match(/LPO-(\d{4})-(\d+)/);
+      if (match && match[1] === year.toString()) {
+        seq = parseInt(match[2], 10) + 1;
+      }
+    }
+    return `LPO-${year}-${seq.toString().padStart(5, '0')}`;
+  }
+
   async create(dto: {
     customerId: string;
     projectName: string;
@@ -125,6 +140,7 @@ export class TestingRequestService {
     sampleQuantity?: number;
     scheduleDate?: string;
     notes?: string;
+    billingType?: string;
     // Portal fields
     submittedBy?: 'admin' | 'customer';
     customerUserId?: string;
@@ -165,6 +181,7 @@ export class TestingRequestService {
       projectAddress: dto.projectAddress,
       preferredScheduleDate: dto.preferredScheduleDate,
       priority: dto.priority ?? 'normal',
+      billingType: dto.billingType ?? 'cash',
       lines: dto.lines.map((line) => ({
         id: undefined,
         createdAt: undefined,
@@ -236,6 +253,7 @@ export class TestingRequestService {
     id: string,
     userId: string,
     userName?: string,
+    downPaymentAmount?: number,
   ): Promise<TestingRequest> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException('Testing request not found');
@@ -266,25 +284,30 @@ export class TestingRequestService {
         await this.contractRepo.save(contract);
       }
     } else if (existing.billingType === 'contract' && !existing.labContractId) {
-      this.logger.log(`[CONTRACT] Initial contract request ${existing.id}, generating contract for signing...`);
+      this.logger.log(`[CONTRACT] New contract request ${existing.id}: storing DP amount and creating PostApprovalLabContract...`);
+      // Store down payment amount (admin enters this on approval)
+      if (downPaymentAmount && downPaymentAmount > 0) {
+        existing.downPaymentAmount = downPaymentAmount;
+      }
       try {
+        // Create the PostApprovalLabContract entity immediately on approval.
+        // totalAmount is set to downPaymentAmount (DP value).
         const contract = await this.contractService.generateForContractRequest(
           existing.id,
           userId,
           userName,
+          downPaymentAmount,
         );
-
-        const deadline = new Date();
-        deadline.setDate(deadline.getDate() + 7);
-        existing.contractSigningDeadline = deadline;
-        existing.isUnlimited = true;
         existing.labContractId = contract.id;
-
-        if (existing.customerUserId) {
-          void this.notificationEventService.onContractReadyForSigning(contract, existing.customerUserId).catch(() => {});
+        this.logger.log(`[CONTRACT] PostApprovalLabContract created on approval: ${contract.id} (${contract.contractNumber})`);
+        // Reload to get invoiceDocumentUrl and contractDocumentUrl set by the service
+        const reloaded = await this.repository.findById(id);
+        if (reloaded) {
+          existing.invoiceDocumentUrl = reloaded.invoiceDocumentUrl;
+          existing.contractDocumentUrl = reloaded.contractDocumentUrl;
         }
       } catch (err: any) {
-        this.logger.error(`[CONTRACT] Contract generation failed for request ${existing.id}: ${err?.message}`, err?.stack);
+        this.logger.error(`[CONTRACT] Contract creation failed for request ${existing.id}: ${err?.message}`, err?.stack);
         void this.activityLog.log({
           testingRequestId: id,
           action: 'document_generation_failed',
@@ -294,8 +317,50 @@ export class TestingRequestService {
           details: { error: err?.message },
         });
       }
-    } else if (existing.billingType === 'cash' && existing.labPurchaseOrderId) {
-      // Cash billing: generate PO + invoice documents synchronously via REST
+    } else if (existing.billingType === 'cash') {
+      // Cash billing: ensure Lab PO exists, then generate documents
+      if (!existing.labPurchaseOrderId) {
+        this.logger.log(`[DOC] Creating Lab PO on-the-fly for admin-created request ${existing.id}...`);
+        const lastPONumber = await this.poRepo.getLastPONumber();
+        const poNumber = this.generatePONumber(lastPONumber);
+        const customer = await this.customerRepo.findById(existing.customerId).catch(() => null);
+        const customerName = customer?.name || existing.customerName || existing.customerId;
+
+        let totalAmount = 0;
+        const poLines = (existing.lines || []).map((line) => {
+          const total = (line.sampleQuantity ?? 0) * 0;
+          totalAmount += total;
+          return {
+            id: undefined,
+            createdAt: undefined,
+            updatedAt: undefined,
+            labPurchaseOrderId: undefined,
+            testingServiceId: line.testingServiceId ?? '',
+            serviceName: line.serviceName ?? 'Testing Service',
+            quantity: line.sampleQuantity ?? 1,
+            unitPrice: 0,
+            total: 0,
+          };
+        });
+
+        const po = new LabPurchaseOrder({
+          id: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+          poNumber,
+          customerId: existing.customerId,
+          customerName,
+          testingServiceId: existing.lines?.[0]?.testingServiceId ?? '',
+          sampleQuantity: existing.sampleQuantity ?? 0,
+          totalAmount,
+          status: 'draft',
+          lines: poLines as any,
+        } as any);
+        const savedPO = await this.poRepo.save(po);
+        existing.labPurchaseOrderId = savedPO.id;
+        this.logger.log(`[DOC] Created Lab PO ${savedPO.id} (${poNumber}) for request ${existing.id}`);
+      }
+
       this.logger.log(
         `[DOC] Cash branch entered for request ${existing.id}, labPurchaseOrderId=${existing.labPurchaseOrderId}`,
       );
@@ -410,7 +475,7 @@ export class TestingRequestService {
       );
     }
 
-    // Create draft Sales Order from testing request lines (all billing types)
+    // Create draft Sales Order from testing request lines OR from down payment for contract billing
     try {
       this.logger.log(`[SO] Step 1: Checking lines for request ${existing.id}...`);
       // Ensure lines are loaded (defensive against lazy-load issues)
@@ -421,7 +486,32 @@ export class TestingRequestService {
         }
       }
 
-      if (!existing.lines || existing.lines.length === 0) {
+      const dpAmount = existing.downPaymentAmount ?? (downPaymentAmount ?? 0);
+
+      // For contract billing with no lines, create a SO from the down payment amount
+      if ((!existing.lines || existing.lines.length === 0) && existing.billingType === 'contract' && dpAmount > 0) {
+        this.logger.log(`[SO] Contract request with no lines — creating SO from down payment amount: ${dpAmount}`);
+        const customer = await this.customerRepo.findById(existing.customerId).catch(() => null);
+        const customerName = customer?.name || existing.customerName || existing.customerId;
+        const so = await this.salesOrderService.create({
+          customerId: existing.customerId,
+          customerName,
+          orderDate: new Date().toISOString().split('T')[0],
+          notes: `Down Payment — Contract Testing Request ${existing.requestNumber}`,
+          lines: [{
+            itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
+            quantity: 1,
+            unitPrice: dpAmount,
+            uom: 'package',
+            lineType: 'service',
+          }],
+        });
+        existing.salesOrderId = so.id;
+        this.logger.log(`[SO] Created contract DP SO ${so.id} for request ${existing.id}`);
+        try { await this.salesOrderService.approve(so.id); } catch {}
+        try { await this.salesFinanceAdapter.recordSOApprovalGl(so.id); } catch {}
+        try { await this.salesFinanceAdapter.createDraftARInvoiceFromSO(so.id, userId); } catch {}
+      } else if (!existing.lines || existing.lines.length === 0) {
         this.logger.warn(
           `[SO] Skipping: testing request ${existing.id} has no lines`,
         );
@@ -685,15 +775,24 @@ export class TestingRequestService {
   async getSignedDownloadUrl(id: string) {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException('Testing request not found');
-    if (!existing.signedDocumentUrl) {
+
+    const urlField = existing.signedContractUrl || existing.signedDocumentUrl;
+    const filenameField = existing.signedDocumentFilename || '';
+
+    if (!urlField) {
       throw new NotFoundException('No signed document uploaded');
     }
-    if (existing.signedDocumentUrl.startsWith('http')) {
-      return { url: existing.signedDocumentUrl, filename: existing.signedDocumentFilename };
+    if (urlField.startsWith('http')) {
+      return { url: urlField, filename: filenameField || 'signed-document.pdf' };
     }
-    const objectName = existing.signedDocumentUrl.replace('documents/', '');
+    const objectName = urlField.replace('documents/', '');
     const url = await this.minioService.getPresignedUrl('documents', objectName, 3600);
-    return { url, filename: existing.signedDocumentFilename };
+    // Extract filename from Minio path if not stored separately
+    const filename = filenameField || (() => {
+      const parts = objectName.split('_');
+      return parts.length > 1 ? parts.slice(1).join('_') : 'signed-document.pdf';
+    })();
+    return { url, filename };
   }
 
   async getPaymentProofDownloadUrl(id: string) {
@@ -740,14 +839,10 @@ export class TestingRequestService {
     existing.quotaGrantedAt = new Date();
     existing.quotaGrantedBy = adminUserId;
 
-    // Mark the linked PO as paid/active
+    // Load the linked PO lines for quota creation (do NOT auto-advance PO status)
     let poLines: Array<{ testingServiceId: string; serviceName: string; quantity: number }> = [];
     if (existing.labPurchaseOrderId) {
       const po = await this.poRepo.findById(existing.labPurchaseOrderId);
-      if (po && ['draft', 'signed'].includes(po.status)) {
-        po.status = 'paid';
-        await this.poRepo.save(po);
-      }
       if (po && po.lines && po.lines.length > 0) {
         poLines = po.lines.map((l) => ({
           testingServiceId: l.testingServiceId,
@@ -774,6 +869,17 @@ export class TestingRequestService {
       } catch (err: any) {
         this.logger.warn(`[VERIFY] Failed to update AR invoice status: ${err?.message}`);
       }
+    }
+
+    // Update Sales Order and create GL posting for payment received
+    if (existing.salesOrderId) {
+      await this.recordPaymentToSOAndGL(
+        existing.salesOrderId,
+        existing.requestNumber,
+        existing.customerId,
+        existing.customerName,
+        0,
+      );
     }
 
     // Create sample_quotas — one row per PO line
@@ -825,6 +931,119 @@ export class TestingRequestService {
     return saved;
   }
 
+  private async recordPaymentToSOAndGL(
+    soId: string,
+    requestNumber: string,
+    customerId: string,
+    customerName: string | undefined,
+    amount: number,
+  ): Promise<void> {
+    try {
+      const soRows: any[] = await this.dataSource.query(
+        `SELECT id, so_number, status, grand_total FROM sales_orders WHERE id = $1 LIMIT 1`,
+        [soId],
+      );
+      if (soRows.length === 0) return;
+
+      const so = soRows[0];
+      const payAmount = amount > 0 ? amount : Number(so.grand_total);
+
+      await this.dataSource.query(
+        `UPDATE sales_orders SET status = 'invoiced', updated_at = NOW() WHERE id = $1 AND status NOT IN ('closed', 'cancelled')`,
+        [soId],
+      );
+
+      await this.dataSource.query(
+        `INSERT INTO gl_posting_queue (source_type, source_id, source_number, event_type, amount, description, status, suggested_lines, customer_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', '[]', $7, NOW(), NOW())`,
+        [
+          'sales_order',
+          soId,
+          so.so_number,
+          'payment_received',
+          payAmount,
+          `Payment received — ${requestNumber} (${customerName || customerId})`,
+          customerId,
+        ],
+      );
+    } catch (err: any) {
+      this.logger.warn(`[PAYMENT] Failed to update SO/GL for SO ${soId}: ${err?.message}`);
+    }
+  }
+
+  async confirmDpPayment(
+    id: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<TestingRequest> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new NotFoundException('Testing request not found');
+    if (existing.billingType !== 'contract') {
+      throw new BadRequestException('Only contract billing requests can have DP confirmed');
+    }
+    if (existing.status !== 'approved') {
+      throw new BadRequestException('Request must be in approved status');
+    }
+    if (!existing.paymentProofUrl) {
+      throw new BadRequestException('Customer has not uploaded down payment proof yet');
+    }
+
+    // Create PostApprovalLabContract if not already created at approval time
+    if (!existing.labContractId) {
+      try {
+        const contract = await this.contractService.generateForContractRequest(
+          id,
+          adminUserId,
+          adminUserName,
+          Number(existing.downPaymentAmount ?? 0),
+        );
+        existing.labContractId = contract.id;
+        this.logger.log(`[DP CONFIRM] Contract created as fallback: ${contract.id} (${contract.contractNumber})`);
+      } catch (err: any) {
+        this.logger.error(`[DP CONFIRM] Fallback contract creation failed: ${err?.message}`, err?.stack);
+        throw new BadRequestException('Failed to create contract. Please try approving the request again.');
+      }
+    }
+
+    existing.status = 'approved';
+    existing.contractConfirmedAt = new Date();
+    existing.contractConfirmedBy = adminUserId;
+
+    const saved = await this.repository.save(existing);
+
+    // Update the PostApprovalLabContract status to active
+    if (existing.labContractId) {
+      try {
+        await this.contractService.updateStatus(existing.labContractId, 'active');
+        this.logger.log(`[DP CONFIRM] Contract status updated to active: ${existing.labContractId}`);
+      } catch (err: any) {
+        this.logger.warn(`[DP CONFIRM] Failed to update contract status: ${err?.message}`);
+      }
+    }
+
+    // Update Sales Order and create GL posting for payment received
+    if (existing.salesOrderId) {
+      await this.recordPaymentToSOAndGL(
+        existing.salesOrderId,
+        existing.requestNumber,
+        existing.customerId,
+        existing.customerName,
+        existing.downPaymentAmount ?? 0,
+      );
+    }
+
+    void this.activityLog.log({
+      testingRequestId: id,
+      action: 'dp_payment_confirmed',
+      performedBy: adminUserId,
+      performedByName: adminUserName,
+      performedByRole: 'admin',
+      details: { contractId: existing.labContractId },
+    }).catch(() => {});
+
+    return saved;
+  }
+
   async confirmSignedContract(
     id: string,
     adminUserId: string,
@@ -842,7 +1061,7 @@ export class TestingRequestService {
       throw new BadRequestException('Customer has not uploaded a signed contract yet');
     }
 
-    existing.status = 'active_contract';
+    existing.status = 'approved';
     existing.contractConfirmedAt = new Date();
     existing.contractConfirmedBy = adminUserId;
     existing.quotaGranted = true;
@@ -908,6 +1127,36 @@ export class TestingRequestService {
       filename: `INV-${request.requestNumber || 'Invoice'}.pdf`,
       expiresAt: new Date(Date.now() + 3600_000).toISOString(),
     };
+  }
+
+  async getContractDocumentDownloadUrl(testingRequestId: string): Promise<{ url: string; filename: string }> {
+    const request = await this.repository.findById(testingRequestId);
+    if (!request) throw new NotFoundException('Testing request not found');
+    // Check contract document stored on the testing request (new flow)
+    if (request.contractDocumentUrl) {
+      const url = await this.docHelper.getDownloadUrl(request.contractDocumentUrl);
+      if (url) return { url, filename: `contract-${request.requestNumber || testingRequestId.substring(0, 8)}.pdf` };
+    }
+    // Fallback: contract entity
+    if (request.labContractId) {
+      return this.contractService.getContractDownloadUrl(request.labContractId);
+    }
+    throw new NotFoundException('Contract document not yet generated');
+  }
+
+  async getTaxInvoiceDownloadUrl(testingRequestId: string): Promise<{ url: string; filename: string }> {
+    const request = await this.repository.findById(testingRequestId);
+    if (!request) throw new NotFoundException('Testing request not found');
+    // Check invoice document stored on the testing request (DP invoice from approval flow)
+    if (request.invoiceDocumentUrl) {
+      const url = await this.docHelper.getDownloadUrl(request.invoiceDocumentUrl);
+      if (url) return { url, filename: `dp-invoice-${request.requestNumber || testingRequestId.substring(0, 8)}.pdf` };
+    }
+    // Fallback: contract entity tax invoice
+    if (request.labContractId) {
+      return this.contractService.getTaxInvoiceDownloadUrl(request.labContractId);
+    }
+    throw new NotFoundException('Tax invoice not yet generated');
   }
 
   async delete(id: string): Promise<boolean> {

@@ -21,7 +21,7 @@ import { UpdateUserCommand } from '../../../application/commands/update-user.com
 import { ChangePasswordCommand } from '../../../application/commands/change-password.command';
 import { CreateUserHttpDto } from '../dtos/create-user.dto';
 import { UpdateUserHttpDto } from '../dtos/update-user.dto';
-import { ChangePasswordHttpDto } from '../dtos/change-password.dto';
+import { ChangePasswordHttpDto, ForceSetPasswordHttpDto } from '../dtos/change-password.dto';
 import { UserResponseDto } from '../dtos/user-response.dto';
 
 @Controller('users')
@@ -105,9 +105,18 @@ export class UserController {
   ): Promise<void> {
     const command = new ChangePasswordCommand(
       id,
-      dto.oldPassword,
+      dto.oldPassword ?? '',
       dto.password,
     );
     await this.userService.changePassword(command);
+  }
+
+  @Patch(':id/set-password')
+  @RequirePermissions('users:update')
+  async setPassword(
+    @Param('id') id: string,
+    @Body() dto: ForceSetPasswordHttpDto,
+  ): Promise<void> {
+    await this.userService.forceSetPassword(id, dto.password);
   }
 }

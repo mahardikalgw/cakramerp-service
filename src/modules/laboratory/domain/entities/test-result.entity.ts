@@ -45,6 +45,11 @@ export class TestResult extends BaseEntity {
   declare approvedById: string | null;
   declare approvedAt: Date | null;
   declare status: TestResultStatus;
+  // Extensions present on the underlying row but not part of the lab
+  // testing-request flow. Used by the post-approval / contract-billing flow.
+  declare contractId: string | null;
+  declare contractSampleId: string | null;
+  declare scheduleId: string | null;
   declare attachments: TestResultAttachment[];
   declare createdAt: Date;
   declare updatedAt: Date;

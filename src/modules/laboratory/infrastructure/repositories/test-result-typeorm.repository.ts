@@ -40,6 +40,9 @@ export class TestResultTypeOrmRepository
       approvedById: entity.approvedById,
       approvedAt: entity.approvedAt,
       status: entity.status as TestResult['status'],
+      contractId: entity.contractId,
+      contractSampleId: entity.contractSampleId,
+      scheduleId: entity.scheduleId,
       attachments: Array.isArray(entity.attachments)
         ? entity.attachments.map(
             (a) =>
@@ -122,6 +125,14 @@ export class TestResultTypeOrmRepository
   ): Promise<TestResult[]> {
     const entities = await this.repository.find({
       where: { testingRequestId } as any,
+      relations: ['attachments'],
+    });
+    return entities.map((e) => this.toDomain(e));
+  }
+
+  async findByContractId(contractId: string): Promise<TestResult[]> {
+    const entities = await this.repository.find({
+      where: { contractId } as any,
       relations: ['attachments'],
     });
     return entities.map((e) => this.toDomain(e));

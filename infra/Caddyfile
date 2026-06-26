@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────
+# Caddyfile — CakramERP Reverse Proxy
+# ISO 27001 A.13.1: Network security (TLS 1.2+ enforced)
+# ISO 27001 A.10.1: Cryptographic controls
+# ─────────────────────────────────────────────────────────
+
+{
+    # Minimum TLS version 1.2 (PCI DSS / ISO 27001 requirement)
+    servers :443 {
+        protocols h2 h1
+    }
+    # Auto HTTPS via Let's Encrypt (Caddy default)
+    # ocsp_stapling is enabled by default
+}
+
+# ── HTTP → HTTPS redirect ──────────────────────────────
+http://api.cakramerp.id {
+    redir https://api.cakramerp.id{uri} 301
+}
+
+http://doc.cakramerp.id {
+    redir https://doc.cakramerp.id{uri} 301
+}
+
+# ── API (NestJS Backend) ───────────────────────────────
+api.cakramerp.id {
+    reverse_proxy app:3000
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'none'; object-src 'none'"
+        X-XSS-Protection "0"
+        -Server
+    }
+}
+
+# ── Document Service (Spring Boot / JasperReports) ─────
+doc.cakramerp.id {
+    reverse_proxy doc:8080
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}

@@ -1,4 +1,4 @@
-import { Repository, DataSource, ObjectLiteral } from 'typeorm';
+import { Repository, DataSource, ObjectLiteral, ILike } from 'typeorm';
 import {
   FindOptions,
   FindResult,
@@ -17,6 +17,11 @@ export abstract class BaseTypeOrmRepositoryAdapter<
   abstract toDomain(entity: E): T;
   abstract toEntity(domain: T): E;
 
+  /** Override in subclass to define which columns are searched by `options.search` */
+  protected searchableColumns(): string[] {
+    return [];
+  }
+
   async findById(id: string): Promise<T | null> {
     const entity = await this.repository.findOne({ where: { id } as any });
     return entity ? this.toDomain(entity) : null;
@@ -27,8 +32,19 @@ export abstract class BaseTypeOrmRepositoryAdapter<
     const page = options?.page ?? 1;
     const offset = options?.offset ?? (page - 1) * limit;
 
+    let where: any = options?.filters ?? {};
+
+    if (options?.search?.trim()) {
+      const term = `%${options.search.trim()}%`;
+      const cols = this.searchableColumns();
+      if (cols.length > 0) {
+        const baseFilters = options?.filters ?? {};
+        where = cols.map((col) => ({ ...baseFilters, [col]: ILike(term) }));
+      }
+    }
+
     const [entities, total] = await this.repository.findAndCount({
-      where: options?.filters as any,
+      where,
       take: limit,
       skip: offset,
       order: options?.orderBy

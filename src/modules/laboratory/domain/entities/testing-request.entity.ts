@@ -10,8 +10,7 @@ export type TestingRequestStatus =
   | 'testing'
   | 'report_draft'
   | 'completed'
-  | 'cancelled'
-  | 'active_contract';
+  | 'cancelled';
 
 export class TestingRequestLine extends BaseEntity {
   declare id: string;
@@ -66,6 +65,8 @@ export class TestingRequest extends BaseEntity {
   // Document fields
   declare additionalNotes?: string | null;
   declare invoiceDocumentUrl?: string | null;
+  declare contractDocumentUrl?: string | null;
+  declare downPaymentAmount?: number | null;
   declare poDocumentUrl?: string | null;
   declare signedDocumentUrl?: string | null;
   declare signedDocumentFilename?: string | null;

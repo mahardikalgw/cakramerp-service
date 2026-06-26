@@ -79,6 +79,7 @@ export class CustomerPortalLabController {
   async getMyContracts(
     @Req() req: any,
     @Query('status') status?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -86,6 +87,7 @@ export class CustomerPortalLabController {
     const result = await this.contractService.findAll({
       customerId,
       status,
+      search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -104,10 +106,16 @@ export class CustomerPortalLabController {
     const contract = await this.assertContractOwnership(id, customerId);
     const pendingQuota = await this.scheduleService.getPendingQuota(id);
     const pendingBySample = await this.scheduleService.getPendingAllocationsBySample(id);
-    const sampleLines = ((contract as any).sampleLines ?? []).map((s: any) => ({
-      ...s,
-      pendingQuantity: pendingBySample[s.id] || 0,
-    }));
+    const sampleLines = ((contract as any).sampleLines ?? []).map((s: any) => {
+      const pending = pendingBySample[s.id] || 0;
+      const completed = s.completedQuantity ?? 0;
+      const availableForSchedule = Math.max(0, (s.sampleQuantity ?? 1) - completed - pending);
+      return {
+        ...s,
+        pendingQuantity: pending,
+        availableForSchedule,
+      };
+    });
     return { ...contract, pendingQuota, sampleLines };
   }
 
@@ -214,7 +222,7 @@ export class CustomerPortalLabController {
   @Get('testing-results/:id')
   @UseGuards(JwtAuthGuard)
   async getTestingResultDetail(@Param('id') id: string) {
-    return this.testingResultService.findById(id);
+    return this.testingResultService.findByIdEnriched(id);
   }
 
   @Patch('testing-results/:id/confirm')
@@ -255,7 +263,7 @@ export class CustomerPortalLabController {
     return this.archiveService.getDownloadUrl(id);
   }
 
-  @Post('testing-requests/:id/upload-signed-contract-file')
+  @Patch('testing-requests/:id/upload-signed-contract-file')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
@@ -277,10 +285,46 @@ export class CustomerPortalLabController {
     const request = await this.testingRequestService.findById(id);
     if (!request) throw new NotFoundException('Testing request not found');
     if ((request as any).customerId !== customerId) throw new ForbiddenException('Access denied');
+    // First try: contract document URL stored directly on the testing request (new flow)
+    const contractDocUrl = (request as any).contractDocumentUrl;
+    if (contractDocUrl) {
+      const url = await this.docHelper.getDownloadUrl(contractDocUrl);
+      if (url) return { url, filename: `contract_${id.substring(0, 8)}.pdf` };
+    }
+    // Fallback: contract entity's document URL (old flow)
     if ((request as any).labContractId) {
       return this.contractService.getContractDownloadUrl((request as any).labContractId);
     }
     throw new NotFoundException('Contract document not found');
+  }
+
+  @Get('testing-requests/:id/download-dp-invoice')
+  @UseGuards(JwtAuthGuard)
+  async downloadDpInvoice(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    const customerId = await this.resolveCustomerId(req.user.id);
+    const request = await this.testingRequestService.findById(id);
+    if (!request) throw new NotFoundException('Testing request not found');
+    if ((request as any).customerId !== customerId) throw new ForbiddenException('Access denied');
+    const invoiceDocId = (request as any).invoiceDocumentUrl;
+    if (!invoiceDocId) throw new NotFoundException('DP invoice not yet generated');
+    const url = await this.docHelper.getDownloadUrl(invoiceDocId);
+    if (!url) throw new NotFoundException('Invoice document URL not available');
+    return { url, filename: `dp_invoice_${id.substring(0, 8)}.pdf` };
+  }
+
+  @Post('contracts/:id/samples')
+  @UseGuards(JwtAuthGuard)
+  async addContractSamples(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: { samples: Array<{ testingServiceId?: string; serviceName: string; sampleCode?: string; sampleDescription?: string; sampleQuantity: number }> },
+  ) {
+    const customerId = await this.resolveCustomerId(req.user.id);
+    await this.assertContractOwnership(id, customerId);
+    return this.contractService.addContractSamples(id, body.samples || []);
   }
 
   @Get('contracts/active')
@@ -316,5 +360,30 @@ export class CustomerPortalLabController {
   @UseGuards(JwtAuthGuard)
   async downloadMyContractInvoice(@Req() req: any, @Param('id') id: string) {
     return this.contractInvoiceService.getDownloadUrl(id);
+  }
+
+  @Get('closed-contracts')
+  @UseGuards(JwtAuthGuard)
+  async getMyClosedContracts(
+    @Req() req: any,
+    @Query('search') search?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    const customerId = await this.resolveCustomerId(req.user.id);
+    const result = await this.contractService.getClosedContracts({ search, page: +page, limit: +limit });
+    // Filter to only this customer's contracts
+    return {
+      ...result,
+      data: result.data.filter((c: any) => c.customerId === customerId),
+    };
+  }
+
+  @Get('closed-contracts/:id/archive-data')
+  @UseGuards(JwtAuthGuard)
+  async getMyClosedContractArchive(@Req() req: any, @Param('id') id: string) {
+    const customerId = await this.resolveCustomerId(req.user.id);
+    await this.assertContractOwnership(id, customerId);
+    return this.contractService.getContractArchiveData(id);
   }
 }

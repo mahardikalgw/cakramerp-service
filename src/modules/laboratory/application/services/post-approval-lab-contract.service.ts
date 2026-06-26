@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PostApprovalLabContract, LabContractSample } from '../../domain/entities/post-approval-lab-contract.entity';
+import { Sample } from '../../domain/entities/sample.entity';
 import type { PostApprovalLabContractRepositoryPort } from '../../domain/repositories/post-approval-lab-contract-repository.port';
 import { POST_APPROVAL_LAB_CONTRACT_REPOSITORY } from '../../domain/repositories/post-approval-lab-contract-repository.port';
 import type { TestingRequestRepositoryPort } from '../../domain/repositories/testing-request-repository.port';
@@ -18,6 +19,11 @@ import { LabActivityLogService } from './lab-activity-log.service';
 import { NotificationEventService } from './notification-event.service';
 import { CUSTOMER_REPOSITORY } from '../../../customer/domain/repositories/customer-repository.port';
 import type { CustomerRepositoryPort } from '../../../customer/domain/repositories/customer-repository.port';
+import type { PostApprovalTestingScheduleRepositoryPort } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
+import { POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
+import type { PostApprovalTestingResultRepositoryPort } from '../../domain/repositories/post-approval-testing-result-repository.port';
+import { POST_APPROVAL_TESTING_RESULT_REPOSITORY } from '../../domain/repositories/post-approval-testing-result-repository.port';
+import type { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 
 @Injectable()
 export class PostApprovalLabContractService {
@@ -42,15 +48,18 @@ export class PostApprovalLabContractService {
     @Inject(CUSTOMER_REPOSITORY)
     private readonly customerRepo: CustomerRepositoryPort,
     private readonly notificationEventService: NotificationEventService,
+    @Inject(POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY)
+    private readonly scheduleRepo: PostApprovalTestingScheduleRepositoryPort,
+    @Inject(POST_APPROVAL_TESTING_RESULT_REPOSITORY)
+    private readonly testingResultRepo: PostApprovalTestingResultRepositoryPort,
   ) {}
 
-  async findAll(options?: { status?: string; customerId?: string; page?: number; limit?: number }) {
+  async findAll(options?: { status?: string; customerId?: string; search?: string; page?: number; limit?: number }) {
     const filters: Record<string, any> = {};
     if (options?.status) filters.status = options.status;
     if (options?.customerId) filters.customerId = options.customerId;
-    return this.repository.findAll({ filters, page: options?.page, limit: options?.limit });
+    return this.repository.findAll({ filters, search: options?.search, page: options?.page, limit: options?.limit });
   }
-
   async findById(id: string): Promise<PostApprovalLabContract | null> {
     const contract = await this.repository.findById(id);
     if (!contract) throw new NotFoundException('Lab contract not found');
@@ -157,8 +166,11 @@ export class PostApprovalLabContractService {
     const lastNumber = await this.repository.getLastContractNumber();
     const contractNumber = this.generateContractNumber(lastNumber);
 
+    // Cash billing: contract valid for 3 months (customer already paid in full).
+    // Contract billing: 6 months default.
+    const isCash = (request.billingType ?? 'cash') === 'cash';
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    expiresAt.setMonth(expiresAt.getMonth() + (isCash ? 3 : 6));
 
     const contract = new PostApprovalLabContract({
       contractNumber,
@@ -226,6 +238,8 @@ export class PostApprovalLabContractService {
           projectLocation: saved.projectLocation || '-',
           testingType: saved.testingType || '-',
           billingType: saved.billingType || '-',
+          isCash: isCash ? 'true' : 'false',
+          contractTerm: isCash ? '3 months from approval date' : '6 months from signing',
           totalQuota: String(totalQuota),
           usedQuota: '0',
           remainingQuota: String(totalQuota),
@@ -245,32 +259,35 @@ export class PostApprovalLabContractService {
       this.logger.error(`Contract document generation failed: ${err?.message}`, err?.stack);
     }
 
-    try {
-      const taxDoc = await this.docHelper.generateDocument({
-        documentType: 'lab_tax_invoice',
-        entityId: saved.id,
-        requestedBy: adminUserId,
-        outputFormat: 'pdf',
-        parameters: {
-          invoiceNumber: `INV-${saved.contractNumber}`,
-          customerName: saved.customerName,
-          customerAddress: request.projectLocation || '-',
-          customerNpwp: '-',
-          baseAmount: baseAmount.toLocaleString('id-ID'),
-          taxPercent: `${taxPercent}%`,
-          taxAmount: taxAmount.toLocaleString('id-ID'),
-          totalAmount: totalAmount.toLocaleString('id-ID'),
-          invoiceDate: new Date().toISOString().split('T')[0],
-          supplierName: 'Cakra ERP Laboratory',
-          supplierNpwp: '-',
-          supplierAddress: '-',
-        },
-        lines: taxDocLines,
-      });
+    // Tax invoice only for contract billing — cash customers paid in full up front.
+    if (!isCash) {
+      try {
+        const taxDoc = await this.docHelper.generateDocument({
+          documentType: 'lab_tax_invoice',
+          entityId: saved.id,
+          requestedBy: adminUserId,
+          outputFormat: 'pdf',
+          parameters: {
+            invoiceNumber: `INV-${saved.contractNumber}`,
+            customerName: saved.customerName,
+            customerAddress: request.projectLocation || '-',
+            customerNpwp: '-',
+            baseAmount: baseAmount.toLocaleString('id-ID'),
+            taxPercent: `${taxPercent}%`,
+            taxAmount: taxAmount.toLocaleString('id-ID'),
+            totalAmount: totalAmount.toLocaleString('id-ID'),
+            invoiceDate: new Date().toISOString().split('T')[0],
+            supplierName: 'Cakra ERP Laboratory',
+            supplierNpwp: '-',
+            supplierAddress: '-',
+          },
+          lines: taxDocLines,
+        });
 
-      saved.taxInvoiceUrl = taxDoc.id;
-    } catch (err: any) {
-      this.logger.error(`Tax invoice generation failed: ${err?.message}`, err?.stack);
+        saved.taxInvoiceUrl = taxDoc.id;
+      } catch (err: any) {
+        this.logger.error(`Tax invoice generation failed: ${err?.message}`, err?.stack);
+      }
     }
 
     const saved2 = await this.repository.save(saved);
@@ -299,6 +316,7 @@ export class PostApprovalLabContractService {
     testingRequestId: string,
     adminUserId: string,
     adminUserName?: string,
+    downPaymentAmount?: number,
   ): Promise<PostApprovalLabContract> {
     const request = await this.requestRepo.findById(testingRequestId);
     if (!request) throw new NotFoundException('Testing request not found');
@@ -309,66 +327,10 @@ export class PostApprovalLabContractService {
     const lastNumber = await this.repository.getLastContractNumber();
     const contractNumber = this.generateContractNumber(lastNumber);
 
-    let baseAmount = 0;
-    const docLines: Record<string, any>[] = [];
-    const taxDocLines: Record<string, any>[] = [];
-    const sampleLines: Record<string, any>[] = [];
-
-    const samples = await this.sampleRepo.findByTestingRequestId(testingRequestId);
-    const samplesOrdered = [...samples].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    );
-
-    for (let i = 0; i < (request.lines || []).length; i++) {
-      const line = request.lines![i];
-      const sample =
-        (line.sampleCode
-          ? samplesOrdered.find((s) => s.sampleCode === line.sampleCode)
-          : null) ?? samplesOrdered[i] ?? null;
-
-      let unitPrice = 0;
-      if (line.testingServiceId) {
-        try {
-          const service = await this.testingServiceRepo.findById(line.testingServiceId);
-          if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {}
-      }
-      const quantity = line.sampleQuantity ?? 0;
-      const totalPrice = unitPrice * quantity;
-      baseAmount += totalPrice;
-
-      sampleLines.push({
-        sampleId: sample?.id ?? null,
-        testingServiceId: line.testingServiceId,
-        serviceName: line.serviceName || 'Unknown Service',
-        sampleCode: sample?.sampleCode ?? line.sampleCode,
-        sampleDescription: line.sampleDescription,
-        sampleQuantity: quantity,
-        unitPrice,
-        totalPrice,
-        status: 'pending',
-      });
-
-      docLines.push({
-        serviceName: line.serviceName || 'Unknown Service',
-        sampleCode: sample?.sampleCode ?? line.sampleCode ?? '-',
-        sampleDescription: line.sampleDescription || '',
-        sampleQuantity: String(quantity),
-        unitPrice: unitPrice.toLocaleString('id-ID'),
-        totalPrice: totalPrice.toLocaleString('id-ID'),
-      });
-
-      taxDocLines.push({
-        description: line.serviceName || 'Unknown Service',
-        quantity: String(quantity),
-        unitPrice: unitPrice.toLocaleString('id-ID'),
-        totalPrice: totalPrice.toLocaleString('id-ID'),
-      });
-    }
-
+    const baseAmount = downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : 0;
     const taxPercent = 11;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
-    const totalAmount = baseAmount + taxAmount;
+    const totalAmount = Math.round((baseAmount + taxAmount) * 100) / 100;
 
     const tempoMonths = request.contractTempoMonths ?? 6;
     const expiresAt = new Date();
@@ -390,7 +352,9 @@ export class PostApprovalLabContractService {
       taxPercent,
       taxAmount,
       totalAmount,
-      status: 'awaiting_signature',
+      // Initial fee = the upfront down-payment base amount, excluding tax.
+      initialFee: baseAmount,
+      status: 'active',
       generatedAt: new Date(),
       generatedBy: adminUserId,
       generatedByName: adminUserName,
@@ -402,15 +366,6 @@ export class PostApprovalLabContractService {
     });
 
     const saved = await this.repository.save(contract);
-
-    for (const sl of sampleLines) {
-      const entity = new LabContractSample({
-        ...(sl as any),
-        contractId: saved.id,
-        status: 'pending',
-      });
-      await this.contractSampleRepo.save(entity);
-    }
 
     request.labContractId = saved.id;
     await this.requestRepo.save(request);
@@ -429,6 +384,7 @@ export class PostApprovalLabContractService {
           projectLocation: saved.projectLocation || '-',
           testingType: saved.testingType || '-',
           billingType: saved.billingType || '-',
+          isCash: 'false',
           totalQuota: 'Unlimited',
           usedQuota: '0',
           remainingQuota: 'Unlimited',
@@ -442,10 +398,14 @@ export class PostApprovalLabContractService {
           scopeOfTesting: request.scopeOfTesting || '-',
           contractEstimation: String(request.contractEstimation ?? '-'),
           contractTempoMonths: String(tempoMonths),
-          paymentTerms: 'Monthly per-sample billing on 25th of each month',
-          contractTerm: `${tempoMonths} months from signing`,
+          downPaymentAmount: baseAmount.toLocaleString('id-ID'),
+          dpDueDate: baseAmount > 0 ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] : '',
+          paymentTerms: 'Down payment required before contract activation',
+          contractTerm: `${tempoMonths} months from activation`,
+          customerSignatureName: saved.customerName || 'Customer',
+          labSignatureName: adminUserName || 'Lab Authorized',
         },
-        lines: docLines,
+        lines: [],
       });
       saved.contractDocumentUrl = contractDoc.id;
     } catch (err: any) {
@@ -472,14 +432,23 @@ export class PostApprovalLabContractService {
           supplierNpwp: '-',
           supplierAddress: '-',
         },
-        lines: taxDocLines,
+        lines: [{
+          description: `Down Payment — Contract Testing (${saved.projectName || '-'})`,
+          quantity: '1',
+          unitPrice: baseAmount.toLocaleString('id-ID'),
+          total: baseAmount.toLocaleString('id-ID'),
+        }],
       });
       saved.taxInvoiceUrl = taxDoc.id;
+      request.invoiceDocumentUrl = taxDoc.id;
+      request.downPaymentAmount = baseAmount;
+      await this.requestRepo.save(request);
+      this.logger.log(`Tax/DP invoice generated: ${taxDoc.id}`);
     } catch (err: any) {
       this.logger.error(`Tax invoice generation failed: ${err?.message}`, err?.stack);
     }
 
-    const saved2 = await this.repository.save(saved);
+    const savedFinal = await this.repository.save(saved);
 
     void this.activityLog.log({
       testingRequestId,
@@ -487,10 +456,10 @@ export class PostApprovalLabContractService {
       performedBy: adminUserId,
       performedByName: adminUserName,
       performedByRole: 'admin',
-      details: { contractId: saved2.id, contractNumber: saved2.contractNumber },
+      details: { contractId: savedFinal.id, contractNumber: savedFinal.contractNumber },
     });
 
-    return saved2;
+    return savedFinal;
   }
 
   async updateStatus(id: string, status: string): Promise<PostApprovalLabContract> {
@@ -635,5 +604,368 @@ export class PostApprovalLabContractService {
     const url = await this.docHelper.getDownloadUrl(contract.taxInvoiceUrl);
     if (!url) throw new NotFoundException('Tax invoice URL is not available');
     return { url, filename: `${contract.contractNumber}_tax_invoice.pdf` };
+  }
+
+  /**
+   * Close a completed cash contract before its expiry date.
+   * Sets status = 'closed' and records closure metadata.
+   * Only allowed for cash billing contracts with status 'completed'.
+   */
+  async closeContract(
+    id: string,
+    adminUserId: string,
+    adminUserName: string,
+  ): Promise<PostApprovalLabContract> {
+    const contract = await this.repository.findById(id);
+    if (!contract) throw new NotFoundException('Lab contract not found');
+
+    // Status prerequisites differ by billing type:
+    //   - Cash contracts run to 'completed' on their own (every sample done)
+    //     and require that state before an admin can close them.
+    //   - Contract/unlimited contracts never auto-complete; admin can close
+    //     them directly from 'active'.
+    if (contract.billingType === 'cash') {
+      if (contract.status !== 'completed') {
+        throw new BadRequestException(
+          `Cash contract must be completed before it can be closed. Current status: ${contract.status}`,
+        );
+      }
+    } else {
+      if (contract.status !== 'active') {
+        throw new BadRequestException(
+          `Contract must be active to be closed. Current status: ${contract.status}`,
+        );
+      }
+    }
+
+    contract.status = 'closed';
+    contract.closedAt = new Date();
+    contract.closedBy = adminUserId;
+    contract.closedByName = adminUserName;
+
+    const saved = await this.repository.save(contract);
+
+    void this.activityLog.log({
+      testingRequestId: contract.testingRequestId,
+      action: 'contract_closed',
+      performedBy: adminUserId,
+      performedByName: adminUserName,
+      performedByRole: 'admin',
+      details: {
+        contractId: contract.id,
+        contractNumber: contract.contractNumber,
+        closedAt: contract.closedAt,
+      },
+    }).catch(() => {});
+
+    return saved;
+  }
+
+  /**
+   * Returns all data for a closed contract archive:
+   * contract details, schedules, testing results, and downloadable document URLs.
+   */
+  async getContractArchiveData(
+    contractId: string,
+  ): Promise<Record<string, any>> {
+    const contract = await this.repository.findById(contractId);
+    if (!contract) throw new NotFoundException('Lab contract not found');
+
+    const enriched: Record<string, any> = { ...contract };
+    enriched.sampleLines = await this.contractSampleRepo.findByContractId(contractId).catch(() => []);
+
+    // Schedules for this contract
+    const schedules = await this.scheduleRepo.findByContractId(contractId).catch(() => []);
+
+    // Testing results grouped by schedule
+    const allResults: PostApprovalTestingResult[] = await this.testingResultRepo.findByContractId(contractId).catch(() => []);
+
+    // Enrich schedules with their schedule-sample allocations and results
+    const scheduleSamples = await Promise.all(
+      schedules.map(async (schedule) => {
+        // Get schedule samples via the lab-contract-sample repo
+        const allocations = await this.contractSampleRepo.findByContractId(contractId)
+          .then((cs) => cs)
+          .catch(() => []);
+        const scheduleResults = allResults.filter((r) => r.scheduleId === schedule.id);
+        return {
+          ...schedule,
+          results: scheduleResults,
+          allocations,
+        };
+      }),
+    );
+
+    enriched.schedules = scheduleSamples;
+
+    // Build results grouped by schedule
+    const resultsBySchedule = schedules.map((schedule) => ({
+      scheduleId: schedule.id,
+      scheduledDate: schedule.scheduledDate,
+      scheduledTime: schedule.scheduledTime,
+      scheduledLocation: schedule.scheduledLocation,
+      laboranName: schedule.laboranName,
+      status: schedule.status,
+      results: allResults.filter((r) => r.scheduleId === schedule.id),
+    }));
+    enriched.resultsBySchedule = resultsBySchedule;
+
+    // Downloadable document URLs
+    const documents: Array<{ type: string; filename: string; url?: string }> = [];
+
+    if (contract.contractDocumentUrl) {
+      try {
+        const url = await this.docHelper.getDownloadUrl(contract.contractDocumentUrl);
+        if (url) documents.push({ type: 'contract', filename: `${contract.contractNumber}_contract.pdf`, url });
+      } catch {}
+    }
+    if (contract.taxInvoiceUrl) {
+      try {
+        const url = await this.docHelper.getDownloadUrl(contract.taxInvoiceUrl);
+        if (url) documents.push({ type: 'tax_invoice', filename: `${contract.contractNumber}_tax_invoice.pdf`, url });
+      } catch {}
+    }
+
+    // Collect all certificate documents from results
+    await Promise.all(
+      allResults.map(async (result) => {
+        if (result.certificateDocumentId) {
+          try {
+            const url = await this.docHelper.getDownloadUrl(result.certificateDocumentId);
+            if (url) documents.push({
+              type: 'certificate',
+              filename: `certificate_${result.id.substring(0, 8)}.pdf`,
+              url,
+            });
+          } catch {}
+        }
+      }),
+    );
+
+    enriched.archiveDocuments = documents;
+
+    return enriched;
+  }
+
+  /**
+   * Step 1 of contract flow: Generate the contract PDF + DP invoice documents only.
+   * Does NOT create a PostApprovalLabContract entity.
+   * Stores contractDocumentUrl and invoiceDocumentUrl on the testing request.
+   * Contract entity is created later when admin confirms DP payment.
+   */
+  async generateContractDocumentsOnly(
+    testingRequestId: string,
+    adminUserId: string,
+    adminUserName?: string,
+    downPaymentAmount?: number,
+  ): Promise<void> {
+    const request = await this.requestRepo.findById(testingRequestId);
+    if (!request) throw new NotFoundException('Testing request not found');
+
+    const lastNumber = await this.repository.getLastContractNumber();
+    const draftContractNumber = this.generateContractNumber(lastNumber);
+
+    let baseAmount = request.contractEstimation ?? 0;
+    const taxPercent = 11;
+    const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
+    const totalAmount = baseAmount + taxAmount;
+    const dpAmount = downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : totalAmount;
+    const tempoMonths = request.contractTempoMonths ?? 6;
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + tempoMonths);
+
+    const customer = await this.customerRepo.findById(request.customerId).catch(() => null);
+    const customerName = (customer as any)?.name || request.customerName || '-';
+
+    // Generate contract PDF document (draft — not yet a contract entity)
+    try {
+      const contractDoc = await this.docHelper.generateDocument({
+        documentType: 'lab_contract',
+        entityId: testingRequestId,
+        requestedBy: adminUserId,
+        outputFormat: 'pdf',
+        parameters: {
+          contractNumber: draftContractNumber,
+          customerName,
+          customerAddress: request.projectLocation || '-',
+          projectName: request.projectName || '-',
+          projectLocation: request.projectLocation || '-',
+          testingType: request.testingType || '-',
+          billingType: 'contract',
+          isCash: 'false',
+          totalQuota: 'Unlimited',
+          usedQuota: '0',
+          remainingQuota: 'Unlimited',
+          baseAmount: baseAmount.toLocaleString('id-ID'),
+          taxPercent: `${taxPercent}%`,
+          taxAmount: taxAmount.toLocaleString('id-ID'),
+          totalAmount: totalAmount.toLocaleString('id-ID'),
+          generatedAt: new Date().toISOString().split('T')[0],
+          generatedByName: adminUserName || 'Admin',
+          expiresAt: expiresAt.toISOString().split('T')[0],
+          scopeOfTesting: request.scopeOfTesting || '-',
+          contractEstimation: String(request.contractEstimation ?? '-'),
+          contractTempoMonths: String(tempoMonths),
+          downPaymentAmount: dpAmount > 0 ? dpAmount.toLocaleString('id-ID') : '',
+          dpDueDate: dpAmount > 0 ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] : '',
+          paymentTerms: 'Down payment required before contract activation',
+          contractTerm: `${tempoMonths} months from contract activation`,
+          customerSignatureName: customerName,
+          labSignatureName: adminUserName || 'Lab Authorized',
+        },
+        lines: [],
+      });
+      (request as any).contractDocumentUrl = contractDoc.id;
+      this.logger.log(`Draft contract PDF generated: ${contractDoc.id}`);
+    } catch (err: any) {
+      this.logger.error(`Draft contract PDF generation failed: ${err?.message}`, err?.stack);
+      throw err;
+    }
+
+    // Generate DP invoice
+    try {
+      const dpInvoiceDoc = await this.docHelper.generateDocument({
+        documentType: 'lab_invoice',
+        entityId: testingRequestId,
+        requestedBy: adminUserId,
+        outputFormat: 'pdf',
+        parameters: {
+          invoiceNumber: `DP-${draftContractNumber}`,
+          customerName,
+          customerAddress: request.projectLocation || '-',
+          invoiceDate: new Date().toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          totalAmount: dpAmount.toLocaleString('id-ID'),
+          status: 'issued',
+          authorizedByName: adminUserName || 'Lab Authorized',
+        },
+        lines: [{
+          description: `Down Payment — Contract Testing (${request.projectName || '-'})`,
+          quantity: '1',
+          unitPrice: dpAmount.toLocaleString('id-ID'),
+          total: dpAmount.toLocaleString('id-ID'),
+        }],
+      });
+      request.invoiceDocumentUrl = dpInvoiceDoc.id;
+      (request as any).downPaymentAmount = dpAmount;
+      this.logger.log(`DP invoice generated: ${dpInvoiceDoc.id}`);
+    } catch (err: any) {
+      this.logger.error(`DP invoice generation failed: ${err?.message}`, err?.stack);
+    }
+
+    await this.requestRepo.save(request);
+  }
+
+  /**
+   * Add sample lines to an existing contract.
+   * Used for contract billing where samples are defined after DP confirmation.
+   */
+  async addContractSamples(
+    contractId: string,
+    samples: Array<{
+      testingServiceId?: string;
+      serviceName: string;
+      sampleCode?: string;
+      sampleDescription?: string;
+      sampleQuantity: number;
+    }>,
+  ): Promise<LabContractSample[]> {
+    const contract = await this.repository.findById(contractId);
+    if (!contract) throw new NotFoundException('Contract not found');
+    if (contract.billingType === 'cash') {
+      throw new BadRequestException('Cannot add samples to a cash billing contract');
+    }
+    if (!['active'].includes(contract.status)) {
+      throw new BadRequestException(`Cannot add samples to contract with status: ${contract.status}`);
+    }
+
+    const created: LabContractSample[] = [];
+    for (const s of samples) {
+      let unitPrice = 0;
+      if (s.testingServiceId) {
+        try {
+          const service = await this.testingServiceRepo.findById(s.testingServiceId);
+          if (service) unitPrice = service.unitPrice ?? 0;
+        } catch {}
+      }
+
+      const sampleCode = s.sampleCode || await this.generateNextSampleCode();
+      const sample = await this.sampleRepo.save(new Sample({
+        sampleCode,
+        customerId: contract.customerId,
+        customerName: contract.customerName,
+        description: s.sampleDescription ?? null,
+        quantity: s.sampleQuantity ?? 1,
+        status: 'awaiting_delivery',
+      } as any));
+
+      const entity = new LabContractSample({
+        contractId,
+        sampleId: sample.id,
+        testingServiceId: s.testingServiceId ?? null,
+        serviceName: s.serviceName,
+        sampleCode: sampleCode,
+        sampleDescription: s.sampleDescription ?? null,
+        sampleQuantity: s.sampleQuantity ?? 1,
+        unitPrice,
+        totalPrice: unitPrice * (s.sampleQuantity ?? 1),
+        status: 'pending',
+      } as any);
+      const saved = await this.contractSampleRepo.save(entity);
+      created.push(saved);
+    }
+
+    // Update contract total quota if not unlimited
+    if (!contract.isUnlimited) {
+      const allSamples = await this.contractSampleRepo.findByContractId(contractId);
+      const newTotal = allSamples.reduce((sum, s) => sum + (s.sampleQuantity ?? 0), 0);
+      contract.totalQuota = newTotal;
+      contract.remainingQuota = newTotal - contract.usedQuota;
+      await this.repository.save(contract);
+    }
+
+    return created;
+  }
+
+  async getClosedContracts(options?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: PostApprovalLabContract[]; total: number; page: number; totalPages: number }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const result = await this.repository.findAll({
+      filters: { status: 'closed' },
+      page,
+      limit,
+    });
+    const data = result.data as PostApprovalLabContract[];
+    // Apply search filter in-memory if provided
+    const filtered = options?.search
+      ? data.filter((c) =>
+          c.contractNumber?.toLowerCase().includes(options.search!.toLowerCase()) ||
+          c.customerName?.toLowerCase().includes(options.search!.toLowerCase()) ||
+          (c.projectName ?? '').toLowerCase().includes(options.search!.toLowerCase()),
+        )
+      : data;
+    return {
+      data: filtered,
+      total: result.meta?.total ?? filtered.length,
+      page,
+      totalPages: result.meta?.totalPages ?? Math.max(1, Math.ceil((result.meta?.total ?? filtered.length) / limit)),
+    };
+  }
+
+  private async generateNextSampleCode(): Promise<string> {
+    const lastCode = await this.sampleRepo.getLastSampleCode();
+    const year = new Date().getFullYear();
+    let seq = 1;
+    if (lastCode) {
+      const match = lastCode.match(/SPL-(\d{4})-(\d+)/);
+      if (match && match[1] === year.toString()) {
+        seq = parseInt(match[2], 10) + 1;
+      }
+    }
+    return `SPL-${year}-${seq.toString().padStart(5, '0')}`;
   }
 }

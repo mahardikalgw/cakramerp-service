@@ -103,6 +103,14 @@ import { CONTRACT_INVOICE_REPOSITORY } from './domain/repositories/contract-invo
 import { ContractInvoiceService } from './application/services/contract-invoice.service';
 import { ContractInvoiceController } from './infrastructure/http/controllers/contract-invoice.controller';
 
+// Phase 11: Contract Test Invoice Module (per-schedule billing for sample tests)
+import { ContractTestInvoiceTypeOrmEntity } from './infrastructure/entities/contract-test-invoice-typeorm.entity';
+import { ContractTestInvoiceResultTypeOrmEntity } from './infrastructure/entities/contract-test-invoice-result-typeorm.entity';
+import { ContractTestInvoiceTypeOrmRepository } from './infrastructure/repositories/contract-test-invoice-typeorm.repository';
+import { CONTRACT_TEST_INVOICE_REPOSITORY } from './domain/repositories/contract-test-invoice-repository.port';
+import { ContractTestInvoiceService } from './application/services/contract-test-invoice.service';
+import { ContractTestInvoiceController } from './infrastructure/http/controllers/contract-test-invoice.controller';
+
 // Phase 10: Report Distribution & Archive
 import { ReportDistributionController } from './infrastructure/http/controllers/report-distribution.controller';
 import { ReportDistributionService } from './application/services/report-distribution.service';
@@ -224,6 +232,8 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
       PostApprovalDocumentArchiveTypeOrmEntity,
       LabScheduleSampleTypeOrmEntity,
       ContractInvoiceTypeOrmEntity,
+      ContractTestInvoiceTypeOrmEntity,
+      ContractTestInvoiceResultTypeOrmEntity,
     ]),
     DocumentGenerationModule,
     SalesModule,
@@ -253,6 +263,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     PostApprovalTestingResultController,
     PostApprovalDocumentArchiveController,
     ContractInvoiceController,
+    ContractTestInvoiceController,
   ],
   providers: [
     {
@@ -378,6 +389,11 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     },
     ContractInvoiceService,
     {
+      provide: CONTRACT_TEST_INVOICE_REPOSITORY,
+      useClass: ContractTestInvoiceTypeOrmRepository,
+    },
+    ContractTestInvoiceService,
+    {
       provide: LAB_CONTRACT_SAMPLE_REPOSITORY,
       useClass: LabContractSampleTypeOrmRepository,
     },
@@ -445,6 +461,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     LAB_SCHEDULE_SAMPLE_REPOSITORY,
     CONTRACT_INVOICE_REPOSITORY,
     ContractInvoiceService,
+    ContractTestInvoiceService,
   ],
 })
 export class LaboratoryModule {}

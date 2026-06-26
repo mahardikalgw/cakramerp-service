@@ -70,11 +70,13 @@ export class CustomerPortalController {
   async getMyTestingRequests(
     @Req() req: any,
     @Query('status') status?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.portalService.getMyTestingRequests(req.user.id, {
       status,
+      search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

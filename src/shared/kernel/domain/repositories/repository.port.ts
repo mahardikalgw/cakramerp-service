@@ -7,6 +7,7 @@ export interface FindOptions {
   orderBy?: string;
   orderDirection?: 'ASC' | 'DESC';
   filters?: Record<string, any>;
+  search?: string;
 }
 
 export interface PaginationMeta {

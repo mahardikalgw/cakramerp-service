@@ -52,6 +52,13 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
   declare baseAmount: number;
 
+  // Initial fee paid upfront at contract generation, excluding tax.
+  // For unlimited contract-billing flows this equals the down-payment base
+  // entered by admin (excluding tax). For cash-billing flows it stays 0
+  // because the customer pays in full up front, not via a separate DP.
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'initial_fee' })
+  declare initialFee: number;
+
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 11 })
   declare taxPercent: number;
 
@@ -120,6 +127,15 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'contract_confirmed_by' })
   declare contractConfirmedBy: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, name: 'closed_at' })
+  declare closedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'closed_by' })
+  declare closedBy: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'closed_by_name' })
+  declare closedByName: string | null;
 
   @OneToMany(
     () => LabContractAttachmentTypeOrmEntity,

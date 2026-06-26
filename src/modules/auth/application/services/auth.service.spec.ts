@@ -12,6 +12,8 @@ import { RegisterCommand } from '../commands/register.command';
 import { User } from '../../../user/domain/entities/user.entity';
 import { Role } from '../../../iam/domain/entities/role.entity';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
+import { MfaService } from './mfa.service';
+import { TokenDenylistService } from '../../infrastructure/services/token-denylist.service';
 
 jest.mock('bcryptjs');
 
@@ -23,6 +25,7 @@ describe('AuthService', () => {
     findByEmail: jest.fn(),
     existsByEmail: jest.fn(),
     save: jest.fn(),
+    bumpTokenVersion: jest.fn(),
   };
 
   const mockAuthRepository = {
@@ -43,6 +46,21 @@ describe('AuthService', () => {
   const mockJwtService = {
     sign: jest.fn(),
     verify: jest.fn(),
+    verifyAsync: jest.fn(),
+    decode: jest.fn(),
+  };
+
+  const mockMfaService = {
+    verifyCode: jest.fn(),
+  };
+
+  const mockTokenDenylistService = {
+    deny: jest.fn().mockResolvedValue(undefined),
+    isDenied: jest.fn().mockResolvedValue(false),
+  };
+
+  const mockAuditLogQueue = {
+    add: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -54,6 +72,9 @@ describe('AuthService', () => {
         { provide: USER_ROLE_ASSIGNER_PORT, useValue: mockRoleAssigner },
         { provide: ROLE_REPOSITORY, useValue: mockRoleRepository },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: MfaService, useValue: mockMfaService },
+        { provide: TokenDenylistService, useValue: mockTokenDenylistService },
+        { provide: 'BullQueue_audit-log', useValue: mockAuditLogQueue },
       ],
     }).compile();
 

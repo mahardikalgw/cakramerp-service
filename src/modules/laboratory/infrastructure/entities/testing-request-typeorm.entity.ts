@@ -65,13 +65,11 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', nullable: true, name: 'testing_service_id' })
   declare testingServiceId: string | null;
 
-  @Column({
-    type: 'varchar',
-    length: 255,
-    nullable: true,
-    name: 'service_name',
-  })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'service_name' })
   declare serviceName: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'additional_notes' })
+  declare additionalNotes: string | null;
 
   @Column({ type: 'uuid', nullable: true, name: 'lab_contract_id' })
   declare labContractId: string | null;
@@ -82,9 +80,11 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', nullable: true, name: 'sales_order_id' })
   declare salesOrderId: string | null;
 
-  // Document / workflow fields
-  @Column({ type: 'text', nullable: true, name: 'additional_notes' })
-  declare additionalNotes: string | null;
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'contract_document_url' })
+  declare contractDocumentUrl: string | null;
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'down_payment_amount' })
+  declare downPaymentAmount: number;
 
   @Column({
     type: 'varchar',

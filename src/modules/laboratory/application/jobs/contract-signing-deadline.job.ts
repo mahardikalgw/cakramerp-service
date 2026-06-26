@@ -32,7 +32,7 @@ export class ContractSigningDeadlineJob {
           try {
             const contract = await this.contractRepo.findById(request.labContractId);
             if (contract) {
-              contract.status = 'cancelled';
+              contract.status = 'closed';
               await this.contractRepo.save(contract);
               this.logger.log(`[CRON] Cancelled orphaned contract ${contract.id} (${contract.contractNumber})`);
             }

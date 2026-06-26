@@ -120,8 +120,10 @@ export class PostApprovalTestingResultService {
       serviceName = result.serviceName;
     }
 
+    const { sampleUnit: _sampleUnit, scheduleSampleId: _scheduleSampleId, ...resultWithoutInternals } = result as any;
+
     return {
-      ...result,
+      ...resultWithoutInternals,
       contractNumber,
       customerName,
       projectName,
@@ -398,22 +400,31 @@ export class PostApprovalTestingResultService {
 
     const contract = await this.contractRepo.findById(saved.contractId).catch(() => null);
     if (contract) {
-      contract.usedQuota = (contract.usedQuota ?? 0) + 1;
-      contract.remainingQuota = Math.max(0, (contract.totalQuota ?? 0) - contract.usedQuota);
-      await this.contractRepo.save(contract);
+      // Unlimited contracts have no meaningful per-result quota and must stay
+      // 'active' so customers can keep submitting testing requests under them.
+      // They are only transitioned to 'closed' when an admin explicitly closes
+      // them. Limited contracts keep the original behaviour: track quota, and
+      // auto-complete when every sample's quota has been consumed.
+      if (contract.isUnlimited) {
+        // no-op
+      } else {
+        contract.usedQuota = (contract.usedQuota ?? 0) + 1;
+        contract.remainingQuota = Math.max(0, (contract.totalQuota ?? 0) - contract.usedQuota);
+        await this.contractRepo.save(contract);
 
-      try {
-        const allContractSamples = await this.contractSampleRepo.findByContractId(saved.contractId);
-        if (allContractSamples.length > 0) {
-          const allDone = allContractSamples.every(
-            s => (s.completedQuantity ?? 0) >= (s.sampleQuantity ?? 1),
-          );
-          if (allDone && contract.status !== 'completed') {
-            contract.status = 'completed';
-            await this.contractRepo.save(contract);
+        try {
+          const allContractSamples = await this.contractSampleRepo.findByContractId(saved.contractId);
+          if (allContractSamples.length > 0) {
+            const allDone = allContractSamples.every(
+              s => (s.completedQuantity ?? 0) >= (s.sampleQuantity ?? 1),
+            );
+            if (allDone && contract.status !== 'completed') {
+              contract.status = 'completed';
+              await this.contractRepo.save(contract);
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
     }
 
     if (contract?.testingRequestId) {
@@ -456,6 +467,15 @@ export class PostApprovalTestingResultService {
     }
 
     try {
+      const enriched = await this.findByIdEnriched(saved.id);
+      const parameters = (enriched.resultData as any)?.parameters ?? [];
+      const certLines = parameters.map((p: any) => ({
+        name: p.parameter ?? '',
+        value: p.value ?? '',
+        unit: p.unit ?? '',
+        method: p.standard ?? '',
+        sop: p.standard ?? '',
+      }));
       const certificateDoc = await this.docHelper.generateDocument({
         documentType: 'test_result_certificate',
         entityId: saved.id,
@@ -463,15 +483,23 @@ export class PostApprovalTestingResultService {
         outputFormat: 'pdf',
         parameters: {
           certificateNumber: `TR-${saved.id.substring(0, 8)}`,
-          sampleCode: saved.sampleId,
-          customerName: '-',
-          projectName: '-',
-          testingServiceName: '-',
-          submittedAt: saved.submittedAt.toISOString().split('T')[0],
-          submittedByName: saved.submittedByName,
+          sampleCode: enriched.sampleCode || saved.sampleId || '-',
+          customerName: enriched.customerName || '-',
+          projectName: enriched.projectName || '-',
+          testingServiceName: enriched.serviceName || '-',
+          submittedAt: saved.submittedAt
+            ? (typeof saved.submittedAt === 'string' ? (saved.submittedAt as string).split('T')[0] : new Date(saved.submittedAt).toISOString().split('T')[0])
+            : '-',
+          submittedByName: saved.submittedByName || '-',
+          laboranName: enriched.laboranName || saved.submittedByName || '-',
+          customerSignatureName: enriched.customerName || '-',
+          labSignatureName: enriched.laboranName || saved.submittedByName || '-',
           certificateDate: new Date().toISOString().split('T')[0],
+          resultNotes: enriched.resultNotes || '',
+          resultNumber: enriched.resultNumber || '',
+          contractNumber: enriched.contractNumber || '',
         },
-        lines: (saved.resultData as any)?.parameters || [],
+        lines: certLines,
       });
 
       saved.certificateDocumentId = certificateDoc.id;

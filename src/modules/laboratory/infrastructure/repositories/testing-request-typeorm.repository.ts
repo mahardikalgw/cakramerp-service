@@ -25,6 +25,10 @@ export class TestingRequestTypeOrmRepository
     this.repository = dataSource.getRepository(TestingRequestTypeOrmEntity);
   }
 
+  protected searchableColumns(): string[] {
+    return ['requestNumber', 'projectName', 'projectLocation'];
+  }
+
   toDomain(entity: TestingRequestTypeOrmEntity): TestingRequest {
     return new TestingRequest({
       id: entity.id,
@@ -59,6 +63,8 @@ export class TestingRequestTypeOrmRepository
       assignmentNotes: entity.assignmentNotes ?? undefined,
       additionalNotes: entity.additionalNotes ?? undefined,
       invoiceDocumentUrl: entity.invoiceDocumentUrl ?? undefined,
+      contractDocumentUrl: (entity as any).contractDocumentUrl ?? undefined,
+      downPaymentAmount: entity.downPaymentAmount != null ? Number(entity.downPaymentAmount) : undefined,
       poDocumentUrl: entity.poDocumentUrl ?? undefined,
       signedDocumentUrl: entity.signedDocumentUrl ?? undefined,
       signedDocumentFilename: entity.signedDocumentFilename ?? undefined,
@@ -141,6 +147,8 @@ export class TestingRequestTypeOrmRepository
     entity.salesOrderId = domain.salesOrderId ?? null;
     entity.additionalNotes = domain.additionalNotes ?? null;
     entity.invoiceDocumentUrl = domain.invoiceDocumentUrl ?? null;
+    (entity as any).contractDocumentUrl = domain.contractDocumentUrl ?? null;
+    entity.downPaymentAmount = domain.downPaymentAmount ?? 0;
     entity.poDocumentUrl = domain.poDocumentUrl ?? null;
     entity.signedDocumentUrl = domain.signedDocumentUrl ?? null;
     entity.signedDocumentFilename = domain.signedDocumentFilename ?? null;

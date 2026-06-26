@@ -1,0 +1,186 @@
+name: cakramerp
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+    depends_on: [app, doc, grafana]
+
+  app:
+    image: ${IMAGE_SERVICE:?IMAGE_SERVICE required — set in .env.image}
+    restart: always
+    env_file: .env.production
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=900 --enable-source-maps=false"
+      OTEL_ENABLED: "false"
+      UV_THREADPOOL_SIZE: "16"
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      MINIO_ENDPOINT: http://minio:9000
+      DOCUMENT_SERVICE_URL: http://doc:8080
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      minio:    { condition: service_started }
+      doc:      { condition: service_healthy }
+    deploy:
+      resources:
+        limits:   { cpus: "1.0", memory: 1200M }
+        reservations: { cpus: "0.4", memory: 600M }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:3000/health/live"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+    networks: [app, internal]
+
+  doc:
+    image: ${IMAGE_DOC:?IMAGE_DOC required — set in .env.image}
+    restart: always
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Xmx1024m -Xms512m
+        -XX:MaxRAMPercentage=60
+        -XX:+UseG1GC
+        -XX:+HeapDumpOnOutOfMemoryError
+        -Djava.security.egd=file:/dev/./urandom
+        -Dspring.datasource.url=${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/cakramerp_db}
+        -Dspring.datasource.username=postgres
+        -Dspring.datasource.password=${POSTGRES_PASSWORD}
+        -Dminio.endpoint=http://minio:9000
+        -Dminio.access-key=${MINIO_ROOT_USER}
+        -Dminio.secret-key=${MINIO_ROOT_PASSWORD}
+        -Djwt.secret=${JWT_SECRET}
+    depends_on:
+      postgres: { condition: service_healthy }
+      minio:    { condition: service_started }
+    deploy:
+      resources:
+        limits:   { cpus: "1.2", memory: 1800M }
+        reservations: { cpus: "0.5", memory: 800M }
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 3s
+      start_period: 90s
+      retries: 3
+    networks: [internal]
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    env_file: .env.production
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+    volumes:
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/ssl:/etc/ssl/postgres:ro
+      - /data/postgres:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits: { cpus: "1.5", memory: 1500M }
+        reservations: { cpus: "0.4", memory: 500M }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cakramerp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command:
+      - "redis-server"
+      - "--maxmemory"
+      - "200mb"
+      - "--maxmemory-policy"
+      - "allkeys-lru"
+      - "--appendonly"
+      - "no"
+    volumes:
+      - /data/redis:/data
+    deploy:
+      resources: { limits: { cpus: "0.3", memory: 256M } }
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [internal]
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    env_file: .env.production
+    environment:
+      MINIO_KMS_AUTO_ENCRYPTION: on
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - /data/minio:/data
+    deploy:
+      resources: { limits: { cpus: "0.3", memory: 512M } }
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    restart: always
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=3d"
+      - "--storage.tsdb.retention.size=1GB"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /data/prometheus:/prometheus
+    deploy:
+      resources: { limits: { cpus: "0.2", memory: 512M } }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [internal]
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    restart: always
+    env_file: .env.production
+    volumes:
+      - /data/grafana:/var/lib/grafana
+    deploy:
+      resources: { limits: { cpus: "0.2", memory: 256M } }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [edge, internal]
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:
+  app:
+  internal:

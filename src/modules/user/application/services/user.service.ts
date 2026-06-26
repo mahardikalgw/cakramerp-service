@@ -119,6 +119,13 @@ export class UserService implements UserServicePort {
     await this.userRepository.save(user);
   }
 
+  async forceSetPassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    user.passwordHash = await bcryptjs.hash(newPassword, 12);
+    await this.userRepository.save(user);
+  }
+
   async delete(id: string): Promise<void> {
     // Never physically delete - only deactivate
     await this.deactivate(id);

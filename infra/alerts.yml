@@ -1,0 +1,89 @@
+# ─────────────────────────────────────────────────────────
+# CakramERP Security & Operational Alert Rules
+# ISO 27001 A.12.4 — Logging and monitoring
+# ISO 27001 A.16.1 — Incident response
+# ─────────────────────────────────────────────────────────
+
+groups:
+  - name: cakramerp-security
+    interval: 30s
+    rules:
+      # ── High failed login rate ────────────────────────
+      - alert: HighFailedLogins
+        expr: |
+          rate(http_requests_total{status=~"401", endpoint=~"/api/v1/auth/login"}[5m]) > 0.033
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High failed login rate (>2 per minute)"
+          description: >
+            {{ $value | humanize }} failed logins/sec on {{ $labels.instance }}
+            — potential brute-force attack.
+
+      # ── Unusual 4xx/5xx rate ──────────────────────────
+      - alert: ElevatedErrorRate
+        expr: |
+          rate(http_requests_total{status=~"4..|5.."}[5m]) /
+          rate(http_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated HTTP error rate (>10% of requests)"
+          description: >
+            Error rate on {{ $labels.instance }} is {{ $value | humanize }}.
+
+      # ── Service down ──────────────────────────────────
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: >
+            {{ $labels.instance }} has been unreachable for >1 minute.
+
+      # ── High resource usage ───────────────────────────
+      - alert: HighMemoryUsage
+        expr: |
+          (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} memory >85%"
+          description: >
+            {{ $labels.name }} is at {{ $value | humanize }}% of memory limit.
+
+      - alert: HighCPUUsage
+        expr: |
+          rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage >80% on {{ $labels.instance }}"
+
+      # ── Disk space ────────────────────────────────────
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space <10% on {{ $labels.device }}"
+          description: >
+            {{ $labels.device }} has {{ $value | humanize }}% free space.
+
+      # ── Database connection pool ──────────────────────
+      - alert: DatabasePoolExhaustion
+        expr: |
+          hikaricp_connections_active / hikaricp_connections_max > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool >80% utilized on {{ $labels.instance }}"

@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsUUID,
   IsInt,
+  IsNumber,
   Min,
   IsArray,
   ValidateNested,
@@ -53,6 +54,10 @@ export class CreateTestingRequestHttpDto {
   @IsString()
   notes?: string;
 
+  @IsOptional()
+  @IsString()
+  billingType?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TestingRequestLineDto)
@@ -99,6 +104,11 @@ export class ApproveRejectDto {
   @IsOptional()
   @IsString()
   rejectionReason?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  downPaymentAmount?: number;
 }
 
 export class AssignLaboranDto {
