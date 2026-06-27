@@ -129,6 +129,7 @@
       "msgpackr-extract",
       "protobufjs",
       "unrs-resolver"
-    ]
+    ],
+    "minimumReleaseAge": "0"
   }
 }
