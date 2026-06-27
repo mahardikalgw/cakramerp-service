@@ -49,8 +49,12 @@ export class DocumentGenerationHelper {
       completedAt: new Date(),
     };
     const entity = this.docRepo.create(partial as any);
-    const saved = (await this.docRepo.save(entity)) as unknown as GeneratedDocumentTypeOrmEntity;
-    this.logger.log(`Document record saved: ${saved.id} (${request.documentType})`);
+    const saved = (await this.docRepo.save(
+      entity,
+    )) as unknown as GeneratedDocumentTypeOrmEntity;
+    this.logger.log(
+      `Document record saved: ${saved.id} (${request.documentType})`,
+    );
     return saved;
   }
 
@@ -113,7 +117,9 @@ export class DocumentGenerationHelper {
       completedAt: new Date(),
     };
     const entity = this.docRepo.create(partial as any);
-    return this.docRepo.save(entity).then((r) => r as unknown as GeneratedDocumentTypeOrmEntity);
+    return this.docRepo
+      .save(entity)
+      .then((r) => r as unknown as GeneratedDocumentTypeOrmEntity);
   }
 
   async getDocument(

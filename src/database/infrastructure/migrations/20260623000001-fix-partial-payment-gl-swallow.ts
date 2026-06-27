@@ -53,9 +53,15 @@ export class FixPartialPaymentGlSwallow1718784000002 implements MigrationInterfa
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_gl_posting_queue_dedup_event`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_gl_posting_queue_dedup_payment`);
-    await queryRunner.query(`ALTER TABLE gl_posting_queue DROP COLUMN IF EXISTS payment_id`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_gl_posting_queue_dedup_event`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_gl_posting_queue_dedup_payment`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE gl_posting_queue DROP COLUMN IF EXISTS payment_id`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS ar_payments`);
     await queryRunner.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_gl_posting_queue_dedup

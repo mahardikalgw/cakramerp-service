@@ -25,9 +25,15 @@ export class CreateContractInvoices20260615000011 implements MigrationInterface 
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_contract_invoices_contract ON contract_invoices(contract_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_contract_invoices_status ON contract_invoices(status)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_contract_invoices_period ON contract_invoices(billing_period_start, billing_period_end)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_contract_invoices_contract ON contract_invoices(contract_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_contract_invoices_status ON contract_invoices(status)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_contract_invoices_period ON contract_invoices(billing_period_start, billing_period_end)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

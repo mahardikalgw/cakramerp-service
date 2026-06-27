@@ -56,7 +56,13 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   // For unlimited contract-billing flows this equals the down-payment base
   // entered by admin (excluding tax). For cash-billing flows it stays 0
   // because the customer pays in full up front, not via a separate DP.
-  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'initial_fee' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'initial_fee',
+  })
   declare initialFee: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 11 })
@@ -116,16 +122,34 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
   declare contractTempoMonths: number | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true, name: 'signed_contract_url' })
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'signed_contract_url',
+  })
   declare signedContractUrl: string | null;
 
-  @Column({ type: 'timestamptz', nullable: true, name: 'contract_signing_deadline' })
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'contract_signing_deadline',
+  })
   declare contractSigningDeadline: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true, name: 'contract_confirmed_at' })
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'contract_confirmed_at',
+  })
   declare contractConfirmedAt: Date | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'contract_confirmed_by' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'contract_confirmed_by',
+  })
   declare contractConfirmedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true, name: 'closed_at' })
@@ -134,7 +158,12 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'closed_by' })
   declare closedBy: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'closed_by_name' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'closed_by_name',
+  })
   declare closedByName: string | null;
 
   @OneToMany(

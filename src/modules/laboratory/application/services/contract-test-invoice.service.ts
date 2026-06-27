@@ -78,17 +78,19 @@ export class ContractTestInvoiceService {
 
     // The monthly cron already produces period-based invoices; this flow is
     // for admin-triggered per-schedule billing.
-    const confirmedResults = await this.testResultRepo.findByContractId(contractId);
+    const confirmedResults =
+      await this.testResultRepo.findByContractId(contractId);
     const eligibleResults = (() => {
       if (testingScheduleId) {
         return confirmedResults.filter(
           (r: any) =>
-            r.status === 'confirmed' &&
-            r.scheduleId === testingScheduleId,
+            r.status === 'confirmed' && r.scheduleId === testingScheduleId,
         );
       }
       // No schedule specified — pick the most recent confirmed one.
-      const confirmed = confirmedResults.filter((r: any) => r.status === 'confirmed');
+      const confirmed = confirmedResults.filter(
+        (r: any) => r.status === 'confirmed',
+      );
       if (confirmed.length === 0) return [];
       const latestScheduleId = confirmed[0].scheduleId;
       return confirmed.filter((r: any) => r.scheduleId === latestScheduleId);
@@ -104,7 +106,8 @@ export class ContractTestInvoiceService {
 
     // Build a lookup from contractSampleId → unitPrice (the negotiated price
     // captured on the lab_contract_samples row).
-    const contractSamples = await this.contractSampleRepo.findByContractId(contractId);
+    const contractSamples =
+      await this.contractSampleRepo.findByContractId(contractId);
     const priceBySampleId = new Map<string, number>();
     for (const cs of contractSamples as any[]) {
       priceBySampleId.set(cs.id, Number(cs.unitPrice ?? 0));
@@ -115,7 +118,9 @@ export class ContractTestInvoiceService {
     let baseAmount = 0;
     const lines: ContractTestInvoiceLine[] = eligibleResults.map((r: any) => {
       const unitPrice = Number(
-        (r.contractSampleId && priceBySampleId.get(r.contractSampleId)) ?? r.unitPrice ?? 0,
+        (r.contractSampleId && priceBySampleId.get(r.contractSampleId)) ??
+          r.unitPrice ??
+          0,
       );
       const quantity = 1;
       const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
@@ -137,16 +142,24 @@ export class ContractTestInvoiceService {
 
     // Initial fee credit application
     const initialFeeTotal = Number(contract.initialFee ?? 0);
-    const alreadyApplied = await this.repository.sumInitialFeeApplied(contractId);
+    const alreadyApplied =
+      await this.repository.sumInitialFeeApplied(contractId);
     const remainingCredit = Math.max(0, initialFeeTotal - alreadyApplied);
     const initialFeeApplied = Math.min(remainingCredit, totalAmount);
-    const amountDue = Math.max(0, Math.round((totalAmount - initialFeeApplied) * 100) / 100);
+    const amountDue = Math.max(
+      0,
+      Math.round((totalAmount - initialFeeApplied) * 100) / 100,
+    );
 
     const isFullyPaidByCredit = amountDue <= 0 && totalAmount > 0;
-    const status: ContractTestInvoice['status'] = isFullyPaidByCredit ? 'paid' : 'issued';
+    const status: ContractTestInvoice['status'] = isFullyPaidByCredit
+      ? 'paid'
+      : 'issued';
 
     const schedule = eligibleResults[0] as any;
-    const periodStart = new Date(schedule.scheduledDate ?? schedule.confirmedAt);
+    const periodStart = new Date(
+      schedule.scheduledDate ?? schedule.confirmedAt,
+    );
     const periodEnd = new Date(schedule.scheduledDate ?? schedule.confirmedAt);
 
     const dueDate = new Date();
@@ -183,11 +196,12 @@ export class ContractTestInvoiceService {
     const saved = await this.repository.save(invoice);
 
     // Fire-and-forget document generation.
-    void this.generateInvoiceDocument(saved, contract, eligibleResults).catch((err) =>
-      this.logger.error(
-        `Invoice document generation failed for ${saved.invoiceNumber}: ${err?.message}`,
-        err?.stack,
-      ),
+    void this.generateInvoiceDocument(saved, contract, eligibleResults).catch(
+      (err) =>
+        this.logger.error(
+          `Invoice document generation failed for ${saved.invoiceNumber}: ${err?.message}`,
+          err?.stack,
+        ),
     );
 
     void this.activityLog.log({
@@ -225,7 +239,9 @@ export class ContractTestInvoiceService {
         invoiceNumber: invoice.invoiceNumber,
         contractNumber: contract.contractNumber,
         customerName: contract.customerName,
-        billingPeriodStart: invoice.billingPeriodStart.toISOString().split('T')[0],
+        billingPeriodStart: invoice.billingPeriodStart
+          .toISOString()
+          .split('T')[0],
         billingPeriodEnd: invoice.billingPeriodEnd.toISOString().split('T')[0],
         totalSamples: String(invoice.totalSamples),
         baseAmount: invoice.baseAmount.toLocaleString('id-ID'),
@@ -309,7 +325,9 @@ export class ContractTestInvoiceService {
       throw new BadRequestException('Invoice is already paid');
     }
     if (invoice.status === 'cancelled') {
-      throw new BadRequestException('Cannot verify payment on cancelled invoice');
+      throw new BadRequestException(
+        'Cannot verify payment on cancelled invoice',
+      );
     }
     if (!invoice.paymentProofUrl) {
       throw new BadRequestException(
@@ -369,7 +387,9 @@ export class ContractTestInvoiceService {
     return this.repository.findByCustomerId(customerId, options);
   }
 
-  async getDownloadUrl(invoiceId: string): Promise<{ url: string; filename: string }> {
+  async getDownloadUrl(
+    invoiceId: string,
+  ): Promise<{ url: string; filename: string }> {
     const invoice = await this.repository.findById(invoiceId);
     if (!invoice) throw new NotFoundException('Invoice not found');
     if (!invoice.invoiceDocumentUrl) {

@@ -1,9 +1,6 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
-export type PostApprovalLabContractStatus =
-  | 'active'
-  | 'completed'
-  | 'closed';
+export type PostApprovalLabContractStatus = 'active' | 'completed' | 'closed';
 
 export type LabContractSampleStatus =
   | 'pending'

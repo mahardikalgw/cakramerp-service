@@ -31,7 +31,10 @@ import type { TestResultRepositoryPort } from '../../../laboratory/domain/reposi
 import { TEST_RESULT_REPOSITORY } from '../../../laboratory/domain/repositories/test-result-repository.port';
 import type { DailyReportRepositoryPort } from '../../../laboratory/domain/repositories/daily-report-repository.port';
 import { DAILY_REPORT_REPOSITORY } from '../../../laboratory/domain/repositories/daily-report-repository.port';
-import { TestingRequest, TestingRequestLine } from '../../../laboratory/domain/entities/testing-request.entity';
+import {
+  TestingRequest,
+  TestingRequestLine,
+} from '../../../laboratory/domain/entities/testing-request.entity';
 import { LabPurchaseOrder } from '../../../laboratory/domain/entities/lab-purchase-order.entity';
 import { Sample } from '../../../laboratory/domain/entities/sample.entity';
 import type { SampleRepositoryPort } from '../../../laboratory/domain/repositories/sample-repository.port';
@@ -160,10 +163,15 @@ export class CustomerPortalService {
     const customer = await this.getCustomerByUserId(userId);
 
     const lines = dto.lines ?? [];
-    const isNewContract = dto.billingType === 'contract' && !dto.existingContractId;
+    const isNewContract =
+      dto.billingType === 'contract' && !dto.existingContractId;
 
     if (isNewContract) {
-      if (!dto.scopeOfTesting || !dto.contractEstimation || !dto.contractTempoMonths) {
+      if (
+        !dto.scopeOfTesting ||
+        !dto.contractEstimation ||
+        !dto.contractTempoMonths
+      ) {
         throw new BadRequestException(
           'New contract requests require scopeOfTesting, contractEstimation, and contractTempoMonths',
         );
@@ -177,10 +185,14 @@ export class CustomerPortalService {
 
     if (dto.billingType === 'contract') {
       if (dto.existingContractId) {
-        const contract = await this.contractRepo.findById(dto.existingContractId);
+        const contract = await this.contractRepo.findById(
+          dto.existingContractId,
+        );
         if (!contract) throw new NotFoundException('Contract not found');
         if (contract.customerId !== (customer.id as string))
-          throw new ForbiddenException('Contract does not belong to this customer');
+          throw new ForbiddenException(
+            'Contract does not belong to this customer',
+          );
         if (contract.status !== 'active')
           throw new BadRequestException('Only active contracts can be used');
         if (contract.expiresAt && new Date(contract.expiresAt) < new Date())
@@ -305,7 +317,12 @@ export class CustomerPortalService {
   /** List customer's own testing requests */
   async getMyTestingRequests(
     userId: string,
-    options?: { status?: string; search?: string; page?: number; limit?: number },
+    options?: {
+      status?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
   ) {
     const customer = await this.getCustomerByUserId(userId);
     const filters: Record<string, any> = { customerId: customer.id };
@@ -319,10 +336,7 @@ export class CustomerPortalService {
   }
 
   /** Get one testing request (validates ownership) */
-  async getMyTestingRequest(
-    userId: string,
-    requestId: string,
-  ): Promise<any> {
+  async getMyTestingRequest(userId: string, requestId: string): Promise<any> {
     const request = await this.testingRequestRepo.findById(requestId);
     if (!request) throw new NotFoundException('Testing request not found');
 
@@ -350,7 +364,9 @@ export class CustomerPortalService {
     // Check invoice document readiness
     if (request.invoiceDocumentUrl) {
       try {
-        const doc = await this.docHelper.getDocument(request.invoiceDocumentUrl);
+        const doc = await this.docHelper.getDocument(
+          request.invoiceDocumentUrl,
+        );
         enriched.invoiceDocumentReady = doc?.status === 'completed';
       } catch {
         enriched.invoiceDocumentReady = false;
@@ -360,7 +376,8 @@ export class CustomerPortalService {
     // Include sample quotas if granted
     if (request.quotaGranted) {
       try {
-        enriched.sampleQuotas = await this.sampleQuotaRepo.findByTestingRequestId(request.id);
+        enriched.sampleQuotas =
+          await this.sampleQuotaRepo.findByTestingRequestId(request.id);
       } catch {
         enriched.sampleQuotas = [];
       }
@@ -399,11 +416,13 @@ export class CustomerPortalService {
     }
 
     if (dto.projectName !== undefined) request.projectName = dto.projectName;
-    if (dto.projectLocation !== undefined) request.projectLocation = dto.projectLocation;
+    if (dto.projectLocation !== undefined)
+      request.projectLocation = dto.projectLocation;
     if (dto.testingType !== undefined) request.testingType = dto.testingType;
     if (dto.priority !== undefined) request.priority = dto.priority;
     if (dto.notes !== undefined) request.notes = dto.notes;
-    if (dto.additionalNotes !== undefined) request.additionalNotes = dto.additionalNotes;
+    if (dto.additionalNotes !== undefined)
+      request.additionalNotes = dto.additionalNotes;
 
     if (dto.lines !== undefined) {
       await this.testingRequestRepo.deleteLinesByRequestId(requestId);
@@ -462,15 +481,24 @@ export class CustomerPortalService {
     const request = await this.getMyTestingRequest(userId, requestId);
 
     if (request.billingType !== 'contract') {
-      throw new BadRequestException('Signed contract upload is only for contract billing requests');
+      throw new BadRequestException(
+        'Signed contract upload is only for contract billing requests',
+      );
     }
     if (request.status !== 'approved') {
-      throw new BadRequestException('Signed contract can only be uploaded for approved requests');
+      throw new BadRequestException(
+        'Signed contract can only be uploaded for approved requests',
+      );
     }
     if (request.signedContractUrl) {
-      throw new BadRequestException('Signed contract has already been uploaded');
+      throw new BadRequestException(
+        'Signed contract has already been uploaded',
+      );
     }
-    if (request.contractSigningDeadline && new Date(request.contractSigningDeadline) < new Date()) {
+    if (
+      request.contractSigningDeadline &&
+      new Date(request.contractSigningDeadline) < new Date()
+    ) {
       throw new BadRequestException('Contract signing deadline has passed');
     }
 
@@ -556,10 +584,17 @@ export class CustomerPortalService {
     }
     // Backward compat: if it's an external URL, return as-is
     if (request.signedDocumentUrl.startsWith('http')) {
-      return { url: request.signedDocumentUrl, filename: request.signedDocumentFilename };
+      return {
+        url: request.signedDocumentUrl,
+        filename: request.signedDocumentFilename,
+      };
     }
     const objectName = request.signedDocumentUrl.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl('documents', objectName, 3600);
+    const url = await this.minioService.getPresignedUrl(
+      'documents',
+      objectName,
+      3600,
+    );
     return { url, filename: request.signedDocumentFilename };
   }
 
@@ -569,10 +604,17 @@ export class CustomerPortalService {
       throw new NotFoundException('No payment proof uploaded');
     }
     if (request.paymentProofUrl.startsWith('http')) {
-      return { url: request.paymentProofUrl, filename: request.paymentProofFilename };
+      return {
+        url: request.paymentProofUrl,
+        filename: request.paymentProofFilename,
+      };
     }
     const objectName = request.paymentProofUrl.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl('documents', objectName, 3600);
+    const url = await this.minioService.getPresignedUrl(
+      'documents',
+      objectName,
+      3600,
+    );
     return { url, filename: request.paymentProofFilename };
   }
 

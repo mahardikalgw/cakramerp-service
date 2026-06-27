@@ -77,7 +77,9 @@ export class NotificationTypeOrmRepository
   }
 
   async countUnreadByRecipientUserId(recipientUserId: string): Promise<number> {
-    return this.repository.count({ where: { recipientUserId, isRead: false } as any });
+    return this.repository.count({
+      where: { recipientUserId, isRead: false } as any,
+    });
   }
 
   async markAsRead(id: string): Promise<Notification | null> {
@@ -97,7 +99,10 @@ export class NotificationTypeOrmRepository
     return result.affected ?? 0;
   }
 
-  async markAsReadByIdAndRecipient(id: string, recipientUserId: string): Promise<boolean> {
+  async markAsReadByIdAndRecipient(
+    id: string,
+    recipientUserId: string,
+  ): Promise<boolean> {
     const result = await this.repository.update(
       { id, recipientUserId, isRead: false } as any,
       { isRead: true, readAt: new Date() },

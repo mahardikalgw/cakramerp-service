@@ -1,9 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type AlertType =
-  | 'min_cash_balance'
-  | 'max_overdue_receivables'
-  | 'project_cost_overrun';
+  'min_cash_balance' | 'max_overdue_receivables' | 'project_cost_overrun';
 
 export class KpiThreshold extends BaseEntity {
   declare id: string;

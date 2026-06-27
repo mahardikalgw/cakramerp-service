@@ -1,10 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type TestResultStatus =
-  | 'draft'
-  | 'submitted'
-  | 'approved'
-  | 'revision_requested';
+  'draft' | 'submitted' | 'approved' | 'revision_requested';
 
 export class TestResultAttachment extends BaseEntity {
   declare id: string;

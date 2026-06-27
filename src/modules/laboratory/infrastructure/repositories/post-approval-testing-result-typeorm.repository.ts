@@ -7,7 +7,10 @@ import { PostApprovalTestingResultRepositoryPort } from '../../domain/repositori
 
 @Injectable()
 export class PostApprovalTestingResultTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<PostApprovalTestingResult, TestResultTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    PostApprovalTestingResult,
+    TestResultTypeOrmEntity
+  >
   implements PostApprovalTestingResultRepositoryPort
 {
   protected readonly repository: Repository<TestResultTypeOrmEntity>;
@@ -54,7 +57,8 @@ export class PostApprovalTestingResultTypeOrmRepository
     if (domain.resultNumber) entity.resultNumber = domain.resultNumber;
     entity.sampleId = domain.sampleId;
     entity.sampleCode = (domain.sampleCode ?? '-') as any;
-    entity.testingServiceId = (domain.testingServiceId ?? '00000000-0000-0000-0000-000000000000') as any;
+    entity.testingServiceId = (domain.testingServiceId ??
+      '00000000-0000-0000-0000-000000000000') as any;
     entity.serviceName = (domain.serviceName ?? '-') as any;
     entity.parameter = (domain.parameter ?? '-') as any;
     entity.resultValue = (domain.resultValue ?? '-') as any;
@@ -73,26 +77,38 @@ export class PostApprovalTestingResultTypeOrmRepository
     entity.confirmedByName = (domain.confirmedByName ?? null) as any;
     entity.confirmedAt = (domain.confirmedAt ?? null) as any;
     entity.rejectionReason = (domain.rejectionReason ?? null) as any;
-    entity.certificateDocumentId = (domain.certificateDocumentId ?? null) as any;
+    entity.certificateDocumentId = (domain.certificateDocumentId ??
+      null) as any;
     return entity;
   }
 
-  async findBySampleId(sampleId: string): Promise<PostApprovalTestingResult | null> {
+  async findBySampleId(
+    sampleId: string,
+  ): Promise<PostApprovalTestingResult | null> {
     const entity = await this.repository.findOne({ where: { sampleId } });
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findByContractId(contractId: string): Promise<PostApprovalTestingResult[]> {
+  async findByContractId(
+    contractId: string,
+  ): Promise<PostApprovalTestingResult[]> {
     const entities = await this.repository.find({ where: { contractId } });
     return entities.map((e) => this.toDomain(e));
   }
 
-  async findByScheduleSampleUnit(scheduleSampleId: string, sampleUnit: number): Promise<PostApprovalTestingResult | null> {
-    const entity = await this.repository.findOne({ where: { scheduleSampleId, sampleUnit } });
+  async findByScheduleSampleUnit(
+    scheduleSampleId: string,
+    sampleUnit: number,
+  ): Promise<PostApprovalTestingResult | null> {
+    const entity = await this.repository.findOne({
+      where: { scheduleSampleId, sampleUnit },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findByScheduleId(scheduleId: string): Promise<PostApprovalTestingResult[]> {
+  async findByScheduleId(
+    scheduleId: string,
+  ): Promise<PostApprovalTestingResult[]> {
     const entities = await this.repository.find({ where: { scheduleId } });
     return entities.map((e) => this.toDomain(e));
   }

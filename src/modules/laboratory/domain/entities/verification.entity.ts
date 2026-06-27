@@ -3,10 +3,7 @@ import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entit
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 
 export type VerificationItemType =
-  | 'contract'
-  | 'purchase_order'
-  | 'payment'
-  | 'supporting_document';
+  'contract' | 'purchase_order' | 'payment' | 'supporting_document';
 
 export class VerificationChecklistItem extends BaseEntity {
   declare id: string;

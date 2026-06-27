@@ -18,14 +18,20 @@ export class PushNotificationService {
     if (!projectId) return;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const admin = require('firebase-admin');
-      this.fcmApp = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail: this.configService.get('FCM_CLIENT_EMAIL'),
-          privateKey: this.configService.get('FCM_PRIVATE_KEY')?.replace(/\\n/g, '\n'),
-        }),
-      }, 'cakramerp');
+      this.fcmApp = admin.initializeApp(
+        {
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail: this.configService.get('FCM_CLIENT_EMAIL'),
+            privateKey: this.configService
+              .get('FCM_PRIVATE_KEY')
+              ?.replace(/\\n/g, '\n'),
+          }),
+        },
+        'cakramerp',
+      );
       this.fcmInitialized = true;
     } catch {
       this.fcmInitialized = false;
@@ -37,6 +43,7 @@ export class PushNotificationService {
     if (!keyPath) return;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const apn = require('apn');
       this.apnProvider = new apn.Provider({
         token: {
@@ -60,19 +67,24 @@ export class PushNotificationService {
       data?: Record<string, string>;
       badge?: number;
     },
-  ): Promise<{ sent: number; failed: number; errors: string[]; invalidTokenIds: string[] }> {
+  ): Promise<{
+    sent: number;
+    failed: number;
+    errors: string[];
+    invalidTokenIds: string[];
+  }> {
     let sent = 0;
     let failed = 0;
     const errors: string[] = [];
     const invalidTokenIds: string[] = [];
 
-    const iosTokens = tokens.filter(t => t.platform === 'ios');
-    const androidTokens = tokens.filter(t => t.platform === 'android');
+    const iosTokens = tokens.filter((t) => t.platform === 'ios');
+    const androidTokens = tokens.filter((t) => t.platform === 'android');
 
     if (this.fcmInitialized && this.fcmApp && androidTokens.length > 0) {
       try {
         const response = await this.fcmApp.messaging().sendEachForMulticast({
-          tokens: androidTokens.map(t => t.token),
+          tokens: androidTokens.map((t) => t.token),
           notification: { title: payload.title, body: payload.body },
           data: payload.data || {},
           android: { priority: 'high', notification: { channelId: 'default' } },
@@ -89,7 +101,9 @@ export class PushNotificationService {
             ) {
               invalidTokenIds.push(androidTokens[idx].id);
             } else {
-              errors.push(`FCM token ${androidTokens[idx].token.substring(0, 8)}...: ${errorCode}`);
+              errors.push(
+                `FCM token ${androidTokens[idx].token.substring(0, 8)}...: ${errorCode}`,
+              );
             }
           }
         });
@@ -101,6 +115,7 @@ export class PushNotificationService {
 
     if (this.apnInitialized && this.apnProvider && iosTokens.length > 0) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const apn = require('apn');
         const note = new apn.Notification();
         note.alert = { title: payload.title, body: payload.body };
@@ -108,12 +123,18 @@ export class PushNotificationService {
         note.payload = payload.data || {};
         note.topic = this.configService.get('APNS_BUNDLE_ID');
 
-        const response = await this.apnProvider.send(note, iosTokens.map(t => t.token));
+        const response = await this.apnProvider.send(
+          note,
+          iosTokens.map((t) => t.token),
+        );
         sent += response.sent.length;
         failed += response.failed.length;
         response.failed.forEach((f: any) => {
-          if (f.response?.reason === 'BadDeviceToken' || f.response?.reason === 'Unregistered') {
-            const idx = iosTokens.findIndex(t => t.token === f.device);
+          if (
+            f.response?.reason === 'BadDeviceToken' ||
+            f.response?.reason === 'Unregistered'
+          ) {
+            const idx = iosTokens.findIndex((t) => t.token === f.device);
             if (idx >= 0) invalidTokenIds.push(iosTokens[idx].id);
           } else {
             errors.push(`APNs: ${f.response?.reason}`);

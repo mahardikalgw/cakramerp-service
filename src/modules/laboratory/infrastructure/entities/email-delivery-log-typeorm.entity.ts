@@ -16,7 +16,12 @@ export class EmailDeliveryLogTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 50, default: 'resend' })
   declare provider: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'provider_message_id' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'provider_message_id',
+  })
   declare providerMessageId: string | null;
 
   @Column({ type: 'varchar', length: 50 })

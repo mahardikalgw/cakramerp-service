@@ -24,11 +24,21 @@ export class CreateDocumentArchives20260613000005 implements MigrationInterface 
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_archives_contract ON document_archives(contract_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_archives_result ON document_archives(testing_result_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_archives_type ON document_archives(document_type)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_archives_request ON document_archives(testing_request_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_doc_archives_status ON document_archives(status)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_archives_contract ON document_archives(contract_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_archives_result ON document_archives(testing_result_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_archives_type ON document_archives(document_type)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_archives_request ON document_archives(testing_request_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_doc_archives_status ON document_archives(status)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

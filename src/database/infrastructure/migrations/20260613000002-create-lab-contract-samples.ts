@@ -22,8 +22,12 @@ export class CreateLabContractSamples20260613000002 implements MigrationInterfac
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lab_contract_samples_contract ON lab_contract_samples(contract_id)`);
-    await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_lab_contract_samples_sample ON lab_contract_samples(sample_id)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lab_contract_samples_contract ON lab_contract_samples(contract_id)`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_lab_contract_samples_sample ON lab_contract_samples(sample_id)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

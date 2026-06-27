@@ -14,11 +14,20 @@ export class PostApprovalDocumentArchiveService {
     private readonly docHelper: DocumentGenerationHelper,
   ) {}
 
-  async findAll(options?: { documentType?: string; contractId?: string; page?: number; limit?: number }) {
+  async findAll(options?: {
+    documentType?: string;
+    contractId?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const filters: Record<string, any> = {};
     if (options?.documentType) filters.documentType = options.documentType;
     if (options?.contractId) filters.contractId = options.contractId;
-    return this.repository.findAll({ filters, page: options?.page, limit: options?.limit });
+    return this.repository.findAll({
+      filters,
+      page: options?.page,
+      limit: options?.limit,
+    });
   }
 
   async findById(id: string): Promise<PostApprovalDocumentArchive | null> {
@@ -33,10 +42,16 @@ export class PostApprovalDocumentArchiveService {
     userId: string,
     userName: string,
   ): Promise<PostApprovalDocumentArchive> {
-    const existing = await this.repository.findByTestingResultId(testingResultId);
+    const existing =
+      await this.repository.findByTestingResultId(testingResultId);
 
     const objectName = `archives/${testingResultId}/${Date.now()}_${file.originalname}`;
-    await this.minioService.uploadFile('documents', objectName, file.buffer, file.mimetype);
+    await this.minioService.uploadFile(
+      'documents',
+      objectName,
+      file.buffer,
+      file.mimetype,
+    );
 
     if (existing) {
       existing.signedDocumentUrl = objectName;
@@ -67,10 +82,17 @@ export class PostApprovalDocumentArchiveService {
   async getDownloadUrl(id: string): Promise<{ url: string; filename: string }> {
     const archive = await this.repository.findById(id);
     if (!archive) throw new NotFoundException('Document archive not found');
-    if (!archive.signedDocumentUrl && !archive.minioPath) throw new NotFoundException('No document available');
+    if (!archive.signedDocumentUrl && !archive.minioPath)
+      throw new NotFoundException('No document available');
 
     const objectName = archive.signedDocumentUrl || archive.minioPath;
-    const url = await this.minioService.getPresignedUrl('documents', objectName);
-    return { url, filename: archive.originalFilename || archive.documentNumber + '.pdf' };
+    const url = await this.minioService.getPresignedUrl(
+      'documents',
+      objectName,
+    );
+    return {
+      url,
+      filename: archive.originalFilename || archive.documentNumber + '.pdf',
+    };
   }
 }

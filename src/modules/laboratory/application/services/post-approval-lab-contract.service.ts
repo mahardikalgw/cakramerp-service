@@ -1,5 +1,14 @@
-import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PostApprovalLabContract, LabContractSample } from '../../domain/entities/post-approval-lab-contract.entity';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  PostApprovalLabContract,
+  LabContractSample,
+} from '../../domain/entities/post-approval-lab-contract.entity';
 import { Sample } from '../../domain/entities/sample.entity';
 import type { PostApprovalLabContractRepositoryPort } from '../../domain/repositories/post-approval-lab-contract-repository.port';
 import { POST_APPROVAL_LAB_CONTRACT_REPOSITORY } from '../../domain/repositories/post-approval-lab-contract-repository.port';
@@ -54,22 +63,38 @@ export class PostApprovalLabContractService {
     private readonly testingResultRepo: PostApprovalTestingResultRepositoryPort,
   ) {}
 
-  async findAll(options?: { status?: string; customerId?: string; search?: string; page?: number; limit?: number }) {
+  async findAll(options?: {
+    status?: string;
+    customerId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const filters: Record<string, any> = {};
     if (options?.status) filters.status = options.status;
     if (options?.customerId) filters.customerId = options.customerId;
-    return this.repository.findAll({ filters, search: options?.search, page: options?.page, limit: options?.limit });
+    return this.repository.findAll({
+      filters,
+      search: options?.search,
+      page: options?.page,
+      limit: options?.limit,
+    });
   }
   async findById(id: string): Promise<PostApprovalLabContract | null> {
     const contract = await this.repository.findById(id);
     if (!contract) throw new NotFoundException('Lab contract not found');
     try {
-      (contract as any).sampleLines = await this.contractSampleRepo.findByContractId(id);
-    } catch {}
+      (contract as any).sampleLines =
+        await this.contractSampleRepo.findByContractId(id);
+    } catch {
+      /* ignore */
+    }
     return contract;
   }
 
-  async findByTestingRequestId(testingRequestId: string): Promise<PostApprovalLabContract | null> {
+  async findByTestingRequestId(
+    testingRequestId: string,
+  ): Promise<PostApprovalLabContract | null> {
     return this.repository.findByTestingRequestId(testingRequestId);
   }
 
@@ -90,13 +115,17 @@ export class PostApprovalLabContractService {
   ): Promise<PostApprovalLabContract> {
     const request = await this.requestRepo.findById(testingRequestId);
     if (!request) throw new NotFoundException('Testing request not found');
-    if (!request.quotaGranted) throw new BadRequestException('Quota has not been granted yet');
+    if (!request.quotaGranted)
+      throw new BadRequestException('Quota has not been granted yet');
 
-    const existing = await this.repository.findByTestingRequestId(testingRequestId);
+    const existing =
+      await this.repository.findByTestingRequestId(testingRequestId);
     if (existing) return existing;
 
-    const quotas = await this.sampleQuotaRepo.findByTestingRequestId(testingRequestId);
-    if (quotas.length === 0) throw new BadRequestException('No quota data found for this request');
+    const quotas =
+      await this.sampleQuotaRepo.findByTestingRequestId(testingRequestId);
+    if (quotas.length === 0)
+      throw new BadRequestException('No quota data found for this request');
 
     const totalQuota = quotas.reduce((sum, q) => sum + q.totalQuota, 0);
 
@@ -106,7 +135,8 @@ export class PostApprovalLabContractService {
     const taxDocLines: Record<string, any>[] = [];
 
     // Query actual samples created for this testing request
-    const samples = await this.sampleRepo.findByTestingRequestId(testingRequestId);
+    const samples =
+      await this.sampleRepo.findByTestingRequestId(testingRequestId);
     const samplesOrdered = [...samples].sort(
       (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
     );
@@ -117,14 +147,20 @@ export class PostApprovalLabContractService {
       const sample =
         (line.sampleCode
           ? samplesOrdered.find((s) => s.sampleCode === line.sampleCode)
-          : null) ?? samplesOrdered[i] ?? null;
+          : null) ??
+        samplesOrdered[i] ??
+        null;
 
       let unitPrice = 0;
       if (line.testingServiceId) {
         try {
-          const service = await this.testingServiceRepo.findById(line.testingServiceId);
+          const service = await this.testingServiceRepo.findById(
+            line.testingServiceId,
+          );
           if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
       const quantity = line.sampleQuantity ?? 0;
       const totalPrice = unitPrice * quantity;
@@ -207,8 +243,12 @@ export class PostApprovalLabContractService {
       if (entity.sampleId) {
         const sample = await this.sampleRepo.findById(entity.sampleId);
         if (sample?.quantity != null) {
-          const existingContractSamples = await this.contractSampleRepo.findBySampleId(entity.sampleId);
-          const existingTotal = existingContractSamples.reduce((sum, cs) => sum + (cs.sampleQuantity ?? 0), 0);
+          const existingContractSamples =
+            await this.contractSampleRepo.findBySampleId(entity.sampleId);
+          const existingTotal = existingContractSamples.reduce(
+            (sum, cs) => sum + (cs.sampleQuantity ?? 0),
+            0,
+          );
           const newTotal = existingTotal + (entity.sampleQuantity ?? 0);
           if (newTotal > sample.quantity) {
             throw new BadRequestException(
@@ -239,7 +279,9 @@ export class PostApprovalLabContractService {
           testingType: saved.testingType || '-',
           billingType: saved.billingType || '-',
           isCash: isCash ? 'true' : 'false',
-          contractTerm: isCash ? '3 months from approval date' : '6 months from signing',
+          contractTerm: isCash
+            ? '3 months from approval date'
+            : '6 months from signing',
           totalQuota: String(totalQuota),
           usedQuota: '0',
           remainingQuota: String(totalQuota),
@@ -256,7 +298,10 @@ export class PostApprovalLabContractService {
 
       saved.contractDocumentUrl = contractDoc.id;
     } catch (err: any) {
-      this.logger.error(`Contract document generation failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Contract document generation failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     // Tax invoice only for contract billing — cash customers paid in full up front.
@@ -286,7 +331,10 @@ export class PostApprovalLabContractService {
 
         saved.taxInvoiceUrl = taxDoc.id;
       } catch (err: any) {
-        this.logger.error(`Tax invoice generation failed: ${err?.message}`, err?.stack);
+        this.logger.error(
+          `Tax invoice generation failed: ${err?.message}`,
+          err?.stack,
+        );
       }
     }
 
@@ -305,9 +353,13 @@ export class PostApprovalLabContractService {
       const customer = await this.customerRepo.findById(saved2.customerId);
       const customerUserId = (customer as any)?.userId;
       if (customerUserId) {
-        void this.notificationEventService.onContractGenerated(saved2, customerUserId).catch(() => {});
+        void this.notificationEventService
+          .onContractGenerated(saved2, customerUserId)
+          .catch(() => {});
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     return saved2;
   }
@@ -321,13 +373,15 @@ export class PostApprovalLabContractService {
     const request = await this.requestRepo.findById(testingRequestId);
     if (!request) throw new NotFoundException('Testing request not found');
 
-    const existing = await this.repository.findByTestingRequestId(testingRequestId);
+    const existing =
+      await this.repository.findByTestingRequestId(testingRequestId);
     if (existing) return existing;
 
     const lastNumber = await this.repository.getLastContractNumber();
     const contractNumber = this.generateContractNumber(lastNumber);
 
-    const baseAmount = downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : 0;
+    const baseAmount =
+      downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : 0;
     const taxPercent = 11;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = Math.round((baseAmount + taxAmount) * 100) / 100;
@@ -399,7 +453,10 @@ export class PostApprovalLabContractService {
           contractEstimation: String(request.contractEstimation ?? '-'),
           contractTempoMonths: String(tempoMonths),
           downPaymentAmount: baseAmount.toLocaleString('id-ID'),
-          dpDueDate: baseAmount > 0 ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] : '',
+          dpDueDate:
+            baseAmount > 0
+              ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+              : '',
           paymentTerms: 'Down payment required before contract activation',
           contractTerm: `${tempoMonths} months from activation`,
           customerSignatureName: saved.customerName || 'Customer',
@@ -409,7 +466,10 @@ export class PostApprovalLabContractService {
       });
       saved.contractDocumentUrl = contractDoc.id;
     } catch (err: any) {
-      this.logger.error(`Contract document generation failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Contract document generation failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     try {
@@ -432,12 +492,14 @@ export class PostApprovalLabContractService {
           supplierNpwp: '-',
           supplierAddress: '-',
         },
-        lines: [{
-          description: `Down Payment — Contract Testing (${saved.projectName || '-'})`,
-          quantity: '1',
-          unitPrice: baseAmount.toLocaleString('id-ID'),
-          total: baseAmount.toLocaleString('id-ID'),
-        }],
+        lines: [
+          {
+            description: `Down Payment — Contract Testing (${saved.projectName || '-'})`,
+            quantity: '1',
+            unitPrice: baseAmount.toLocaleString('id-ID'),
+            total: baseAmount.toLocaleString('id-ID'),
+          },
+        ],
       });
       saved.taxInvoiceUrl = taxDoc.id;
       request.invoiceDocumentUrl = taxDoc.id;
@@ -445,7 +507,10 @@ export class PostApprovalLabContractService {
       await this.requestRepo.save(request);
       this.logger.log(`Tax/DP invoice generated: ${taxDoc.id}`);
     } catch (err: any) {
-      this.logger.error(`Tax invoice generation failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Tax invoice generation failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     const savedFinal = await this.repository.save(saved);
@@ -456,13 +521,19 @@ export class PostApprovalLabContractService {
       performedBy: adminUserId,
       performedByName: adminUserName,
       performedByRole: 'admin',
-      details: { contractId: savedFinal.id, contractNumber: savedFinal.contractNumber },
+      details: {
+        contractId: savedFinal.id,
+        contractNumber: savedFinal.contractNumber,
+      },
     });
 
     return savedFinal;
   }
 
-  async updateStatus(id: string, status: string): Promise<PostApprovalLabContract> {
+  async updateStatus(
+    id: string,
+    status: string,
+  ): Promise<PostApprovalLabContract> {
     const contract = await this.repository.findById(id);
     if (!contract) throw new NotFoundException('Lab contract not found');
     contract.status = status as any;
@@ -483,7 +554,9 @@ export class PostApprovalLabContractService {
     const docLines: Record<string, any>[] = [];
     const taxDocLines: Record<string, any>[] = [];
 
-    const samples = await this.sampleRepo.findByTestingRequestId(contract.testingRequestId);
+    const samples = await this.sampleRepo.findByTestingRequestId(
+      contract.testingRequestId,
+    );
     const samplesOrdered = [...samples].sort(
       (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
     );
@@ -493,14 +566,20 @@ export class PostApprovalLabContractService {
       const sample =
         (line.sampleCode
           ? samplesOrdered.find((s) => s.sampleCode === line.sampleCode)
-          : null) ?? samplesOrdered[i] ?? null;
+          : null) ??
+        samplesOrdered[i] ??
+        null;
 
       let unitPrice = 0;
       if (line.testingServiceId) {
         try {
-          const service = await this.testingServiceRepo.findById(line.testingServiceId);
+          const service = await this.testingServiceRepo.findById(
+            line.testingServiceId,
+          );
           if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
       const quantity = line.sampleQuantity ?? 0;
       const totalPrice = unitPrice * quantity;
@@ -543,7 +622,9 @@ export class PostApprovalLabContractService {
           taxPercent: `${contract.taxPercent}%`,
           taxAmount: contract.taxAmount.toLocaleString('id-ID'),
           totalAmount: contract.totalAmount.toLocaleString('id-ID'),
-          generatedAt: (contract.generatedAt ?? new Date()).toISOString().split('T')[0],
+          generatedAt: (contract.generatedAt ?? new Date())
+            .toISOString()
+            .split('T')[0],
           generatedByName: adminUserName || 'Admin',
           expiresAt: contract.expiresAt
             ? contract.expiresAt.toISOString().split('T')[0]
@@ -554,7 +635,10 @@ export class PostApprovalLabContractService {
       contract.contractDocumentUrl = contractDoc.id;
       this.logger.log(`Contract document regenerated: ${contractDoc.id}`);
     } catch (err: any) {
-      this.logger.error(`Contract document regeneration failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Contract document regeneration failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     try {
@@ -582,25 +666,37 @@ export class PostApprovalLabContractService {
       contract.taxInvoiceUrl = taxDoc.id;
       this.logger.log(`Tax invoice regenerated: ${taxDoc.id}`);
     } catch (err: any) {
-      this.logger.error(`Tax invoice regeneration failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Tax invoice regeneration failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     return this.repository.save(contract);
   }
 
-  async getContractDownloadUrl(id: string): Promise<{ url: string; filename: string }> {
+  async getContractDownloadUrl(
+    id: string,
+  ): Promise<{ url: string; filename: string }> {
     const contract = await this.repository.findById(id);
     if (!contract) throw new NotFoundException('Lab contract not found');
-    if (!contract.contractDocumentUrl) throw new NotFoundException('Contract document not yet generated');
-    const url = await this.docHelper.getDownloadUrl(contract.contractDocumentUrl);
-    if (!url) throw new NotFoundException('Contract document URL is not available');
+    if (!contract.contractDocumentUrl)
+      throw new NotFoundException('Contract document not yet generated');
+    const url = await this.docHelper.getDownloadUrl(
+      contract.contractDocumentUrl,
+    );
+    if (!url)
+      throw new NotFoundException('Contract document URL is not available');
     return { url, filename: `${contract.contractNumber}_contract.pdf` };
   }
 
-  async getTaxInvoiceDownloadUrl(id: string): Promise<{ url: string; filename: string }> {
+  async getTaxInvoiceDownloadUrl(
+    id: string,
+  ): Promise<{ url: string; filename: string }> {
     const contract = await this.repository.findById(id);
     if (!contract) throw new NotFoundException('Lab contract not found');
-    if (!contract.taxInvoiceUrl) throw new NotFoundException('Tax invoice not yet generated');
+    if (!contract.taxInvoiceUrl)
+      throw new NotFoundException('Tax invoice not yet generated');
     const url = await this.docHelper.getDownloadUrl(contract.taxInvoiceUrl);
     if (!url) throw new NotFoundException('Tax invoice URL is not available');
     return { url, filename: `${contract.contractNumber}_tax_invoice.pdf` };
@@ -645,18 +741,20 @@ export class PostApprovalLabContractService {
 
     const saved = await this.repository.save(contract);
 
-    void this.activityLog.log({
-      testingRequestId: contract.testingRequestId,
-      action: 'contract_closed',
-      performedBy: adminUserId,
-      performedByName: adminUserName,
-      performedByRole: 'admin',
-      details: {
-        contractId: contract.id,
-        contractNumber: contract.contractNumber,
-        closedAt: contract.closedAt,
-      },
-    }).catch(() => {});
+    void this.activityLog
+      .log({
+        testingRequestId: contract.testingRequestId,
+        action: 'contract_closed',
+        performedBy: adminUserId,
+        performedByName: adminUserName,
+        performedByRole: 'admin',
+        details: {
+          contractId: contract.id,
+          contractNumber: contract.contractNumber,
+          closedAt: contract.closedAt,
+        },
+      })
+      .catch(() => {});
 
     return saved;
   }
@@ -672,22 +770,31 @@ export class PostApprovalLabContractService {
     if (!contract) throw new NotFoundException('Lab contract not found');
 
     const enriched: Record<string, any> = { ...contract };
-    enriched.sampleLines = await this.contractSampleRepo.findByContractId(contractId).catch(() => []);
+    enriched.sampleLines = await this.contractSampleRepo
+      .findByContractId(contractId)
+      .catch(() => []);
 
     // Schedules for this contract
-    const schedules = await this.scheduleRepo.findByContractId(contractId).catch(() => []);
+    const schedules = await this.scheduleRepo
+      .findByContractId(contractId)
+      .catch(() => []);
 
     // Testing results grouped by schedule
-    const allResults: PostApprovalTestingResult[] = await this.testingResultRepo.findByContractId(contractId).catch(() => []);
+    const allResults: PostApprovalTestingResult[] = await this.testingResultRepo
+      .findByContractId(contractId)
+      .catch(() => []);
 
     // Enrich schedules with their schedule-sample allocations and results
     const scheduleSamples = await Promise.all(
       schedules.map(async (schedule) => {
         // Get schedule samples via the lab-contract-sample repo
-        const allocations = await this.contractSampleRepo.findByContractId(contractId)
+        const allocations = await this.contractSampleRepo
+          .findByContractId(contractId)
           .then((cs) => cs)
           .catch(() => []);
-        const scheduleResults = allResults.filter((r) => r.scheduleId === schedule.id);
+        const scheduleResults = allResults.filter(
+          (r) => r.scheduleId === schedule.id,
+        );
         return {
           ...schedule,
           results: scheduleResults,
@@ -711,19 +818,36 @@ export class PostApprovalLabContractService {
     enriched.resultsBySchedule = resultsBySchedule;
 
     // Downloadable document URLs
-    const documents: Array<{ type: string; filename: string; url?: string }> = [];
+    const documents: Array<{ type: string; filename: string; url?: string }> =
+      [];
 
     if (contract.contractDocumentUrl) {
       try {
-        const url = await this.docHelper.getDownloadUrl(contract.contractDocumentUrl);
-        if (url) documents.push({ type: 'contract', filename: `${contract.contractNumber}_contract.pdf`, url });
-      } catch {}
+        const url = await this.docHelper.getDownloadUrl(
+          contract.contractDocumentUrl,
+        );
+        if (url)
+          documents.push({
+            type: 'contract',
+            filename: `${contract.contractNumber}_contract.pdf`,
+            url,
+          });
+      } catch {
+        /* ignore */
+      }
     }
     if (contract.taxInvoiceUrl) {
       try {
         const url = await this.docHelper.getDownloadUrl(contract.taxInvoiceUrl);
-        if (url) documents.push({ type: 'tax_invoice', filename: `${contract.contractNumber}_tax_invoice.pdf`, url });
-      } catch {}
+        if (url)
+          documents.push({
+            type: 'tax_invoice',
+            filename: `${contract.contractNumber}_tax_invoice.pdf`,
+            url,
+          });
+      } catch {
+        /* ignore */
+      }
     }
 
     // Collect all certificate documents from results
@@ -731,13 +855,18 @@ export class PostApprovalLabContractService {
       allResults.map(async (result) => {
         if (result.certificateDocumentId) {
           try {
-            const url = await this.docHelper.getDownloadUrl(result.certificateDocumentId);
-            if (url) documents.push({
-              type: 'certificate',
-              filename: `certificate_${result.id.substring(0, 8)}.pdf`,
-              url,
-            });
-          } catch {}
+            const url = await this.docHelper.getDownloadUrl(
+              result.certificateDocumentId,
+            );
+            if (url)
+              documents.push({
+                type: 'certificate',
+                filename: `certificate_${result.id.substring(0, 8)}.pdf`,
+                url,
+              });
+          } catch {
+            /* ignore */
+          }
         }
       }),
     );
@@ -765,16 +894,21 @@ export class PostApprovalLabContractService {
     const lastNumber = await this.repository.getLastContractNumber();
     const draftContractNumber = this.generateContractNumber(lastNumber);
 
-    let baseAmount = request.contractEstimation ?? 0;
+    const baseAmount = request.contractEstimation ?? 0;
     const taxPercent = 11;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = baseAmount + taxAmount;
-    const dpAmount = downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : totalAmount;
+    const dpAmount =
+      downPaymentAmount && downPaymentAmount > 0
+        ? downPaymentAmount
+        : totalAmount;
     const tempoMonths = request.contractTempoMonths ?? 6;
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + tempoMonths);
 
-    const customer = await this.customerRepo.findById(request.customerId).catch(() => null);
+    const customer = await this.customerRepo
+      .findById(request.customerId)
+      .catch(() => null);
     const customerName = (customer as any)?.name || request.customerName || '-';
 
     // Generate contract PDF document (draft — not yet a contract entity)
@@ -806,8 +940,12 @@ export class PostApprovalLabContractService {
           scopeOfTesting: request.scopeOfTesting || '-',
           contractEstimation: String(request.contractEstimation ?? '-'),
           contractTempoMonths: String(tempoMonths),
-          downPaymentAmount: dpAmount > 0 ? dpAmount.toLocaleString('id-ID') : '',
-          dpDueDate: dpAmount > 0 ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] : '',
+          downPaymentAmount:
+            dpAmount > 0 ? dpAmount.toLocaleString('id-ID') : '',
+          dpDueDate:
+            dpAmount > 0
+              ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+              : '',
           paymentTerms: 'Down payment required before contract activation',
           contractTerm: `${tempoMonths} months from contract activation`,
           customerSignatureName: customerName,
@@ -818,7 +956,10 @@ export class PostApprovalLabContractService {
       (request as any).contractDocumentUrl = contractDoc.id;
       this.logger.log(`Draft contract PDF generated: ${contractDoc.id}`);
     } catch (err: any) {
-      this.logger.error(`Draft contract PDF generation failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `Draft contract PDF generation failed: ${err?.message}`,
+        err?.stack,
+      );
       throw err;
     }
 
@@ -834,23 +975,30 @@ export class PostApprovalLabContractService {
           customerName,
           customerAddress: request.projectLocation || '-',
           invoiceDate: new Date().toISOString().split('T')[0],
-          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 7 * 86400000)
+            .toISOString()
+            .split('T')[0],
           totalAmount: dpAmount.toLocaleString('id-ID'),
           status: 'issued',
           authorizedByName: adminUserName || 'Lab Authorized',
         },
-        lines: [{
-          description: `Down Payment — Contract Testing (${request.projectName || '-'})`,
-          quantity: '1',
-          unitPrice: dpAmount.toLocaleString('id-ID'),
-          total: dpAmount.toLocaleString('id-ID'),
-        }],
+        lines: [
+          {
+            description: `Down Payment — Contract Testing (${request.projectName || '-'})`,
+            quantity: '1',
+            unitPrice: dpAmount.toLocaleString('id-ID'),
+            total: dpAmount.toLocaleString('id-ID'),
+          },
+        ],
       });
       request.invoiceDocumentUrl = dpInvoiceDoc.id;
       (request as any).downPaymentAmount = dpAmount;
       this.logger.log(`DP invoice generated: ${dpInvoiceDoc.id}`);
     } catch (err: any) {
-      this.logger.error(`DP invoice generation failed: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `DP invoice generation failed: ${err?.message}`,
+        err?.stack,
+      );
     }
 
     await this.requestRepo.save(request);
@@ -873,10 +1021,14 @@ export class PostApprovalLabContractService {
     const contract = await this.repository.findById(contractId);
     if (!contract) throw new NotFoundException('Contract not found');
     if (contract.billingType === 'cash') {
-      throw new BadRequestException('Cannot add samples to a cash billing contract');
+      throw new BadRequestException(
+        'Cannot add samples to a cash billing contract',
+      );
     }
     if (!['active'].includes(contract.status)) {
-      throw new BadRequestException(`Cannot add samples to contract with status: ${contract.status}`);
+      throw new BadRequestException(
+        `Cannot add samples to contract with status: ${contract.status}`,
+      );
     }
 
     const created: LabContractSample[] = [];
@@ -884,20 +1036,26 @@ export class PostApprovalLabContractService {
       let unitPrice = 0;
       if (s.testingServiceId) {
         try {
-          const service = await this.testingServiceRepo.findById(s.testingServiceId);
+          const service = await this.testingServiceRepo.findById(
+            s.testingServiceId,
+          );
           if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
 
-      const sampleCode = s.sampleCode || await this.generateNextSampleCode();
-      const sample = await this.sampleRepo.save(new Sample({
-        sampleCode,
-        customerId: contract.customerId,
-        customerName: contract.customerName,
-        description: s.sampleDescription ?? null,
-        quantity: s.sampleQuantity ?? 1,
-        status: 'awaiting_delivery',
-      } as any));
+      const sampleCode = s.sampleCode || (await this.generateNextSampleCode());
+      const sample = await this.sampleRepo.save(
+        new Sample({
+          sampleCode,
+          customerId: contract.customerId,
+          customerName: contract.customerName,
+          description: s.sampleDescription ?? null,
+          quantity: s.sampleQuantity ?? 1,
+          status: 'awaiting_delivery',
+        } as any),
+      );
 
       const entity = new LabContractSample({
         contractId,
@@ -917,8 +1075,12 @@ export class PostApprovalLabContractService {
 
     // Update contract total quota if not unlimited
     if (!contract.isUnlimited) {
-      const allSamples = await this.contractSampleRepo.findByContractId(contractId);
-      const newTotal = allSamples.reduce((sum, s) => sum + (s.sampleQuantity ?? 0), 0);
+      const allSamples =
+        await this.contractSampleRepo.findByContractId(contractId);
+      const newTotal = allSamples.reduce(
+        (sum, s) => sum + (s.sampleQuantity ?? 0),
+        0,
+      );
       contract.totalQuota = newTotal;
       contract.remainingQuota = newTotal - contract.usedQuota;
       await this.repository.save(contract);
@@ -931,7 +1093,12 @@ export class PostApprovalLabContractService {
     search?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: PostApprovalLabContract[]; total: number; page: number; totalPages: number }> {
+  }): Promise<{
+    data: PostApprovalLabContract[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 20;
     const result = await this.repository.findAll({
@@ -942,17 +1109,26 @@ export class PostApprovalLabContractService {
     const data = result.data as PostApprovalLabContract[];
     // Apply search filter in-memory if provided
     const filtered = options?.search
-      ? data.filter((c) =>
-          c.contractNumber?.toLowerCase().includes(options.search!.toLowerCase()) ||
-          c.customerName?.toLowerCase().includes(options.search!.toLowerCase()) ||
-          (c.projectName ?? '').toLowerCase().includes(options.search!.toLowerCase()),
+      ? data.filter(
+          (c) =>
+            c.contractNumber
+              ?.toLowerCase()
+              .includes(options.search!.toLowerCase()) ||
+            c.customerName
+              ?.toLowerCase()
+              .includes(options.search!.toLowerCase()) ||
+            (c.projectName ?? '')
+              .toLowerCase()
+              .includes(options.search!.toLowerCase()),
         )
       : data;
     return {
       data: filtered,
       total: result.meta?.total ?? filtered.length,
       page,
-      totalPages: result.meta?.totalPages ?? Math.max(1, Math.ceil((result.meta?.total ?? filtered.length) / limit)),
+      totalPages:
+        result.meta?.totalPages ??
+        Math.max(1, Math.ceil((result.meta?.total ?? filtered.length) / limit)),
     };
   }
 

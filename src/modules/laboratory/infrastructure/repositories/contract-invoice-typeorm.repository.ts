@@ -4,11 +4,17 @@ import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructur
 import { ContractInvoice } from '../../domain/entities/contract-invoice.entity';
 import { ContractInvoiceTypeOrmEntity } from '../entities/contract-invoice-typeorm.entity';
 import { ContractInvoiceRepositoryPort } from '../../domain/repositories/contract-invoice-repository.port';
-import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class ContractInvoiceTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<ContractInvoice, ContractInvoiceTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    ContractInvoice,
+    ContractInvoiceTypeOrmEntity
+  >
   implements ContractInvoiceRepositoryPort
 {
   protected readonly repository: Repository<ContractInvoiceTypeOrmEntity>;
@@ -26,10 +32,10 @@ export class ContractInvoiceTypeOrmRepository
       billingPeriodStart: entity.billingPeriodStart,
       billingPeriodEnd: entity.billingPeriodEnd,
       totalSamples: entity.totalSamples ?? 0,
-      baseAmount: Number(entity.baseAmount) ?? 0,
-      taxPercent: Number(entity.taxPercent) ?? 11,
-      taxAmount: Number(entity.taxAmount) ?? 0,
-      totalAmount: Number(entity.totalAmount) ?? 0,
+      baseAmount: Number(entity.baseAmount ?? 0),
+      taxPercent: Number(entity.taxPercent ?? 11),
+      taxAmount: Number(entity.taxAmount ?? 0),
+      totalAmount: Number(entity.totalAmount ?? 0),
       invoiceDocumentUrl: entity.invoiceDocumentUrl,
       status: entity.status as ContractInvoice['status'],
       paidAt: entity.paidAt,
@@ -68,11 +74,13 @@ export class ContractInvoiceTypeOrmRepository
       where: { contractId } as any,
       order: { billingPeriodStart: 'DESC' },
     });
-    return entities.map(e => this.toDomain(e));
+    return entities.map((e) => this.toDomain(e));
   }
 
   async findByBillingPeriod(
-    contractId: string, start: Date, end: Date,
+    contractId: string,
+    start: Date,
+    end: Date,
   ): Promise<ContractInvoice | null> {
     const entity = await this.repository
       .createQueryBuilder('i')
@@ -108,7 +116,7 @@ export class ContractInvoiceTypeOrmRepository
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: entities.map(e => this.toDomain(e)),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page,
         limit,

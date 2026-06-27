@@ -1,10 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type JournalEntryStatus =
-  | 'draft'
-  | 'pending_approval'
-  | 'approved'
-  | 'reversed';
+  'draft' | 'pending_approval' | 'approved' | 'reversed';
 
 export class JournalEntry extends BaseEntity {
   declare id: string;

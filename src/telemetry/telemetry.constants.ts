@@ -1,1 +1,0 @@
-export const TELEMETRY_MODULE = 'TELEMETRY_MODULE';

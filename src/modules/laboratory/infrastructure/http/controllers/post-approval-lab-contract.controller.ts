@@ -46,7 +46,11 @@ export class PostApprovalLabContractController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {
-    return this.service.getClosedContracts({ search, page: +page, limit: +limit });
+    return this.service.getClosedContracts({
+      search,
+      page: +page,
+      limit: +limit,
+    });
   }
 
   @Get('post-approval/contracts/:id')
@@ -89,18 +93,15 @@ export class PostApprovalLabContractController {
     const user = req.user ?? {};
     const userName =
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
-    return this.service.regenerateDocuments(
-      id,
-      user.id ?? 'unknown',
-      userName,
-    );
+    return this.service.regenerateDocuments(id, user.id ?? 'unknown', userName);
   }
 
   @Patch('post-approval/contracts/:id/close')
   @RequirePermissions('contracts:update')
   async closeContract(@Param('id') id: string, @Req() req: any) {
     const user = req.user ?? {};
-    const userName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Admin';
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Admin';
     return this.service.closeContract(id, user.id ?? 'unknown', userName);
   }
 
@@ -108,7 +109,16 @@ export class PostApprovalLabContractController {
   @RequirePermissions('contracts:update')
   async addSamples(
     @Param('id') id: string,
-    @Body() body: { samples: Array<{ testingServiceId?: string; serviceName: string; sampleCode?: string; sampleDescription?: string; sampleQuantity: number }> },
+    @Body()
+    body: {
+      samples: Array<{
+        testingServiceId?: string;
+        serviceName: string;
+        sampleCode?: string;
+        sampleDescription?: string;
+        sampleQuantity: number;
+      }>;
+    },
   ) {
     return this.service.addContractSamples(id, body.samples || []);
   }

@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PostApprovalTestingSchedule } from '../../domain/entities/post-approval-testing-schedule.entity';
 import type { PostApprovalTestingScheduleRepositoryPort } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 import { POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
@@ -27,12 +32,22 @@ export class PostApprovalTestingScheduleService {
     private readonly notificationEventService: NotificationEventService,
   ) {}
 
-  async findAll(options?: { status?: string; contractId?: string; laboranId?: string; page?: number; limit?: number }) {
+  async findAll(options?: {
+    status?: string;
+    contractId?: string;
+    laboranId?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const filters: Record<string, any> = {};
     if (options?.status) filters.status = options.status;
     if (options?.contractId) filters.contractId = options.contractId;
     if (options?.laboranId) filters.laboranId = options.laboranId;
-    return this.repository.findAll({ filters, page: options?.page, limit: options?.limit });
+    return this.repository.findAll({
+      filters,
+      page: options?.page,
+      limit: options?.limit,
+    });
   }
 
   async findById(id: string): Promise<PostApprovalTestingSchedule | null> {
@@ -41,11 +56,15 @@ export class PostApprovalTestingScheduleService {
     return schedule;
   }
 
-  async findByContractId(contractId: string): Promise<PostApprovalTestingSchedule[]> {
+  async findByContractId(
+    contractId: string,
+  ): Promise<PostApprovalTestingSchedule[]> {
     return this.repository.findByContractId(contractId);
   }
 
-  async findMySchedules(userId: string): Promise<PostApprovalTestingSchedule[]> {
+  async findMySchedules(
+    userId: string,
+  ): Promise<PostApprovalTestingSchedule[]> {
     return this.repository.findByLaboranId(userId);
   }
 
@@ -55,29 +74,34 @@ export class PostApprovalTestingScheduleService {
       limit: 10000,
     });
     return all.data
-      .filter(s => s.status !== 'cancelled' && s.status !== 'completed')
+      .filter((s) => s.status !== 'cancelled' && s.status !== 'completed')
       .reduce((sum, s) => sum + (s.qtySamples ?? 0), 0);
   }
 
-  async getPendingAllocationsBySample(contractId: string): Promise<Record<string, number>> {
+  async getPendingAllocationsBySample(
+    contractId: string,
+  ): Promise<Record<string, number>> {
     const all = await this.repository.findAll({
       filters: { contractId },
       limit: 10000,
     });
     const pendingScheduleIds = all.data
-      .filter(s => s.status !== 'cancelled' && s.status !== 'completed')
-      .map(s => s.id);
+      .filter((s) => s.status !== 'cancelled' && s.status !== 'completed')
+      .map((s) => s.id);
 
     if (pendingScheduleIds.length === 0) return {};
 
     const allSamples = await Promise.all(
-      pendingScheduleIds.map(sid => this.scheduleSampleRepo.findByScheduleId(sid)),
+      pendingScheduleIds.map((sid) =>
+        this.scheduleSampleRepo.findByScheduleId(sid),
+      ),
     );
 
     const result: Record<string, number> = {};
     for (const samples of allSamples) {
       for (const sample of samples) {
-        result[sample.contractSampleId] = (result[sample.contractSampleId] || 0) + sample.allocatedQuantity;
+        result[sample.contractSampleId] =
+          (result[sample.contractSampleId] || 0) + sample.allocatedQuantity;
       }
     }
     return result;
@@ -99,18 +123,27 @@ export class PostApprovalTestingScheduleService {
     const contract = await this.contractRepo.findById(data.contractId);
     if (!contract) throw new NotFoundException('Lab contract not found');
 
-    const contractSamples = await this.contractSampleRepo.findByContractId(data.contractId);
-    const samplesById = new Map(contractSamples.map(s => [s.id, s]));
+    const contractSamples = await this.contractSampleRepo.findByContractId(
+      data.contractId,
+    );
+    const samplesById = new Map(contractSamples.map((s) => [s.id, s]));
 
     for (const alloc of data.sampleAllocations) {
-      if (alloc.allocatedQuantity <= 0) throw new BadRequestException('Quantity must be > 0');
+      if (alloc.allocatedQuantity <= 0)
+        throw new BadRequestException('Quantity must be > 0');
       if (!samplesById.has(alloc.contractSampleId)) {
-        throw new BadRequestException(`Invalid contract sample: ${alloc.contractSampleId}`);
+        throw new BadRequestException(
+          `Invalid contract sample: ${alloc.contractSampleId}`,
+        );
       }
     }
 
-    const total = data.sampleAllocations.reduce((sum, a) => sum + a.allocatedQuantity, 0);
-    if (total === 0) throw new BadRequestException('Must allocate at least 1 quota unit');
+    const total = data.sampleAllocations.reduce(
+      (sum, a) => sum + a.allocatedQuantity,
+      0,
+    );
+    if (total === 0)
+      throw new BadRequestException('Must allocate at least 1 quota unit');
     if (!contract.isUnlimited) {
       const pendingAllocated = await this.getPendingQuota(data.contractId);
       const availableNow = (contract.remainingQuota ?? 0) - pendingAllocated;
@@ -135,7 +168,7 @@ export class PostApprovalTestingScheduleService {
 
     const saved = await this.repository.save(schedule);
 
-    const scheduleSamples = data.sampleAllocations.map(alloc => {
+    const scheduleSamples = data.sampleAllocations.map((alloc) => {
       const cs = samplesById.get(alloc.contractSampleId)!;
       return new LabScheduleSample({
         scheduleId: saved.id,
@@ -148,7 +181,7 @@ export class PostApprovalTestingScheduleService {
     await this.scheduleSampleRepo.saveMany(scheduleSamples);
 
     for (const cs of contractSamples) {
-      if (data.sampleAllocations.some(a => a.contractSampleId === cs.id)) {
+      if (data.sampleAllocations.some((a) => a.contractSampleId === cs.id)) {
         cs.status = 'in_progress';
         await this.contractSampleRepo.save(cs);
       }
@@ -160,7 +193,11 @@ export class PostApprovalTestingScheduleService {
       performedBy: data.userId,
       performedByName: data.userName,
       performedByRole: 'customer',
-      details: { scheduleId: saved.id, contractId: data.contractId, totalQuota: total },
+      details: {
+        scheduleId: saved.id,
+        contractId: data.contractId,
+        totalQuota: total,
+      },
     });
 
     return saved;
@@ -172,7 +209,8 @@ export class PostApprovalTestingScheduleService {
   }> {
     const schedule = await this.repository.findById(scheduleId);
     if (!schedule) throw new NotFoundException('Testing schedule not found');
-    const sampleAllocations = await this.scheduleSampleRepo.findByScheduleId(scheduleId);
+    const sampleAllocations =
+      await this.scheduleSampleRepo.findByScheduleId(scheduleId);
     return { schedule, sampleAllocations };
   }
 
@@ -184,7 +222,8 @@ export class PostApprovalTestingScheduleService {
   ): Promise<PostApprovalTestingSchedule> {
     const schedule = await this.repository.findById(scheduleId);
     if (!schedule) throw new NotFoundException('Testing schedule not found');
-    if (schedule.status !== 'pending') throw new BadRequestException('Only pending schedules can be confirmed');
+    if (schedule.status !== 'pending')
+      throw new BadRequestException('Only pending schedules can be confirmed');
 
     schedule.status = 'confirmed';
     schedule.laboranId = data.laboranId;
@@ -207,7 +246,9 @@ export class PostApprovalTestingScheduleService {
       details: { scheduleId: saved.id, laboranId: data.laboranId },
     });
 
-    void this.notificationEventService.onScheduleConfirmed(saved).catch(() => {});
+    void this.notificationEventService
+      .onScheduleConfirmed(saved)
+      .catch(() => {});
 
     return saved;
   }
@@ -236,12 +277,13 @@ export class PostApprovalTestingScheduleService {
     });
 
     const conflicts = all.data
-      .filter(s =>
-        s.scheduledDate === date &&
-        (!time || !s.scheduledTime || s.scheduledTime === time) &&
-        !['cancelled', 'completed'].includes(s.status),
+      .filter(
+        (s) =>
+          s.scheduledDate === date &&
+          (!time || !s.scheduledTime || s.scheduledTime === time) &&
+          !['cancelled', 'completed'].includes(s.status),
       )
-      .map(s => ({
+      .map((s) => ({
         id: s.id,
         scheduledDate: s.scheduledDate,
         scheduledTime: s.scheduledTime,
@@ -254,11 +296,18 @@ export class PostApprovalTestingScheduleService {
     return { hasConflict: conflicts.length > 0, conflicts };
   }
 
-  async cancelByCustomer(scheduleId: string, userId: string): Promise<PostApprovalTestingSchedule> {
+  async cancelByCustomer(
+    scheduleId: string,
+    userId: string,
+  ): Promise<PostApprovalTestingSchedule> {
     const schedule = await this.repository.findById(scheduleId);
     if (!schedule) throw new NotFoundException('Testing schedule not found');
-    if (schedule.createdBy !== userId) throw new BadRequestException('Only the creator can cancel this schedule');
-    if (schedule.status !== 'pending') throw new BadRequestException('Only pending schedules can be cancelled');
+    if (schedule.createdBy !== userId)
+      throw new BadRequestException(
+        'Only the creator can cancel this schedule',
+      );
+    if (schedule.status !== 'pending')
+      throw new BadRequestException('Only pending schedules can be cancelled');
 
     schedule.status = 'cancelled';
     const saved = await this.repository.save(schedule);

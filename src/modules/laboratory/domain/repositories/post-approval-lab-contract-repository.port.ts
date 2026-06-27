@@ -5,8 +5,7 @@ export const POST_APPROVAL_LAB_CONTRACT_REPOSITORY = Symbol(
   'POST_APPROVAL_LAB_CONTRACT_REPOSITORY',
 );
 
-export interface PostApprovalLabContractRepositoryPort
-  extends RepositoryPort<PostApprovalLabContract> {
+export interface PostApprovalLabContractRepositoryPort extends RepositoryPort<PostApprovalLabContract> {
   findByContractNumber(
     contractNumber: string,
   ): Promise<PostApprovalLabContract | null>;

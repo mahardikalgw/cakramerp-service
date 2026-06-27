@@ -1,12 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type ContractTestInvoiceStatus =
-  | 'draft'
-  | 'issued'
-  | 'paid'
-  | 'partial'
-  | 'overdue'
-  | 'cancelled';
+  'draft' | 'issued' | 'paid' | 'partial' | 'overdue' | 'cancelled';
 
 export class ContractTestInvoice extends BaseEntity {
   declare id: string;

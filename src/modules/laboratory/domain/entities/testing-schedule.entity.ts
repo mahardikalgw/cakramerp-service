@@ -1,10 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type ScheduleStatus =
-  | 'scheduled'
-  | 'rescheduled'
-  | 'completed'
-  | 'cancelled';
+  'scheduled' | 'rescheduled' | 'completed' | 'cancelled';
 
 export class TestingSchedule extends BaseEntity {
   declare id: string;

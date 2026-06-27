@@ -7,6 +7,7 @@ import {
   LEAVE_BALANCE_REPOSITORY,
   LEAVE_REQUEST_REPOSITORY,
 } from '../../domain/repositories/self-service-repository.port';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 
 describe('MyLeaveService', () => {
   let service: MyLeaveService;
@@ -33,6 +34,10 @@ describe('MyLeaveService', () => {
     findPending: jest.fn(),
   };
 
+  const mockDocumentGenerationHelper = {
+    generateAsync: jest.fn().mockResolvedValue({}),
+  };
+
   const mockDataSource = {
     query: jest.fn().mockResolvedValue([]),
     getRepository: jest.fn().mockReturnValue({
@@ -49,6 +54,10 @@ describe('MyLeaveService', () => {
         { provide: LEAVE_TYPE_REPOSITORY, useValue: mockLeaveTypeRepo },
         { provide: LEAVE_BALANCE_REPOSITORY, useValue: mockLeaveBalanceRepo },
         { provide: LEAVE_REQUEST_REPOSITORY, useValue: mockLeaveRequestRepo },
+        {
+          provide: DocumentGenerationHelper,
+          useValue: mockDocumentGenerationHelper,
+        },
       ],
     }).compile();
 

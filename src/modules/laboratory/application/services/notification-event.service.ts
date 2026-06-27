@@ -21,13 +21,18 @@ export class NotificationEventService {
     private readonly notificationService: NotificationService,
     private readonly emailService: EmailNotificationService,
     @Inject(USER_REPOSITORY) private readonly userRepo: UserRepositoryPort,
-    @Inject(CUSTOMER_REPOSITORY) private readonly customerRepo: CustomerRepositoryPort,
+    @Inject(CUSTOMER_REPOSITORY)
+    private readonly customerRepo: CustomerRepositoryPort,
     private readonly configService: ConfigService,
   ) {
-    this.appBaseUrl = this.configService.get('APP_BASE_URL') || 'http://localhost:3000';
+    this.appBaseUrl =
+      this.configService.get('APP_BASE_URL') || 'http://localhost:3000';
   }
 
-  async onTestingRequestSubmitted(request: TestingRequest, customer: Customer): Promise<void> {
+  async onTestingRequestSubmitted(
+    request: TestingRequest,
+    customer: Customer,
+  ): Promise<void> {
     try {
       const admins = await this.userRepo.findAll({
         filters: { role: 'admin' },
@@ -36,7 +41,7 @@ export class NotificationEventService {
       const requestUrl = `${this.appBaseUrl}/laboratory/testing-requests/${request.id}`;
 
       await this.notificationService.dispatchMany(
-        admins.data.map(a => ({ userId: a.id!, email: a.email })),
+        admins.data.map((a) => ({ userId: a.id!, email: a.email })),
         (admin) => ({
           recipientUserId: admin.userId,
           recipientEmail: admin.email,
@@ -54,9 +59,10 @@ export class NotificationEventService {
                 requestNumber: request.requestNumber,
                 projectName: request.projectName,
                 customerName: customer.name,
-                submittedAt: request.createdAt instanceof Date
-                  ? request.createdAt.toISOString()
-                  : String(request.createdAt ?? new Date().toISOString()),
+                submittedAt:
+                  request.createdAt instanceof Date
+                    ? request.createdAt.toISOString()
+                    : String(request.createdAt ?? new Date().toISOString()),
               }),
             },
             push: {
@@ -73,7 +79,10 @@ export class NotificationEventService {
     }
   }
 
-  async onTestingRequestApproved(request: TestingRequest, customerUserId: string): Promise<void> {
+  async onTestingRequestApproved(
+    request: TestingRequest,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/requests/${request.id}`;
@@ -112,7 +121,9 @@ export class NotificationEventService {
     }
   }
 
-  async onScheduleConfirmed(schedule: PostApprovalTestingSchedule): Promise<void> {
+  async onScheduleConfirmed(
+    schedule: PostApprovalTestingSchedule,
+  ): Promise<void> {
     try {
       if (!schedule.laboranId) return;
 
@@ -150,7 +161,9 @@ export class NotificationEventService {
     contract: PostApprovalLabContract,
   ): Promise<void> {
     try {
-      const customerUserId = await this.resolveCustomerUserId(contract.customerId);
+      const customerUserId = await this.resolveCustomerUserId(
+        contract.customerId,
+      );
       if (!customerUserId) return;
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/schedules/${schedule.id}`;
@@ -202,7 +215,7 @@ export class NotificationEventService {
       const adminUrl = `${this.appBaseUrl}/laboratory/post-approval/testing-results/${result.id}`;
 
       await this.notificationService.dispatchMany(
-        admins.data.map(a => ({ userId: a.id! })),
+        admins.data.map((a) => ({ userId: a.id! })),
         (admin) => ({
           recipientUserId: admin.userId,
           eventType: 'test_result_submitted',
@@ -219,7 +232,9 @@ export class NotificationEventService {
     }
   }
 
-  async onTestResultConfirmed(result: PostApprovalTestingResult): Promise<void> {
+  async onTestResultConfirmed(
+    result: PostApprovalTestingResult,
+  ): Promise<void> {
     try {
       if (!result.submittedBy) return;
       const laboran = await this.userRepo.findById(result.submittedBy);
@@ -246,7 +261,10 @@ export class NotificationEventService {
     }
   }
 
-  async onContractGenerated(contract: PostApprovalLabContract, customerUserId: string): Promise<void> {
+  async onContractGenerated(
+    contract: PostApprovalLabContract,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/contracts/${contract.id}`;
@@ -284,7 +302,10 @@ export class NotificationEventService {
     }
   }
 
-  async onContractReadyForSigning(contract: PostApprovalLabContract, customerUserId: string): Promise<void> {
+  async onContractReadyForSigning(
+    contract: PostApprovalLabContract,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/requests/${contract.testingRequestId}`;
@@ -311,7 +332,10 @@ export class NotificationEventService {
           push: {
             title: 'Contract Ready for Signing',
             body: `Contract ${contract.contractNumber} — download and sign within 7 days`,
-            data: { screen: 'request_detail', entityId: contract.testingRequestId },
+            data: {
+              screen: 'request_detail',
+              entityId: contract.testingRequestId,
+            },
           },
           inApp: true,
         },
@@ -321,7 +345,10 @@ export class NotificationEventService {
     }
   }
 
-  async onSignedContractUploaded(request: TestingRequest, customerUserId: string): Promise<void> {
+  async onSignedContractUploaded(
+    request: TestingRequest,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const admins = await this.userRepo.findAll({
         filters: { role: 'admin' },
@@ -330,7 +357,7 @@ export class NotificationEventService {
       const adminUrl = `${this.appBaseUrl}/laboratory/testing-requests/${request.id}`;
 
       await this.notificationService.dispatchMany(
-        admins.data.map(a => ({ userId: a.id!, email: a.email })),
+        admins.data.map((a) => ({ userId: a.id!, email: a.email })),
         (admin) => ({
           recipientUserId: admin.userId,
           recipientEmail: admin.email,
@@ -359,7 +386,10 @@ export class NotificationEventService {
     }
   }
 
-  async onContractConfirmed(request: TestingRequest, customerUserId: string): Promise<void> {
+  async onContractConfirmed(
+    request: TestingRequest,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/requests/${request.id}`;
@@ -396,7 +426,10 @@ export class NotificationEventService {
     }
   }
 
-  async onContractSigningExpired(request: TestingRequest, customerUserId: string): Promise<void> {
+  async onContractSigningExpired(
+    request: TestingRequest,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/requests/${request.id}`;
@@ -433,7 +466,10 @@ export class NotificationEventService {
     }
   }
 
-  async onMonthlyInvoiceGenerated(invoice: any, customerUserId: string): Promise<void> {
+  async onMonthlyInvoiceGenerated(
+    invoice: any,
+    customerUserId: string,
+  ): Promise<void> {
     try {
       const customerEmail = await this.resolveCustomerEmail(customerUserId);
       const portalUrl = `${this.appBaseUrl}/portal/lab/contract-invoices`;
@@ -471,7 +507,9 @@ export class NotificationEventService {
     }
   }
 
-  private async resolveCustomerEmail(customerUserId: string): Promise<string | undefined> {
+  private async resolveCustomerEmail(
+    customerUserId: string,
+  ): Promise<string | undefined> {
     try {
       const user = await this.userRepo.findById(customerUserId);
       return user?.email;
@@ -480,7 +518,9 @@ export class NotificationEventService {
     }
   }
 
-  private async resolveCustomerUserId(customerId: string): Promise<string | null> {
+  private async resolveCustomerUserId(
+    customerId: string,
+  ): Promise<string | null> {
     try {
       const customer = await this.customerRepo.findById(customerId);
       return (customer as any)?.userId ?? null;

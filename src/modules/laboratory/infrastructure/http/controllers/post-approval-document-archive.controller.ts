@@ -20,9 +20,7 @@ import { PostApprovalDocumentArchiveService } from '../../../application/service
 @Controller('laboratory')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PostApprovalDocumentArchiveController {
-  constructor(
-    private readonly service: PostApprovalDocumentArchiveService,
-  ) {}
+  constructor(private readonly service: PostApprovalDocumentArchiveService) {}
 
   @Get('post-approval/archives')
   @RequirePermissions('archives:read')

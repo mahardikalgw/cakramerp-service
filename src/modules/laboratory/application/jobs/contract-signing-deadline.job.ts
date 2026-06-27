@@ -21,23 +21,32 @@ export class ContractSigningDeadlineJob {
     this.logger.log('[CRON] Checking for expired unsigned contracts...');
     try {
       const now = new Date();
-      const expired = await this.testingRequestRepo.findExpiredUnsignedContracts(now);
-      
+      const expired =
+        await this.testingRequestRepo.findExpiredUnsignedContracts(now);
+
       for (const request of expired) {
         request.status = 'cancelled';
         await this.testingRequestRepo.save(request);
-        this.logger.log(`[CRON] Cancelled expired unsigned contract request ${request.id} (${request.requestNumber})`);
+        this.logger.log(
+          `[CRON] Cancelled expired unsigned contract request ${request.id} (${request.requestNumber})`,
+        );
 
         if (request.labContractId) {
           try {
-            const contract = await this.contractRepo.findById(request.labContractId);
+            const contract = await this.contractRepo.findById(
+              request.labContractId,
+            );
             if (contract) {
               contract.status = 'closed';
               await this.contractRepo.save(contract);
-              this.logger.log(`[CRON] Cancelled orphaned contract ${contract.id} (${contract.contractNumber})`);
+              this.logger.log(
+                `[CRON] Cancelled orphaned contract ${contract.id} (${contract.contractNumber})`,
+              );
             }
           } catch (err: any) {
-            this.logger.error(`[CRON] Failed to cancel contract for request ${request.id}: ${err?.message}`);
+            this.logger.error(
+              `[CRON] Failed to cancel contract for request ${request.id}: ${err?.message}`,
+            );
           }
         }
       }
@@ -46,7 +55,10 @@ export class ContractSigningDeadlineJob {
         this.logger.log('[CRON] No expired unsigned contracts found');
       }
     } catch (err: any) {
-      this.logger.error(`[CRON] Error checking expired unsigned contracts: ${err?.message}`, err?.stack);
+      this.logger.error(
+        `[CRON] Error checking expired unsigned contracts: ${err?.message}`,
+        err?.stack,
+      );
     }
   }
 }

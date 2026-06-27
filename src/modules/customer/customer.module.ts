@@ -24,7 +24,12 @@ import { LaboratoryModule } from '../laboratory/laboratory.module';
     UserModule,
     forwardRef(() => LaboratoryModule),
   ],
-  controllers: [CustomerController, CustomerPortalController, CustomerPortalLabController, PortalContractTestInvoiceController],
+  controllers: [
+    CustomerController,
+    CustomerPortalController,
+    CustomerPortalLabController,
+    PortalContractTestInvoiceController,
+  ],
   providers: [
     {
       provide: CUSTOMER_REPOSITORY,

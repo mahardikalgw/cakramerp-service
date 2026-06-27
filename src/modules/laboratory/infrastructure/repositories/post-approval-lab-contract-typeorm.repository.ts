@@ -1,15 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, ILike, Or, Repository } from 'typeorm';
 import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
-import { PostApprovalLabContract, LabContractSample } from '../../domain/entities/post-approval-lab-contract.entity';
+import {
+  PostApprovalLabContract,
+  LabContractSample,
+} from '../../domain/entities/post-approval-lab-contract.entity';
 import { LabContractTypeOrmEntity } from '../entities/lab-contract-typeorm.entity';
 import { PostApprovalLabContractSampleTypeOrmEntity } from '../entities/post-approval-lab-contract-sample-typeorm.entity';
 import { PostApprovalLabContractRepositoryPort } from '../../domain/repositories/post-approval-lab-contract-repository.port';
-import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class PostApprovalLabContractTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<PostApprovalLabContract, LabContractTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    PostApprovalLabContract,
+    LabContractTypeOrmEntity
+  >
   implements PostApprovalLabContractRepositoryPort
 {
   protected readonly repository: Repository<LabContractTypeOrmEntity>;
@@ -18,14 +27,20 @@ export class PostApprovalLabContractTypeOrmRepository
   constructor(dataSource: DataSource) {
     super(dataSource);
     this.repository = dataSource.getRepository(LabContractTypeOrmEntity);
-    this.sampleRepo = dataSource.getRepository(PostApprovalLabContractSampleTypeOrmEntity);
+    this.sampleRepo = dataSource.getRepository(
+      PostApprovalLabContractSampleTypeOrmEntity,
+    );
   }
 
-  private loadSamples(contractId: string): Promise<PostApprovalLabContractSampleTypeOrmEntity[]> {
+  private loadSamples(
+    contractId: string,
+  ): Promise<PostApprovalLabContractSampleTypeOrmEntity[]> {
     return this.sampleRepo.find({ where: { contractId } as any });
   }
 
-  private toContractSample(entity: PostApprovalLabContractSampleTypeOrmEntity): LabContractSample {
+  private toContractSample(
+    entity: PostApprovalLabContractSampleTypeOrmEntity,
+  ): LabContractSample {
     return new LabContractSample({
       id: entity.id,
       contractId: entity.contractId,
@@ -37,8 +52,8 @@ export class PostApprovalLabContractTypeOrmRepository
       sampleQuantity: entity.sampleQuantity ?? 1,
       usedQuantity: entity.usedQuantity ?? 0,
       completedQuantity: entity.completedQuantity ?? 0,
-      unitPrice: Number(entity.unitPrice) ?? 0,
-      totalPrice: Number(entity.totalPrice) ?? 0,
+      unitPrice: Number(entity.unitPrice ?? 0),
+      totalPrice: Number(entity.totalPrice ?? 0),
       status: entity.status as LabContractSample['status'],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -50,11 +65,13 @@ export class PostApprovalLabContractTypeOrmRepository
     if (!entity) return null;
     const contract = this.toDomain(entity);
     const sampleEntities = await this.loadSamples(id);
-    contract.lines = sampleEntities.map(s => this.toContractSample(s));
+    contract.lines = sampleEntities.map((s) => this.toContractSample(s));
     return contract;
   }
 
-  async findAll(options?: FindOptions): Promise<FindResult<PostApprovalLabContract>> {
+  async findAll(
+    options?: FindOptions,
+  ): Promise<FindResult<PostApprovalLabContract>> {
     const limit = options?.limit ?? 20;
     const page = options?.page ?? 1;
     const skip = (page - 1) * limit;
@@ -78,13 +95,13 @@ export class PostApprovalLabContractTypeOrmRepository
       skip,
       order: options?.orderBy
         ? ({ [options.orderBy]: options.orderDirection ?? 'ASC' } as any)
-        : { createdAt: 'DESC' } as any,
+        : ({ createdAt: 'DESC' } as any),
     });
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: entities.map(e => this.toDomain(e)),
+      data: entities.map((e) => this.toDomain(e)),
       meta: {
         page,
         limit,
@@ -110,11 +127,11 @@ export class PostApprovalLabContractTypeOrmRepository
       totalQuota: entity.totalQuota ?? 0,
       usedQuota: entity.usedQuota ?? 0,
       remainingQuota: entity.remainingQuota ?? 0,
-      baseAmount: Number(entity.baseAmount) ?? 0,
-      taxPercent: Number(entity.taxPercent) ?? 11,
-      taxAmount: Number(entity.taxAmount) ?? 0,
-      totalAmount: Number(entity.totalAmount) ?? 0,
-      initialFee: Number((entity as any).initialFee) ?? 0,
+      baseAmount: Number(entity.baseAmount ?? 0),
+      taxPercent: Number(entity.taxPercent ?? 11),
+      taxAmount: Number(entity.taxAmount ?? 0),
+      totalAmount: Number(entity.totalAmount ?? 0),
+      initialFee: Number((entity as any).initialFee ?? 0),
       contractDocumentUrl: entity.contractDocumentUrl,
       taxInvoiceUrl: entity.taxInvoiceUrl,
       status: entity.status as PostApprovalLabContract['status'],
@@ -183,21 +200,27 @@ export class PostApprovalLabContractTypeOrmRepository
     return entity;
   }
 
-  async findByContractNumber(contractNumber: string): Promise<PostApprovalLabContract | null> {
+  async findByContractNumber(
+    contractNumber: string,
+  ): Promise<PostApprovalLabContract | null> {
     const entity = await this.repository.findOne({ where: { contractNumber } });
     if (!entity) return null;
     const contract = this.toDomain(entity);
     const sampleEntities = await this.loadSamples(contract.id);
-    contract.lines = sampleEntities.map(s => this.toContractSample(s));
+    contract.lines = sampleEntities.map((s) => this.toContractSample(s));
     return contract;
   }
 
-  async findByTestingRequestId(testingRequestId: string): Promise<PostApprovalLabContract | null> {
-    const entity = await this.repository.findOne({ where: { testingRequestId } });
+  async findByTestingRequestId(
+    testingRequestId: string,
+  ): Promise<PostApprovalLabContract | null> {
+    const entity = await this.repository.findOne({
+      where: { testingRequestId },
+    });
     if (!entity) return null;
     const contract = this.toDomain(entity);
     const sampleEntities = await this.loadSamples(contract.id);
-    contract.lines = sampleEntities.map(s => this.toContractSample(s));
+    contract.lines = sampleEntities.map((s) => this.toContractSample(s));
     return contract;
   }
 

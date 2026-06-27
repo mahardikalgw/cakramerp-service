@@ -12,7 +12,11 @@ export class AddContractSampleQuantities20260614000003 implements MigrationInter
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE lab_contract_samples DROP COLUMN IF EXISTS used_quantity`);
-    await queryRunner.query(`ALTER TABLE lab_contract_samples DROP COLUMN IF EXISTS completed_quantity`);
+    await queryRunner.query(
+      `ALTER TABLE lab_contract_samples DROP COLUMN IF EXISTS used_quantity`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE lab_contract_samples DROP COLUMN IF EXISTS completed_quantity`,
+    );
   }
 }

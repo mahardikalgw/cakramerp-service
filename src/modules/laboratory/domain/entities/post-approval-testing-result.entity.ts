@@ -1,11 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type PostApprovalTestingResultStatus =
-  | 'draft'
-  | 'submitted'
-  | 'confirmed'
-  | 'rejected'
-  | 'archived';
+  'draft' | 'submitted' | 'confirmed' | 'rejected' | 'archived';
 
 export class PostApprovalTestingResult extends BaseEntity {
   declare id: string;

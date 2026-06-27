@@ -1,10 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type PaymentMethodType =
-  | 'bank_transfer'
-  | 'virtual_account'
-  | 'cash'
-  | 'cheque';
+  'bank_transfer' | 'virtual_account' | 'cash' | 'cheque';
 
 export type PaymentEvidenceStatus = 'pending' | 'verified' | 'rejected';
 

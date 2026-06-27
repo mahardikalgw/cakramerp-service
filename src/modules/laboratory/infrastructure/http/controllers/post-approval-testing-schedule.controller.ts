@@ -46,7 +46,9 @@ export class PostApprovalTestingScheduleController {
     const enriched = await Promise.all(
       result.data.map(async (schedule) => {
         try {
-          const contract = await this.contractRepo.findById(schedule.contractId);
+          const contract = await this.contractRepo.findById(
+            schedule.contractId,
+          );
           if (contract) {
             return {
               ...schedule,
@@ -55,7 +57,9 @@ export class PostApprovalTestingScheduleController {
               projectName: contract.projectName,
             };
           }
-        } catch {}
+        } catch {
+          /* ignore */
+        }
         return schedule;
       }),
     );
@@ -93,7 +97,9 @@ export class PostApprovalTestingScheduleController {
           projectName: contract.projectName,
         };
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return schedule;
   }
 
@@ -113,9 +119,16 @@ export class PostApprovalTestingScheduleController {
         projectName = contract.projectName ?? '';
         customerName = contract.customerName ?? '';
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return {
-      schedule: { ...result.schedule, contractNumber, projectName, customerName },
+      schedule: {
+        ...result.schedule,
+        contractNumber,
+        projectName,
+        customerName,
+      },
       sampleAllocations: result.sampleAllocations,
     };
   }

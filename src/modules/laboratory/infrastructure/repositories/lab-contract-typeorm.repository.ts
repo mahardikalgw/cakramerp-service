@@ -87,7 +87,7 @@ export class LabContractTypeOrmRepository
       : new Date();
     entity.expiresAt = domain.expiresAt
       ? new Date(domain.expiresAt)
-      : null as any;
+      : (null as any);
     entity.attachments = domain.attachments?.map((a) => {
       const attEntity = new LabContractAttachmentTypeOrmEntity();
       attEntity.id = a.id;

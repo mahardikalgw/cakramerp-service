@@ -1,4 +1,10 @@
-import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
@@ -45,12 +51,22 @@ export class PostApprovalTestingResultService {
     private readonly notificationEventService: NotificationEventService,
   ) {}
 
-  async findAll(options?: { status?: string; contractId?: string; scheduleId?: string; page?: number; limit?: number }) {
+  async findAll(options?: {
+    status?: string;
+    contractId?: string;
+    scheduleId?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const filters: Record<string, any> = {};
     if (options?.status) filters.status = options.status;
     if (options?.contractId) filters.contractId = options.contractId;
     if (options?.scheduleId) filters.scheduleId = options.scheduleId;
-    return this.repository.findAll({ filters, page: options?.page, limit: options?.limit });
+    return this.repository.findAll({
+      filters,
+      page: options?.page,
+      limit: options?.limit,
+    });
   }
 
   async findById(id: string): Promise<PostApprovalTestingResult | null> {
@@ -84,17 +100,23 @@ export class PostApprovalTestingResultService {
           projectLocation = contract.projectLocation ?? '';
           testingType = contract.testingType ?? '';
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     if (result.scheduleSampleId) {
       try {
-        const ss = await this.scheduleSampleRepo.findById(result.scheduleSampleId);
+        const ss = await this.scheduleSampleRepo.findById(
+          result.scheduleSampleId,
+        );
         if (ss) {
           sampleCode = ss.sampleCode ?? '';
           serviceName = ss.serviceName ?? '';
           if (result.scheduleId) {
-            const schedule = await this.scheduleRepo.findById(result.scheduleId);
+            const schedule = await this.scheduleRepo.findById(
+              result.scheduleId,
+            );
             if (schedule) {
               scheduleDate = schedule.scheduledDate ?? '';
               scheduleTime = schedule.scheduledTime ?? '';
@@ -103,7 +125,9 @@ export class PostApprovalTestingResultService {
             }
           }
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     if (!sampleCode && result.sampleId) {
@@ -113,14 +137,20 @@ export class PostApprovalTestingResultService {
           sampleCode = cs.sampleCode ?? '';
           if (!serviceName) serviceName = cs.serviceName ?? '';
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     if (!serviceName && result.serviceName) {
       serviceName = result.serviceName;
     }
 
-    const { sampleUnit: _sampleUnit, scheduleSampleId: _scheduleSampleId, ...resultWithoutInternals } = result as any;
+    const {
+      sampleUnit: _sampleUnit,
+      scheduleSampleId: _scheduleSampleId,
+      ...resultWithoutInternals
+    } = result as any;
 
     return {
       ...resultWithoutInternals,
@@ -138,7 +168,11 @@ export class PostApprovalTestingResultService {
     };
   }
 
-  async generateCertificate(id: string, userId: string, userName: string): Promise<Record<string, any>> {
+  async generateCertificate(
+    id: string,
+    userId: string,
+    userName: string,
+  ): Promise<Record<string, any>> {
     const enriched = await this.findByIdEnriched(id);
 
     const parameters = (enriched.resultData as any)?.parameters ?? [];
@@ -164,7 +198,11 @@ export class PostApprovalTestingResultService {
         customerName: enriched.customerName || '-',
         projectName: enriched.projectName || '-',
         testingServiceName: enriched.serviceName || '-',
-        submittedAt: enriched.submittedAt ? (typeof enriched.submittedAt === 'string' ? enriched.submittedAt.split('T')[0] : new Date(enriched.submittedAt).toISOString().split('T')[0]) : '-',
+        submittedAt: enriched.submittedAt
+          ? typeof enriched.submittedAt === 'string'
+            ? enriched.submittedAt.split('T')[0]
+            : new Date(enriched.submittedAt).toISOString().split('T')[0]
+          : '-',
         submittedByName: enriched.submittedByName || '-',
         laboranName: enriched.laboranName || enriched.submittedByName || '-',
         customerSignatureName: enriched.customerName || '-',
@@ -213,13 +251,19 @@ export class PostApprovalTestingResultService {
       fileUrl,
       fileType: 'signed_certificate',
     } as any);
-    const saved = (await this.attachmentRepo.save(attachment)) as unknown as TestResultAttachmentTypeOrmEntity;
+    const saved = (await this.attachmentRepo.save(
+      attachment,
+    )) as unknown as TestResultAttachmentTypeOrmEntity;
 
-    this.logger.log(`Signed certificate uploaded for result ${testResultId}: ${objectName}`);
+    this.logger.log(
+      `Signed certificate uploaded for result ${testResultId}: ${objectName}`,
+    );
     return saved;
   }
 
-  async getSignedCertificate(testResultId: string): Promise<{ url: string; fileName: string } | null> {
+  async getSignedCertificate(
+    testResultId: string,
+  ): Promise<{ url: string; fileName: string } | null> {
     const attachments = await this.attachmentRepo.find({
       where: { testResultId, fileType: 'signed_certificate' } as any,
       order: { createdAt: 'DESC' } as any,
@@ -236,16 +280,26 @@ export class PostApprovalTestingResultService {
     return { url, fileName: attachment.fileName };
   }
 
-  async findByContractId(contractId: string): Promise<PostApprovalTestingResult[]> {
+  async findByContractId(
+    contractId: string,
+  ): Promise<PostApprovalTestingResult[]> {
     return this.repository.findByContractId(contractId);
   }
 
-  async findByScheduleId(scheduleId: string): Promise<PostApprovalTestingResult[]> {
+  async findByScheduleId(
+    scheduleId: string,
+  ): Promise<PostApprovalTestingResult[]> {
     return this.repository.findByScheduleId(scheduleId);
   }
 
-  async findByUnit(scheduleSampleId: string, sampleUnit: number): Promise<PostApprovalTestingResult | null> {
-    return this.repository.findByScheduleSampleUnit(scheduleSampleId, sampleUnit);
+  async findByUnit(
+    scheduleSampleId: string,
+    sampleUnit: number,
+  ): Promise<PostApprovalTestingResult | null> {
+    return this.repository.findByScheduleSampleUnit(
+      scheduleSampleId,
+      sampleUnit,
+    );
   }
 
   async createOrUpdate(data: {
@@ -261,13 +315,19 @@ export class PostApprovalTestingResultService {
     const ss = await this.scheduleSampleRepo.findById(data.scheduleSampleId);
     if (!ss) throw new NotFoundException('Schedule sample not found');
     if (data.sampleUnit < 1 || data.sampleUnit > ss.allocatedQuantity) {
-      throw new BadRequestException(`sample_unit must be 1..${ss.allocatedQuantity}, got ${data.sampleUnit}`);
+      throw new BadRequestException(
+        `sample_unit must be 1..${ss.allocatedQuantity}, got ${data.sampleUnit}`,
+      );
     }
 
-    const existing = await this.repository.findByScheduleSampleUnit(data.scheduleSampleId, data.sampleUnit);
+    const existing = await this.repository.findByScheduleSampleUnit(
+      data.scheduleSampleId,
+      data.sampleUnit,
+    );
 
     if (existing) {
-      if (existing.status !== 'draft') throw new BadRequestException('Only draft results can be updated');
+      if (existing.status !== 'draft')
+        throw new BadRequestException('Only draft results can be updated');
       existing.resultData = data.resultData;
       existing.resultNotes = data.resultNotes || null;
       return this.repository.save(existing);
@@ -278,11 +338,15 @@ export class PostApprovalTestingResultService {
     try {
       const cs = await this.contractSampleRepo.findById(ss.contractSampleId);
       if (cs) testingServiceId = cs.testingServiceId;
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     try {
       const schedule = await this.scheduleRepo.findById(data.scheduleId);
       if (schedule?.contractId) contractId = schedule.contractId;
-    } catch {}
+    } catch {
+      /* ignore */
+    }
 
     const result = new PostApprovalTestingResult({
       resultNumber: `PTR-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
@@ -307,10 +371,15 @@ export class PostApprovalTestingResultService {
     return this.repository.save(result);
   }
 
-  async submit(id: string, userId: string, userName: string): Promise<PostApprovalTestingResult> {
+  async submit(
+    id: string,
+    userId: string,
+    userName: string,
+  ): Promise<PostApprovalTestingResult> {
     const result = await this.repository.findById(id);
     if (!result) throw new NotFoundException('Testing result not found');
-    if (result.status !== 'draft') throw new BadRequestException('Only draft results can be submitted');
+    if (result.status !== 'draft')
+      throw new BadRequestException('Only draft results can be submitted');
 
     result.status = 'submitted';
     result.submittedAt = new Date();
@@ -318,19 +387,26 @@ export class PostApprovalTestingResultService {
 
     if (saved.scheduleSampleId) {
       try {
-        const ss = await this.scheduleSampleRepo.findById(saved.scheduleSampleId);
+        const ss = await this.scheduleSampleRepo.findById(
+          saved.scheduleSampleId,
+        );
         if (ss && ss.usedQuantity < ss.allocatedQuantity) {
           ss.usedQuantity += 1;
           await this.scheduleSampleRepo.save(ss);
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     let testingRequestId = saved.contractId;
     try {
       const contract = await this.contractRepo.findById(saved.contractId);
-      if (contract?.testingRequestId) testingRequestId = contract.testingRequestId;
-    } catch {}
+      if (contract?.testingRequestId)
+        testingRequestId = contract.testingRequestId;
+    } catch {
+      /* ignore */
+    }
 
     void this.activityLog.log({
       testingRequestId,
@@ -338,7 +414,11 @@ export class PostApprovalTestingResultService {
       performedBy: userId,
       performedByName: userName,
       performedByRole: 'laboran',
-      details: { resultId: saved.id, sampleId: saved.sampleId, sampleUnit: saved.sampleUnit },
+      details: {
+        resultId: saved.id,
+        sampleId: saved.sampleId,
+        sampleUnit: saved.sampleUnit,
+      },
     });
 
     let schedule: any = null;
@@ -346,16 +426,25 @@ export class PostApprovalTestingResultService {
       if (saved.scheduleId) {
         schedule = await this.scheduleRepo.findById(saved.scheduleId);
       }
-    } catch {}
-    void this.notificationEventService.onTestResultSubmitted(saved, schedule).catch(() => {});
+    } catch {
+      /* ignore */
+    }
+    void this.notificationEventService
+      .onTestResultSubmitted(saved, schedule)
+      .catch(() => {});
 
     return saved;
   }
 
-  async confirmByCustomer(id: string, userId: string, userName: string): Promise<PostApprovalTestingResult> {
+  async confirmByCustomer(
+    id: string,
+    userId: string,
+    userName: string,
+  ): Promise<PostApprovalTestingResult> {
     const result = await this.repository.findById(id);
     if (!result) throw new NotFoundException('Testing result not found');
-    if (result.status !== 'submitted') throw new BadRequestException('Only submitted results can be confirmed');
+    if (result.status !== 'submitted')
+      throw new BadRequestException('Only submitted results can be confirmed');
 
     result.status = 'confirmed';
     result.confirmedBy = userId;
@@ -373,32 +462,48 @@ export class PostApprovalTestingResultService {
           }
           await this.contractSampleRepo.save(cs);
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     if (saved.scheduleSampleId) {
       try {
-        const ss = await this.scheduleSampleRepo.findById(saved.scheduleSampleId);
+        const ss = await this.scheduleSampleRepo.findById(
+          saved.scheduleSampleId,
+        );
         if (ss) {
           ss.completedQuantity += 1;
           await this.scheduleSampleRepo.save(ss);
 
-          const allSamples = await this.scheduleSampleRepo.findByScheduleId(saved.scheduleId!);
-          const allCompleted = allSamples.every(s => s.completedQuantity >= s.allocatedQuantity);
+          const allSamples = await this.scheduleSampleRepo.findByScheduleId(
+            saved.scheduleId!,
+          );
+          const allCompleted = allSamples.every(
+            (s) => s.completedQuantity >= s.allocatedQuantity,
+          );
           if (allCompleted) {
             try {
-              const schedule = await this.scheduleRepo.findById(saved.scheduleId!);
+              const schedule = await this.scheduleRepo.findById(
+                saved.scheduleId!,
+              );
               if (schedule) {
                 schedule.status = 'completed';
                 await this.scheduleRepo.save(schedule);
               }
-            } catch {}
+            } catch {
+              /* ignore */
+            }
           }
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
-    const contract = await this.contractRepo.findById(saved.contractId).catch(() => null);
+    const contract = await this.contractRepo
+      .findById(saved.contractId)
+      .catch(() => null);
     if (contract) {
       // Unlimited contracts have no meaningful per-result quota and must stay
       // 'active' so customers can keep submitting testing requests under them.
@@ -409,21 +514,27 @@ export class PostApprovalTestingResultService {
         // no-op
       } else {
         contract.usedQuota = (contract.usedQuota ?? 0) + 1;
-        contract.remainingQuota = Math.max(0, (contract.totalQuota ?? 0) - contract.usedQuota);
+        contract.remainingQuota = Math.max(
+          0,
+          (contract.totalQuota ?? 0) - contract.usedQuota,
+        );
         await this.contractRepo.save(contract);
 
         try {
-          const allContractSamples = await this.contractSampleRepo.findByContractId(saved.contractId);
+          const allContractSamples =
+            await this.contractSampleRepo.findByContractId(saved.contractId);
           if (allContractSamples.length > 0) {
             const allDone = allContractSamples.every(
-              s => (s.completedQuantity ?? 0) >= (s.sampleQuantity ?? 1),
+              (s) => (s.completedQuantity ?? 0) >= (s.sampleQuantity ?? 1),
             );
             if (allDone && contract.status !== 'completed') {
               contract.status = 'completed';
               await this.contractRepo.save(contract);
             }
           }
-        } catch {}
+        } catch {
+          /* ignore */
+        }
       }
     }
 
@@ -434,13 +545,17 @@ export class PostApprovalTestingResultService {
           const cs = await this.contractSampleRepo.findById(saved.sampleId);
           tsi = cs?.testingServiceId ?? null;
         } catch (err: any) {
-          this.logger.warn(`[CONFIRM] Failed to look up testingServiceId from contract sample ${saved.sampleId}: ${err?.message}`);
+          this.logger.warn(
+            `[CONFIRM] Failed to look up testingServiceId from contract sample ${saved.sampleId}: ${err?.message}`,
+          );
         }
       }
 
       try {
-        const quotas = await this.sampleQuotaRepo.findByTestingRequestId(contract.testingRequestId);
-        const matchingQuota = quotas.find(q => q.testingServiceId === tsi);
+        const quotas = await this.sampleQuotaRepo.findByTestingRequestId(
+          contract.testingRequestId,
+        );
+        const matchingQuota = quotas.find((q) => q.testingServiceId === tsi);
         if (matchingQuota) {
           matchingQuota.usedQuota = (matchingQuota.usedQuota ?? 0) + 1;
           matchingQuota.remainingQuota = Math.max(
@@ -450,7 +565,7 @@ export class PostApprovalTestingResultService {
           await this.sampleQuotaRepo.save(matchingQuota);
           this.logger.log(
             `[CONFIRM] Sample quota reduced: service=${tsi}, request=${contract.testingRequestId}, ` +
-            `used=${matchingQuota.usedQuota}/${matchingQuota.totalQuota}`,
+              `used=${matchingQuota.usedQuota}/${matchingQuota.totalQuota}`,
           );
         } else if (tsi) {
           this.logger.warn(
@@ -462,7 +577,9 @@ export class PostApprovalTestingResultService {
           );
         }
       } catch (err: any) {
-        this.logger.error(`[CONFIRM] Failed to reduce sample quota: ${err?.message}`);
+        this.logger.error(
+          `[CONFIRM] Failed to reduce sample quota: ${err?.message}`,
+        );
       }
     }
 
@@ -488,12 +605,15 @@ export class PostApprovalTestingResultService {
           projectName: enriched.projectName || '-',
           testingServiceName: enriched.serviceName || '-',
           submittedAt: saved.submittedAt
-            ? (typeof saved.submittedAt === 'string' ? (saved.submittedAt as string).split('T')[0] : new Date(saved.submittedAt).toISOString().split('T')[0])
+            ? typeof saved.submittedAt === 'string'
+              ? (saved.submittedAt as string).split('T')[0]
+              : new Date(saved.submittedAt).toISOString().split('T')[0]
             : '-',
           submittedByName: saved.submittedByName || '-',
           laboranName: enriched.laboranName || saved.submittedByName || '-',
           customerSignatureName: enriched.customerName || '-',
-          labSignatureName: enriched.laboranName || saved.submittedByName || '-',
+          labSignatureName:
+            enriched.laboranName || saved.submittedByName || '-',
           certificateDate: new Date().toISOString().split('T')[0],
           resultNotes: enriched.resultNotes || '',
           resultNumber: enriched.resultNumber || '',
@@ -510,7 +630,9 @@ export class PostApprovalTestingResultService {
       this.logger.warn(`Certificate generation failed: ${err?.message}`);
     }
 
-    const confirmedContract = await this.contractRepo.findById(saved.contractId).catch(() => null);
+    const confirmedContract = await this.contractRepo
+      .findById(saved.contractId)
+      .catch(() => null);
     void this.activityLog.log({
       testingRequestId: confirmedContract?.testingRequestId ?? saved.contractId,
       action: 'testing_result_confirmed',
@@ -520,24 +642,42 @@ export class PostApprovalTestingResultService {
       details: { resultId: saved.id },
     });
 
-    void this.notificationEventService.onTestResultConfirmed(saved).catch(() => {});
+    void this.notificationEventService
+      .onTestResultConfirmed(saved)
+      .catch(() => {});
 
     if (saved.scheduleId) {
       try {
-        const scheduleCheck = await this.scheduleRepo.findById(saved.scheduleId);
-        if (scheduleCheck && scheduleCheck.status === 'completed' && confirmedContract) {
-          void this.notificationEventService.onScheduleCompleted(scheduleCheck, confirmedContract).catch(() => {});
+        const scheduleCheck = await this.scheduleRepo.findById(
+          saved.scheduleId,
+        );
+        if (
+          scheduleCheck &&
+          scheduleCheck.status === 'completed' &&
+          confirmedContract
+        ) {
+          void this.notificationEventService
+            .onScheduleCompleted(scheduleCheck, confirmedContract)
+            .catch(() => {});
         }
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     return saved;
   }
 
-  async reject(id: string, reason: string, userId: string, userName: string): Promise<PostApprovalTestingResult> {
+  async reject(
+    id: string,
+    reason: string,
+    userId: string,
+    userName: string,
+  ): Promise<PostApprovalTestingResult> {
     const result = await this.repository.findById(id);
     if (!result) throw new NotFoundException('Testing result not found');
-    if (result.status !== 'submitted') throw new BadRequestException('Only submitted results can be rejected');
+    if (result.status !== 'submitted')
+      throw new BadRequestException('Only submitted results can be rejected');
 
     result.status = 'rejected';
     result.rejectionReason = reason;

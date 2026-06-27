@@ -1,7 +1,10 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger, Inject } from '@nestjs/common';
 import { AUDIT_LOG_QUEUE_NAME } from './audit-log.constants';
-import { AuditLog, AuditAction } from '../modules/audit/domain/entities/audit-log.entity';
+import {
+  AuditLog,
+  AuditAction,
+} from '../modules/audit/domain/entities/audit-log.entity';
 import type { AuditLogRepositoryPort } from '../modules/audit/domain/repositories/audit-log-repository.port';
 import { AUDIT_LOG_REPOSITORY } from '../modules/audit/domain/repositories/audit-log-repository.port';
 

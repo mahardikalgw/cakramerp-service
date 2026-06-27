@@ -1,11 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type AccountType =
-  | 'asset'
-  | 'liability'
-  | 'equity'
-  | 'revenue'
-  | 'expense';
+  'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
 
 export class Account extends BaseEntity {
   declare id: string;

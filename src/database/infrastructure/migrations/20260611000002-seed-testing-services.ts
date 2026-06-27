@@ -25,35 +25,40 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Analisis Saringan Tanah (Sieve Analysis)',
         unitPrice: 250000,
         measurementUnit: 'sampel',
-        description: 'Analisis distribusi ukuran butiran tanah sesuai SNI 3423:2008',
+        description:
+          'Analisis distribusi ukuran butiran tanah sesuai SNI 3423:2008',
       },
       {
         code: 'SRV-SOIL-004',
         name: 'Uji Batas Atterberg (Atterberg Limits Test)',
         unitPrice: 300000,
         measurementUnit: 'sampel',
-        description: 'Pengujian batas cair dan batas plastis tanah sesuai SNI 1966:2008 dan SNI 1967:2008',
+        description:
+          'Pengujian batas cair dan batas plastis tanah sesuai SNI 1966:2008 dan SNI 1967:2008',
       },
       {
         code: 'SRV-SOIL-005',
         name: 'Uji Pemadatan Tanah (Proctor Compaction Test)',
         unitPrice: 350000,
         measurementUnit: 'sampel',
-        description: 'Pengujian pemadatan tanah metode standar sesuai SNI 1742:2008',
+        description:
+          'Pengujian pemadatan tanah metode standar sesuai SNI 1742:2008',
       },
       {
         code: 'SRV-SOIL-006',
         name: 'Uji CBR Laboratorium (Laboratory CBR Test)',
         unitPrice: 500000,
         measurementUnit: 'sampel',
-        description: 'Pengujian California Bearing Ratio di laboratorium sesuai SNI 1744:2012',
+        description:
+          'Pengujian California Bearing Ratio di laboratorium sesuai SNI 1744:2012',
       },
       {
         code: 'SRV-SOIL-007',
         name: 'Uji Permeabilitas Tanah (Permeability Test)',
         unitPrice: 400000,
         measurementUnit: 'sampel',
-        description: 'Pengujian koefisien permeabilitas tanah dengan kepala tetap atau kepala turun',
+        description:
+          'Pengujian koefisien permeabilitas tanah dengan kepala tetap atau kepala turun',
       },
       {
         code: 'SRV-SOIL-008',
@@ -67,14 +72,16 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Triaxial UU (Unconsolidated Undrained Triaxial Test)',
         unitPrice: 700000,
         measurementUnit: 'sampel',
-        description: 'Pengujian triaksial tanpa konsolidasi dan tak terdrainasi sesuai SNI',
+        description:
+          'Pengujian triaksial tanpa konsolidasi dan tak terdrainasi sesuai SNI',
       },
       {
         code: 'SRV-SOIL-010',
         name: 'Uji Konsolidasi Tanah (Consolidation Test)',
         unitPrice: 800000,
         measurementUnit: 'sampel',
-        description: 'Pengujian pemampatan tanah satu dimensi sesuai SNI 2812:2011',
+        description:
+          'Pengujian pemampatan tanah satu dimensi sesuai SNI 2812:2011',
       },
 
       // ── CONCRETE TESTING ──────────────────────────────────────────────
@@ -90,35 +97,40 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Kuat Tekan Beton Silinder (Compressive Strength - Cylinder)',
         unitPrice: 150000,
         measurementUnit: 'benda uji',
-        description: 'Pengujian kuat tekan beton dengan benda uji silinder 15x30 cm sesuai SNI 1974:2011',
+        description:
+          'Pengujian kuat tekan beton dengan benda uji silinder 15x30 cm sesuai SNI 1974:2011',
       },
       {
         code: 'SRV-BETON-003',
         name: 'Uji Kuat Tekan Beton Kubus (Compressive Strength - Cube)',
         unitPrice: 150000,
         measurementUnit: 'benda uji',
-        description: 'Pengujian kuat tekan beton dengan benda uji kubus 15x15x15 cm',
+        description:
+          'Pengujian kuat tekan beton dengan benda uji kubus 15x15x15 cm',
       },
       {
         code: 'SRV-BETON-004',
         name: 'Uji Kuat Lentur Beton (Flexural Strength Test)',
         unitPrice: 250000,
         measurementUnit: 'benda uji',
-        description: 'Pengujian kuat lentur beton dengan balok uji sesuai SNI 4431:2011',
+        description:
+          'Pengujian kuat lentur beton dengan balok uji sesuai SNI 4431:2011',
       },
       {
         code: 'SRV-BETON-005',
         name: 'Uji Core Drill Beton (Core Drill Test)',
         unitPrice: 500000,
         measurementUnit: 'titik',
-        description: 'Pengambilan dan pengujian inti beton dari struktur eksisting',
+        description:
+          'Pengambilan dan pengujian inti beton dari struktur eksisting',
       },
       {
         code: 'SRV-BETON-006',
         name: 'Uji Hammer Test Beton (Schmidt Hammer Test)',
         unitPrice: 200000,
         measurementUnit: 'titik',
-        description: 'Pengujian perkiraan kuat tekan beton non-destruktif dengan palu pantul',
+        description:
+          'Pengujian perkiraan kuat tekan beton non-destruktif dengan palu pantul',
       },
 
       // ── AGGREGATE TESTING ─────────────────────────────────────────────
@@ -127,14 +139,16 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Analisis Saringan Agregat (Aggregate Sieve Analysis)',
         unitPrice: 200000,
         measurementUnit: 'sampel',
-        description: 'Analisis gradasi agregat halus dan kasar sesuai SNI ASTM C136:2012',
+        description:
+          'Analisis gradasi agregat halus dan kasar sesuai SNI ASTM C136:2012',
       },
       {
         code: 'SRV-AGG-002',
         name: 'Uji Keausan Agregat Los Angeles (Los Angeles Abrasion Test)',
         unitPrice: 350000,
         measurementUnit: 'sampel',
-        description: 'Pengujian ketahanan aus agregat kasar sesuai SNI 2417:2008',
+        description:
+          'Pengujian ketahanan aus agregat kasar sesuai SNI 2417:2008',
       },
       {
         code: 'SRV-AGG-003',
@@ -148,7 +162,8 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Kadar Lumpur Agregat (Clay Content Test)',
         unitPrice: 150000,
         measurementUnit: 'sampel',
-        description: 'Pengujian kadar lumpur dan lempung dalam agregat sesuai SNI 4141:2015',
+        description:
+          'Pengujian kadar lumpur dan lempung dalam agregat sesuai SNI 4141:2015',
       },
 
       // ── ASPHALT TESTING ───────────────────────────────────────────────
@@ -157,7 +172,8 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Marshall Aspal (Marshall Test)',
         unitPrice: 600000,
         measurementUnit: 'campuran',
-        description: 'Pengujian campuran beraspal dengan metode Marshall sesuai SNI 06-2489-1991',
+        description:
+          'Pengujian campuran beraspal dengan metode Marshall sesuai SNI 06-2489-1991',
       },
       {
         code: 'SRV-ASP-002',
@@ -178,7 +194,8 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Ekstraksi Aspal (Asphalt Extraction Test)',
         unitPrice: 400000,
         measurementUnit: 'sampel',
-        description: 'Pengujian kadar aspal dalam campuran beraspal sesuai SNI 03-3640-1994',
+        description:
+          'Pengujian kadar aspal dalam campuran beraspal sesuai SNI 03-3640-1994',
       },
 
       // ── FIELD TESTING ─────────────────────────────────────────────────
@@ -194,7 +211,8 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         name: 'Uji Sandcone (Sand Cone Test)',
         unitPrice: 400000,
         measurementUnit: 'titik',
-        description: 'Pengujian kepadatan tanah di lapangan dengan metode kerucut pasir sesuai SNI 03-2828-1992',
+        description:
+          'Pengujian kepadatan tanah di lapangan dengan metode kerucut pasir sesuai SNI 03-2828-1992',
       },
       {
         code: 'SRV-FIELD-003',
@@ -210,7 +228,13 @@ export class SeedTestingServices20260611000002 implements MigrationInterface {
         `INSERT INTO testing_services (code, name, unit_price, measurement_unit, description, is_active)
          VALUES ($1, $2, $3, $4, $5, TRUE)
          ON CONFLICT (code) DO NOTHING`,
-        [svc.code, svc.name, svc.unitPrice, svc.measurementUnit, svc.description],
+        [
+          svc.code,
+          svc.name,
+          svc.unitPrice,
+          svc.measurementUnit,
+          svc.description,
+        ],
       );
     }
   }

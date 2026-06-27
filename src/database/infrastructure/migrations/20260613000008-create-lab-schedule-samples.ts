@@ -18,8 +18,12 @@ export class CreateLabScheduleSamples20260613000008 implements MigrationInterfac
         updated_at TIMESTAMP NOT NULL DEFAULT now()
       )
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lab_schedule_samples_schedule ON lab_schedule_samples(schedule_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_lab_schedule_samples_contract_sample ON lab_schedule_samples(contract_sample_id)`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lab_schedule_samples_schedule ON lab_schedule_samples(schedule_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_lab_schedule_samples_contract_sample ON lab_schedule_samples(contract_sample_id)`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

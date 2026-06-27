@@ -11,7 +11,11 @@ export class AddDownPaymentToSalesOrders1718668800001 implements MigrationInterf
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE testing_requests DROP COLUMN IF EXISTS down_payment_amount;`);
-    await queryRunner.query(`ALTER TABLE sales_orders DROP COLUMN IF EXISTS down_payment_amount;`);
+    await queryRunner.query(
+      `ALTER TABLE testing_requests DROP COLUMN IF EXISTS down_payment_amount;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE sales_orders DROP COLUMN IF EXISTS down_payment_amount;`,
+    );
   }
 }

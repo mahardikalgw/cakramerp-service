@@ -97,9 +97,14 @@ export class AuthService implements AuthServicePort {
     // Fetch user with roles and permissions
     const userWithRoles = await this.userRepository.findById(user.id);
 
-    return this.generateTokens(user.id, user.email, userWithRoles ?? undefined, {
-      ipAddress: command.ipAddress,
-    });
+    return this.generateTokens(
+      user.id,
+      user.email,
+      userWithRoles ?? undefined,
+      {
+        ipAddress: command.ipAddress,
+      },
+    );
   }
 
   async refresh(
@@ -113,7 +118,9 @@ export class AuthService implements AuthServicePort {
     }
 
     // Session binding check: reject if IP or user agent changed
-    if (!stored.isSessionValid(sessionInfo?.ipAddress, sessionInfo?.userAgent)) {
+    if (
+      !stored.isSessionValid(sessionInfo?.ipAddress, sessionInfo?.userAgent)
+    ) {
       await this.authRepository.delete(stored.id);
       await this.enqueueAuditLog({
         userId: stored.userId,

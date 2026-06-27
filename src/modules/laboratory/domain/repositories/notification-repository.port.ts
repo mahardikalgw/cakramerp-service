@@ -9,7 +9,10 @@ export interface NotificationRepositoryPort extends RepositoryPort<Notification>
   countUnreadByRecipientUserId(recipientUserId: string): Promise<number>;
   markAsRead(id: string): Promise<Notification | null>;
   markAllAsRead(recipientUserId: string): Promise<number>;
-  markAsReadByIdAndRecipient(id: string, recipientUserId: string): Promise<boolean>;
+  markAsReadByIdAndRecipient(
+    id: string,
+    recipientUserId: string,
+  ): Promise<boolean>;
 }
 
 export const NOTIFICATION_REPOSITORY = Symbol('NOTIFICATION_REPOSITORY');

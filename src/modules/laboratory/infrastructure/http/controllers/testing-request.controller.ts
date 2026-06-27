@@ -249,8 +249,13 @@ export class TestingRequestController {
   @RequirePermissions('testing-requests:approve')
   async confirmDpPayment(@Param('id') id: string, @Req() req: any) {
     const user = req.user ?? {};
-    const userName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
-    return this.testingRequestService.confirmDpPayment(id, user.id ?? 'unknown', userName);
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.confirmDpPayment(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
   }
 
   @Patch('testing-requests/:id/confirm-signed-contract')
@@ -266,4 +271,3 @@ export class TestingRequestController {
     );
   }
 }
-

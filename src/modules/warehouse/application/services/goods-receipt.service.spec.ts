@@ -7,7 +7,7 @@ import {
 } from './goods-receipt.service';
 import { GOODS_RECEIPT_REPOSITORY } from '../../domain/repositories/goods-receipt-repository.port';
 import { STOCK_MOVEMENT_SERVICE } from '../ports/stock-movement-service.port';
-import { GL_POSTING_QUEUE_SERVICE } from '../../../finance/application/ports/gl-posting-queue-service.port';
+import { GL_POSTING_QUEUE_PORT } from '../../../../shared/kernel/domain/ports/gl-posting-queue.port';
 
 describe('GoodsReceiptService', () => {
   let service: GoodsReceiptService;
@@ -76,7 +76,7 @@ describe('GoodsReceiptService', () => {
         GoodsReceiptService,
         { provide: GOODS_RECEIPT_REPOSITORY, useValue: goodsReceiptRepo },
         { provide: STOCK_MOVEMENT_SERVICE, useValue: stockMovementService },
-        { provide: GL_POSTING_QUEUE_SERVICE, useValue: glPostingQueueService },
+        { provide: GL_POSTING_QUEUE_PORT, useValue: glPostingQueueService },
         { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();

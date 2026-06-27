@@ -7,7 +7,10 @@ import { LabScheduleSampleRepositoryPort } from '../../domain/repositories/lab-s
 
 @Injectable()
 export class LabScheduleSampleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<LabScheduleSample, LabScheduleSampleTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    LabScheduleSample,
+    LabScheduleSampleTypeOrmEntity
+  >
   implements LabScheduleSampleRepositoryPort
 {
   protected readonly repository: Repository<LabScheduleSampleTypeOrmEntity>;

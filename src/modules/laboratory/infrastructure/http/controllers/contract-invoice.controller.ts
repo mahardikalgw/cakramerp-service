@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
@@ -7,7 +15,9 @@ import { ContractInvoiceService } from '../../../application/services/contract-i
 @Controller('laboratory')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ContractInvoiceController {
-  constructor(private readonly contractInvoiceService: ContractInvoiceService) {}
+  constructor(
+    private readonly contractInvoiceService: ContractInvoiceService,
+  ) {}
 
   @Get('contract-invoices')
   @RequirePermissions('contracts:read')

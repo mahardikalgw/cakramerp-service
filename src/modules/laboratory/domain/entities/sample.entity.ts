@@ -1,10 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type SampleStatus =
-  | 'awaiting_delivery'
-  | 'received'
-  | 'processing'
-  | 'completed';
+  'awaiting_delivery' | 'received' | 'processing' | 'completed';
 
 export class Sample extends BaseEntity {
   declare id: string;

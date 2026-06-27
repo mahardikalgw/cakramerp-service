@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
@@ -10,9 +10,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { QueueModule } from './queues/queue.module';
-import { TelemetryModule } from './telemetry/telemetry.module';
-import { MetricsInterceptor } from './telemetry/metrics.interceptor';
-import { traceContextMixin } from './telemetry/trace-context.mixin';
 import { UserModule } from './modules/user';
 import { AuthModule } from './modules/auth';
 import { IAMModule } from './modules/iam';
@@ -46,8 +43,6 @@ import { envConfig } from './config/env.config';
             : undefined,
         level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
         autoLogging: true,
-        // Inject OTel trace_id + span_id into every log entry
-        mixin: traceContextMixin,
         serializers: {
           req(req) {
             return { method: req.method, url: req.url };
@@ -79,7 +74,6 @@ import { envConfig } from './config/env.config';
     TerminusModule,
     DatabaseModule,
     QueueModule,
-    TelemetryModule,
     HealthModule,
     DocumentGenerationModule,
     UserModule,
@@ -106,10 +100,6 @@ import { envConfig } from './config/env.config';
     {
       provide: APP_GUARD,
       useClass: UserThrottlerGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: MetricsInterceptor,
     },
   ],
 })

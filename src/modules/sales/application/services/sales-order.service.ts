@@ -281,7 +281,9 @@ export class SalesOrderService {
         outputFormat: 'pdf',
       });
     } catch {
-      this.logger.warn(`SO document generation failed (non-blocking) for SO ${id}`);
+      this.logger.warn(
+        `SO document generation failed (non-blocking) for SO ${id}`,
+      );
     }
 
     return this.findById(id);

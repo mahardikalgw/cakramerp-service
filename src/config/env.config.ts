@@ -35,12 +35,6 @@ export const envConfig = {
     secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
     bucket: process.env.MINIO_BUCKET || 'documents',
   },
-  otel: {
-    enabled: process.env.OTEL_ENABLED === 'true',
-    exporterEndpoint:
-      process.env.OTEL_EXPORTER_ENDPOINT || 'http://localhost:4318/v1/traces',
-    serviceName: process.env.OTEL_SERVICE_NAME || 'cakramerp-service',
-  },
   documentService: {
     url: process.env.DOCUMENT_SERVICE_URL || 'http://localhost:8080',
   },

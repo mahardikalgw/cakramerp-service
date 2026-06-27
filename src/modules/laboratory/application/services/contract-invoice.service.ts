@@ -1,4 +1,10 @@
-import { Injectable, Inject, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ContractInvoice } from '../../domain/entities/contract-invoice.entity';
 import type { ContractInvoiceRepositoryPort } from '../../domain/repositories/contract-invoice-repository.port';
 import { CONTRACT_INVOICE_REPOSITORY } from '../../domain/repositories/contract-invoice-repository.port';
@@ -16,7 +22,12 @@ export class ContractInvoiceService {
     private readonly activityLog: LabActivityLogService,
   ) {}
 
-  async findAll(options?: { status?: string; contractId?: string; page?: number; limit?: number }) {
+  async findAll(options?: {
+    status?: string;
+    contractId?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const filters: Record<string, any> = {};
     if (options?.status) filters.status = options.status;
     if (options?.contractId) filters.contractId = options.contractId;
@@ -40,23 +51,32 @@ export class ContractInvoiceService {
   async getDownloadUrl(id: string): Promise<{ url: string; filename: string }> {
     const invoice = await this.repository.findById(id);
     if (!invoice) throw new NotFoundException('Contract invoice not found');
-    if (!invoice.invoiceDocumentUrl) throw new NotFoundException('Invoice document not yet generated');
+    if (!invoice.invoiceDocumentUrl)
+      throw new NotFoundException('Invoice document not yet generated');
     const url = await this.docHelper.getDownloadUrl(invoice.invoiceDocumentUrl);
     return { url, filename: `${invoice.invoiceNumber}.pdf` };
   }
 
-  async markAsPaid(id: string, adminUserId: string, adminUserName?: string): Promise<ContractInvoice> {
+  async markAsPaid(
+    id: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<ContractInvoice> {
     const invoice = await this.repository.findById(id);
     if (!invoice) throw new NotFoundException('Contract invoice not found');
-    if (invoice.status === 'paid') throw new BadRequestException('Invoice is already paid');
-    if (invoice.status === 'cancelled') throw new BadRequestException('Cannot mark cancelled invoice as paid');
+    if (invoice.status === 'paid')
+      throw new BadRequestException('Invoice is already paid');
+    if (invoice.status === 'cancelled')
+      throw new BadRequestException('Cannot mark cancelled invoice as paid');
 
     invoice.status = 'paid';
     invoice.paidAt = new Date();
     invoice.paidAmount = invoice.totalAmount;
     const saved = await this.repository.save(invoice);
 
-    this.logger.log(`Invoice ${invoice.invoiceNumber} marked as paid by ${adminUserId}`);
+    this.logger.log(
+      `Invoice ${invoice.invoiceNumber} marked as paid by ${adminUserId}`,
+    );
 
     return saved;
   }

@@ -1,11 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type LabContractStatus =
-  | 'draft'
-  | 'review'
-  | 'signed'
-  | 'active'
-  | 'closed';
+  'draft' | 'review' | 'signed' | 'active' | 'closed';
 
 export class LabContractAttachment extends BaseEntity {
   declare id: string;

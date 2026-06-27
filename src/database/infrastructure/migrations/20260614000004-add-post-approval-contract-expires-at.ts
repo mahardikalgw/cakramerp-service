@@ -11,6 +11,8 @@ export class AddPostApprovalContractExpiresAt20260614000004 implements Migration
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE lab_contracts DROP COLUMN IF EXISTS expires_at`);
+    await queryRunner.query(
+      `ALTER TABLE lab_contracts DROP COLUMN IF EXISTS expires_at`,
+    );
   }
 }

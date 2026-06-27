@@ -10,12 +10,7 @@ export class Spending extends BaseEntity {
   declare vendor: string | null;
   declare referenceNo: string | null;
   declare status:
-    | 'draft'
-    | 'pending'
-    | 'approved'
-    | 'rejected'
-    | 'paid'
-    | 'cancelled';
+    'draft' | 'pending' | 'approved' | 'rejected' | 'paid' | 'cancelled';
   declare paymentMethod: 'cash' | 'bank_transfer' | 'check' | 'credit_card';
   declare glPostingQueueId?: string;
   declare journalEntryId?: string;

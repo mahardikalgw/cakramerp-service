@@ -3,7 +3,9 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 
 @Entity('notifications')
 @Index('idx_notifications_recipient', ['recipientUserId'])
-@Index('idx_notifications_unread', ['recipientUserId', 'isRead'], { where: 'is_read = false' })
+@Index('idx_notifications_unread', ['recipientUserId', 'isRead'], {
+  where: 'is_read = false',
+})
 @Index('idx_notifications_created_at', ['createdAt'])
 @Index('idx_notifications_entity', ['entityType', 'entityId'])
 export class NotificationTypeOrmEntity extends TypeOrmBaseEntity {
@@ -22,7 +24,12 @@ export class NotificationTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true, name: 'action_url' })
   declare actionUrl: string | null;
 
-  @Column({ type: 'varchar', length: 100, nullable: true, name: 'action_label' })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    name: 'action_label',
+  })
   declare actionLabel: string | null;
 
   @Column({ type: 'varchar', length: 60, nullable: true, name: 'entity_type' })

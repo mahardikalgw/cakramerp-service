@@ -11,7 +11,11 @@ export class AddContractDocUrlsToTestingRequests1718668800002 implements Migrati
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE testing_requests DROP COLUMN IF EXISTS tax_invoice_url;`);
-    await queryRunner.query(`ALTER TABLE testing_requests DROP COLUMN IF EXISTS contract_document_url;`);
+    await queryRunner.query(
+      `ALTER TABLE testing_requests DROP COLUMN IF EXISTS tax_invoice_url;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE testing_requests DROP COLUMN IF EXISTS contract_document_url;`,
+    );
   }
 }

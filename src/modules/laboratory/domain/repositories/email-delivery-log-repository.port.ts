@@ -10,4 +10,6 @@ export interface EmailDeliveryLogRepositoryPort {
   }): Promise<void>;
 }
 
-export const EMAIL_DELIVERY_LOG_REPOSITORY = Symbol('EMAIL_DELIVERY_LOG_REPOSITORY');
+export const EMAIL_DELIVERY_LOG_REPOSITORY = Symbol(
+  'EMAIL_DELIVERY_LOG_REPOSITORY',
+);

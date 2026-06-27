@@ -9,10 +9,7 @@ export type ClosingChecklistItemType =
   | 'all_tests_completed';
 
 export type ClosingStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled';
+  'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export class ClosingChecklistItem extends BaseEntity {
   declare id: string;

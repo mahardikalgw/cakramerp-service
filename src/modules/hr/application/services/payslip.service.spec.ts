@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { PaySlipService } from './payslip.service';
 import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port';
+import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 
 describe('PaySlipService', () => {
   let service: PaySlipService;
   let payrollRepo: any;
+  let docHelper: any;
 
   beforeEach(async () => {
     payrollRepo = {
@@ -13,11 +15,15 @@ describe('PaySlipService', () => {
       findRunByMonthYear: jest.fn(),
       findDetailsByRunId: jest.fn(),
     };
+    docHelper = {
+      generateAsync: jest.fn().mockResolvedValue({}),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaySlipService,
         { provide: PAYROLL_REPOSITORY, useValue: payrollRepo },
+        { provide: DocumentGenerationHelper, useValue: docHelper },
       ],
     }).compile();
 

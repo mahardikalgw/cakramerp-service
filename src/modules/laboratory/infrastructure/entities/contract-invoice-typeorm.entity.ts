@@ -18,19 +18,48 @@ export class ContractInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'int', default: 0, name: 'total_samples' })
   declare totalSamples: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'base_amount' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'base_amount',
+  })
   declare baseAmount: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 11, name: 'tax_percent' })
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 11,
+    name: 'tax_percent',
+  })
   declare taxPercent: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'tax_amount' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'tax_amount',
+  })
   declare taxAmount: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'total_amount' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'total_amount',
+  })
   declare totalAmount: number;
 
-  @Column({ type: 'varchar', length: 500, nullable: true, name: 'invoice_document_url' })
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'invoice_document_url',
+  })
   declare invoiceDocumentUrl: string | null;
 
   @Column({ type: 'varchar', length: 50, default: 'issued' })
@@ -39,6 +68,12 @@ export class ContractInvoiceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'timestamptz', nullable: true, name: 'paid_at' })
   declare paidAt: Date | null;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true, name: 'paid_amount' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    nullable: true,
+    name: 'paid_amount',
+  })
   declare paidAmount: number | null;
 }

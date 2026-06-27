@@ -5,7 +5,9 @@ import { LabContractSample } from '../../domain/entities/post-approval-lab-contr
 import { PostApprovalLabContractSampleTypeOrmEntity } from '../entities/post-approval-lab-contract-sample-typeorm.entity';
 import { RepositoryPort } from '../../../../shared/kernel/domain/repositories/repository.port';
 
-export const LAB_CONTRACT_SAMPLE_REPOSITORY = Symbol('LAB_CONTRACT_SAMPLE_REPOSITORY');
+export const LAB_CONTRACT_SAMPLE_REPOSITORY = Symbol(
+  'LAB_CONTRACT_SAMPLE_REPOSITORY',
+);
 
 export interface LabContractSampleRepositoryPort extends RepositoryPort<LabContractSample> {
   findByContractId(contractId: string): Promise<LabContractSample[]>;
@@ -14,17 +16,24 @@ export interface LabContractSampleRepositoryPort extends RepositoryPort<LabContr
 
 @Injectable()
 export class LabContractSampleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<LabContractSample, PostApprovalLabContractSampleTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    LabContractSample,
+    PostApprovalLabContractSampleTypeOrmEntity
+  >
   implements LabContractSampleRepositoryPort
 {
   protected readonly repository: Repository<PostApprovalLabContractSampleTypeOrmEntity>;
 
   constructor(dataSource: DataSource) {
     super(dataSource);
-    this.repository = dataSource.getRepository(PostApprovalLabContractSampleTypeOrmEntity);
+    this.repository = dataSource.getRepository(
+      PostApprovalLabContractSampleTypeOrmEntity,
+    );
   }
 
-  toDomain(entity: PostApprovalLabContractSampleTypeOrmEntity): LabContractSample {
+  toDomain(
+    entity: PostApprovalLabContractSampleTypeOrmEntity,
+  ): LabContractSample {
     return new LabContractSample({
       id: entity.id,
       contractId: entity.contractId,
@@ -44,7 +53,9 @@ export class LabContractSampleTypeOrmRepository
     });
   }
 
-  toEntity(domain: LabContractSample): PostApprovalLabContractSampleTypeOrmEntity {
+  toEntity(
+    domain: LabContractSample,
+  ): PostApprovalLabContractSampleTypeOrmEntity {
     const entity = new PostApprovalLabContractSampleTypeOrmEntity();
     if (domain.id) entity.id = domain.id;
     entity.contractId = domain.contractId;

@@ -7,20 +7,28 @@ import { PostApprovalDocumentArchiveRepositoryPort } from '../../domain/reposito
 
 @Injectable()
 export class PostApprovalDocumentArchiveTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<PostApprovalDocumentArchive, PostApprovalDocumentArchiveTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    PostApprovalDocumentArchive,
+    PostApprovalDocumentArchiveTypeOrmEntity
+  >
   implements PostApprovalDocumentArchiveRepositoryPort
 {
   protected readonly repository: Repository<PostApprovalDocumentArchiveTypeOrmEntity>;
 
   constructor(dataSource: DataSource) {
     super(dataSource);
-    this.repository = dataSource.getRepository(PostApprovalDocumentArchiveTypeOrmEntity);
+    this.repository = dataSource.getRepository(
+      PostApprovalDocumentArchiveTypeOrmEntity,
+    );
   }
 
-  toDomain(entity: PostApprovalDocumentArchiveTypeOrmEntity): PostApprovalDocumentArchive {
+  toDomain(
+    entity: PostApprovalDocumentArchiveTypeOrmEntity,
+  ): PostApprovalDocumentArchive {
     return new PostApprovalDocumentArchive({
       id: entity.id,
-      documentType: entity.documentType as PostApprovalDocumentArchive['documentType'],
+      documentType:
+        entity.documentType as PostApprovalDocumentArchive['documentType'],
       testingRequestId: entity.testingRequestId,
       contractId: entity.contractId,
       testingResultId: entity.testingResultId,
@@ -37,7 +45,9 @@ export class PostApprovalDocumentArchiveTypeOrmRepository
     });
   }
 
-  toEntity(domain: PostApprovalDocumentArchive): PostApprovalDocumentArchiveTypeOrmEntity {
+  toEntity(
+    domain: PostApprovalDocumentArchive,
+  ): PostApprovalDocumentArchiveTypeOrmEntity {
     const entity = new PostApprovalDocumentArchiveTypeOrmEntity();
     if (domain.id) entity.id = domain.id;
     entity.documentType = domain.documentType;
@@ -55,17 +65,25 @@ export class PostApprovalDocumentArchiveTypeOrmRepository
     return entity;
   }
 
-  async findByContractId(contractId: string): Promise<PostApprovalDocumentArchive[]> {
+  async findByContractId(
+    contractId: string,
+  ): Promise<PostApprovalDocumentArchive[]> {
     const entities = await this.repository.find({ where: { contractId } });
     return entities.map((e) => this.toDomain(e));
   }
 
-  async findByTestingResultId(testingResultId: string): Promise<PostApprovalDocumentArchive | null> {
-    const entity = await this.repository.findOne({ where: { testingResultId } });
+  async findByTestingResultId(
+    testingResultId: string,
+  ): Promise<PostApprovalDocumentArchive | null> {
+    const entity = await this.repository.findOne({
+      where: { testingResultId },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findByDocumentNumber(documentNumber: string): Promise<PostApprovalDocumentArchive | null> {
+  async findByDocumentNumber(
+    documentNumber: string,
+  ): Promise<PostApprovalDocumentArchive | null> {
     const entity = await this.repository.findOne({ where: { documentNumber } });
     return entity ? this.toDomain(entity) : null;
   }

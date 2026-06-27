@@ -25,7 +25,9 @@ export class AddContractRequestFields20260615000010 implements MigrationInterfac
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_testing_requests_signing_deadline`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_testing_requests_signing_deadline`,
+    );
     await queryRunner.query(`
       ALTER TABLE testing_requests
         DROP COLUMN IF EXISTS scope_of_testing,

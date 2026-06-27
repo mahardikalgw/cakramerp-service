@@ -3,7 +3,9 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 
 @Entity('device_tokens')
 @Index('idx_device_tokens_user', ['userId'])
-@Index('idx_device_tokens_active', ['userId', 'isActive'], { where: 'is_active = true' })
+@Index('idx_device_tokens_active', ['userId', 'isActive'], {
+  where: 'is_active = true',
+})
 @Index('idx_device_tokens_token', ['token'], { unique: true })
 export class DeviceTokenTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', name: 'user_id' })

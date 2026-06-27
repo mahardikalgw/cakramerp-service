@@ -9,17 +9,27 @@ export class EmailNotificationService {
 
   constructor(private readonly configService: ConfigService) {
     this.resendApiKey = this.configService.get('RESEND_API_KEY') || '';
-    this.fromEmail = this.configService.get('RESEND_FROM_EMAIL') || 'noreply@cakramerp.id';
-    this.appBaseUrl = this.configService.get('APP_BASE_URL') || 'http://localhost:3000';
+    this.fromEmail =
+      this.configService.get('RESEND_FROM_EMAIL') || 'noreply@cakramerp.id';
+    this.appBaseUrl =
+      this.configService.get('APP_BASE_URL') || 'http://localhost:3000';
   }
 
-  async sendEmail(to: string, subject: string, html: string): Promise<{
+  async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<{
     messageId: string | null;
     status: 'sent' | 'failed';
     error?: string;
   }> {
     if (!this.resendApiKey) {
-      return { messageId: null, status: 'failed', error: 'RESEND_API_KEY not configured' };
+      return {
+        messageId: null,
+        status: 'failed',
+        error: 'RESEND_API_KEY not configured',
+      };
     }
 
     try {
@@ -33,7 +43,11 @@ export class EmailNotificationService {
       });
 
       if (result.error) {
-        return { messageId: null, status: 'failed', error: result.error.message };
+        return {
+          messageId: null,
+          status: 'failed',
+          error: result.error.message,
+        };
       }
 
       return { messageId: (result.data as any)?.id ?? null, status: 'sent' };
@@ -104,13 +118,17 @@ export class EmailNotificationService {
     results: Array<{ serviceName: string; sampleCode: string; status: string }>;
     actionUrl: string;
   }): string {
-    const rows = data.results.map(r => `
+    const rows = data.results
+      .map(
+        (r) => `
       <tr>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #111827;">${r.serviceName}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #111827;">${r.sampleCode}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: ${r.status === 'confirmed' ? '#059669' : '#6b7280'}; text-transform: capitalize;">${r.status}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join('');
 
     return `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">

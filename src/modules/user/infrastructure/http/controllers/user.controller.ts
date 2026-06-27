@@ -21,7 +21,10 @@ import { UpdateUserCommand } from '../../../application/commands/update-user.com
 import { ChangePasswordCommand } from '../../../application/commands/change-password.command';
 import { CreateUserHttpDto } from '../dtos/create-user.dto';
 import { UpdateUserHttpDto } from '../dtos/update-user.dto';
-import { ChangePasswordHttpDto, ForceSetPasswordHttpDto } from '../dtos/change-password.dto';
+import {
+  ChangePasswordHttpDto,
+  ForceSetPasswordHttpDto,
+} from '../dtos/change-password.dto';
 import { UserResponseDto } from '../dtos/user-response.dto';
 
 @Controller('users')

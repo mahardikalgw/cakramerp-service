@@ -73,7 +73,7 @@ export class SampleTypeOrmRepository
     const row = await this.repository
       .createQueryBuilder('s')
       .select('s.sample_code', 'sampleCode')
-      .where("s.sample_code LIKE :prefix", { prefix: `SPL-${year}-%` })
+      .where('s.sample_code LIKE :prefix', { prefix: `SPL-${year}-%` })
       .orderBy('s.created_at', 'DESC')
       .limit(1)
       .getRawOne();

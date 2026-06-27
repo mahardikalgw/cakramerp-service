@@ -55,10 +55,10 @@ export class DeviceTokenTypeOrmRepository
   }
 
   async invalidateToken(tokenId: string): Promise<boolean> {
-    const result = await this.repository.update(
-      { id: tokenId } as any,
-      { isActive: false, invalidatedAt: new Date() },
-    );
+    const result = await this.repository.update({ id: tokenId } as any, {
+      isActive: false,
+      invalidatedAt: new Date(),
+    });
     return (result.affected ?? 0) > 0;
   }
 

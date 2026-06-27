@@ -32,9 +32,17 @@ export class AddTokenVersionAndUniqueConstraints1719864000003 implements Migrati
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE item_stock_balances DROP CONSTRAINT IF EXISTS ck_stock_balance_non_negative`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_purchase_orders_request_id`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_sales_orders_quotation_id`);
-    await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS token_version`);
+    await queryRunner.query(
+      `ALTER TABLE item_stock_balances DROP CONSTRAINT IF EXISTS ck_stock_balance_non_negative`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_purchase_orders_request_id`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_sales_orders_quotation_id`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users DROP COLUMN IF EXISTS token_version`,
+    );
   }
 }

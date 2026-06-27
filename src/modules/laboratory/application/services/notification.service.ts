@@ -1,5 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Notification, NotificationEventType } from '../../domain/entities/notification.entity';
+import {
+  Notification,
+  NotificationEventType,
+} from '../../domain/entities/notification.entity';
 import type { NotificationRepositoryPort } from '../../domain/repositories/notification-repository.port';
 import { NOTIFICATION_REPOSITORY } from '../../domain/repositories/notification-repository.port';
 import type { DeviceTokenRepositoryPort } from '../../domain/repositories/device-token-repository.port';
@@ -79,30 +82,46 @@ export class NotificationService {
           status: result.status,
           errorMessage: result.error,
         });
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     if (input.channels.push) {
       try {
-        const tokens = await this.deviceTokenRepo.findActiveByUserId(input.recipientUserId);
+        const tokens = await this.deviceTokenRepo.findActiveByUserId(
+          input.recipientUserId,
+        );
         if (tokens.length > 0) {
-          const unreadCount = await this.notificationRepo.countUnreadByRecipientUserId(input.recipientUserId) + 1;
+          const unreadCount =
+            (await this.notificationRepo.countUnreadByRecipientUserId(
+              input.recipientUserId,
+            )) + 1;
           const result = await this.pushService.sendPush(
-            tokens.map(t => ({ id: t.id!, platform: t.platform as 'ios' | 'android', token: t.token })),
+            tokens.map((t) => ({
+              id: t.id!,
+              platform: t.platform as 'ios' | 'android',
+              token: t.token,
+            })),
             { ...input.channels.push, badge: unreadCount },
           );
           update.pushSent = result.sent > 0;
           update.pushSentAt = result.sent > 0 ? new Date() : null;
-          update.pushError = result.errors.length > 0 ? result.errors.join('; ') : null;
+          update.pushError =
+            result.errors.length > 0 ? result.errors.join('; ') : null;
 
           for (const tokenId of result.invalidTokenIds) {
             try {
               await this.deviceTokenRepo.invalidateToken(tokenId);
-            } catch {}
+            } catch {
+              /* ignore */
+            }
           }
         }
       } catch (err: any) {
-        this.logger.warn(`Push dispatch failed for user ${input.recipientUserId}: ${err?.message}`);
+        this.logger.warn(
+          `Push dispatch failed for user ${input.recipientUserId}: ${err?.message}`,
+        );
       }
     }
 
@@ -110,7 +129,9 @@ export class NotificationService {
       Object.assign(saved, update);
       try {
         await this.notificationRepo.save(saved);
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
 
     return saved;
@@ -121,9 +142,11 @@ export class NotificationService {
     builder: (recipient: { userId: string; email?: string }) => DispatchInput,
   ): Promise<void> {
     await Promise.allSettled(
-      recipients.map(r =>
-        this.dispatch(builder(r)).catch(err => {
-          this.logger.error(`Notification dispatch failed for user ${r.userId}: ${err?.message}`);
+      recipients.map((r) =>
+        this.dispatch(builder(r)).catch((err) => {
+          this.logger.error(
+            `Notification dispatch failed for user ${r.userId}: ${err?.message}`,
+          );
         }),
       ),
     );
@@ -133,7 +156,10 @@ export class NotificationService {
     recipientUserId: string,
     options?: { unreadOnly?: boolean; page?: number; limit?: number },
   ) {
-    return this.notificationRepo.findByRecipientUserId(recipientUserId, options);
+    return this.notificationRepo.findByRecipientUserId(
+      recipientUserId,
+      options,
+    );
   }
 
   async countUnread(recipientUserId: string): Promise<number> {
@@ -144,8 +170,14 @@ export class NotificationService {
     return this.notificationRepo.markAsRead(id);
   }
 
-  async markAsReadByIdAndRecipient(id: string, recipientUserId: string): Promise<boolean> {
-    return this.notificationRepo.markAsReadByIdAndRecipient(id, recipientUserId);
+  async markAsReadByIdAndRecipient(
+    id: string,
+    recipientUserId: string,
+  ): Promise<boolean> {
+    return this.notificationRepo.markAsReadByIdAndRecipient(
+      id,
+      recipientUserId,
+    );
   }
 
   async markAllAsRead(recipientUserId: string): Promise<number> {

@@ -65,7 +65,12 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', nullable: true, name: 'testing_service_id' })
   declare testingServiceId: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'service_name' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'service_name',
+  })
   declare serviceName: string | null;
 
   @Column({ type: 'text', nullable: true, name: 'additional_notes' })
@@ -80,10 +85,21 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid', nullable: true, name: 'sales_order_id' })
   declare salesOrderId: string | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true, name: 'contract_document_url' })
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'contract_document_url',
+  })
   declare contractDocumentUrl: string | null;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0, name: 'down_payment_amount' })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'down_payment_amount',
+  })
   declare downPaymentAmount: number;
 
   @Column({
@@ -201,19 +217,41 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
   declare contractTempoMonths: number | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true, name: 'signed_contract_url' })
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    name: 'signed_contract_url',
+  })
   declare signedContractUrl: string | null;
 
-  @Column({ type: 'timestamptz', nullable: true, name: 'signed_contract_uploaded_at' })
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'signed_contract_uploaded_at',
+  })
   declare signedContractUploadedAt: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true, name: 'contract_signing_deadline' })
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'contract_signing_deadline',
+  })
   declare contractSigningDeadline: Date | null;
 
-  @Column({ type: 'timestamptz', nullable: true, name: 'contract_confirmed_at' })
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+    name: 'contract_confirmed_at',
+  })
   declare contractConfirmedAt: Date | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true, name: 'contract_confirmed_by' })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    name: 'contract_confirmed_by',
+  })
   declare contractConfirmedBy: string | null;
 
   @Column({ type: 'boolean', default: false, name: 'is_unlimited' })

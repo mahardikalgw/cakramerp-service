@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class DropSampleQuotaUniqueIndex20260613000007
-  implements MigrationInterface
-{
+export class DropSampleQuotaUniqueIndex20260613000007 implements MigrationInterface {
   name = 'DropSampleQuotaUniqueIndex20260613000007';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

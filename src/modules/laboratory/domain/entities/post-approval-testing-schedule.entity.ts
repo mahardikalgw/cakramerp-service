@@ -1,11 +1,7 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
 export type PostApprovalScheduleStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled';
+  'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 
 export class PostApprovalTestingSchedule extends BaseEntity {
   declare id: string;

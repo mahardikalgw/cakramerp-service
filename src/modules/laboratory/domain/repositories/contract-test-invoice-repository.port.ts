@@ -1,7 +1,11 @@
 import { ContractTestInvoice } from '../entities/contract-test-invoice.entity';
-import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
-export const CONTRACT_TEST_INVOICE_REPOSITORY = 'CONTRACT_TEST_INVOICE_REPOSITORY';
+export const CONTRACT_TEST_INVOICE_REPOSITORY =
+  'CONTRACT_TEST_INVOICE_REPOSITORY';
 
 export interface ContractTestInvoiceRepositoryPort {
   save(invoice: ContractTestInvoice): Promise<ContractTestInvoice>;

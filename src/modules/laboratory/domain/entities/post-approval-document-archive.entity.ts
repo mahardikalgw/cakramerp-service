@@ -1,15 +1,9 @@
 import { BaseEntity } from '../../../../shared/kernel/domain/entities/base.entity';
 
-export type PostApprovalDocumentArchiveStatus =
-  | 'draft'
-  | 'signed'
-  | 'archived';
+export type PostApprovalDocumentArchiveStatus = 'draft' | 'signed' | 'archived';
 
 export type PostApprovalDocumentType =
-  | 'contract'
-  | 'tax_invoice'
-  | 'testing_result'
-  | 'lab_purchase_order';
+  'contract' | 'tax_invoice' | 'testing_result' | 'lab_purchase_order';
 
 export class PostApprovalDocumentArchive extends BaseEntity {
   declare id: string;

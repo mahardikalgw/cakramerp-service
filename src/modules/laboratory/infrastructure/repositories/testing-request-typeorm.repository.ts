@@ -8,7 +8,10 @@ import {
 import { TestingRequestTypeOrmEntity } from '../entities/testing-request-typeorm.entity';
 import { TestingRequestLineTypeOrmEntity } from '../entities/testing-request-line-typeorm.entity';
 import { TestingRequestRepositoryPort } from '../../domain/repositories/testing-request-repository.port';
-import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class TestingRequestTypeOrmRepository
@@ -64,7 +67,10 @@ export class TestingRequestTypeOrmRepository
       additionalNotes: entity.additionalNotes ?? undefined,
       invoiceDocumentUrl: entity.invoiceDocumentUrl ?? undefined,
       contractDocumentUrl: (entity as any).contractDocumentUrl ?? undefined,
-      downPaymentAmount: entity.downPaymentAmount != null ? Number(entity.downPaymentAmount) : undefined,
+      downPaymentAmount:
+        entity.downPaymentAmount != null
+          ? Number(entity.downPaymentAmount)
+          : undefined,
       poDocumentUrl: entity.poDocumentUrl ?? undefined,
       signedDocumentUrl: entity.signedDocumentUrl ?? undefined,
       signedDocumentFilename: entity.signedDocumentFilename ?? undefined,
@@ -246,13 +252,14 @@ export class TestingRequestTypeOrmRepository
   }
 
   async findExpiredUnsignedContracts(now: Date): Promise<TestingRequest[]> {
-    const entities = await this.repository.createQueryBuilder('r')
+    const entities = await this.repository
+      .createQueryBuilder('r')
       .where('r.billing_type = :bt', { bt: 'contract' })
       .andWhere('r.status = :status', { status: 'approved' })
       .andWhere('r.contract_signing_deadline IS NOT NULL')
       .andWhere('r.contract_signing_deadline < :now', { now })
       .andWhere('r.signed_contract_url IS NULL')
       .getMany();
-    return entities.map(e => this.toDomain(e));
+    return entities.map((e) => this.toDomain(e));
   }
 }

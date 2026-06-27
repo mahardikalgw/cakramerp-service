@@ -5,6 +5,7 @@ import { PayrollEngineService } from './payroll-engine.service';
 import { PAYROLL_REPOSITORY } from '../../domain/repositories/payroll-repository.port';
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance-repository.port';
+import { HrFinanceAdapter } from '../adapters/hr-finance.adapter';
 
 describe('PayrollEngineService', () => {
   let service: PayrollEngineService;
@@ -12,6 +13,7 @@ describe('PayrollEngineService', () => {
   let employeeRepo: any;
   let attendanceRepo: any;
   let dataSource: any;
+  let financeAdapter: any;
 
   beforeEach(async () => {
     payrollRepo = {
@@ -31,6 +33,9 @@ describe('PayrollEngineService', () => {
     attendanceRepo = {
       getOvertimeHours: jest.fn(),
     };
+    financeAdapter = {
+      recordPayrollGl: jest.fn().mockResolvedValue(undefined),
+    };
     const mockQueueRepo = {
       create: jest.fn((data) => data),
       save: jest.fn(),
@@ -45,6 +50,7 @@ describe('PayrollEngineService', () => {
         { provide: PAYROLL_REPOSITORY, useValue: payrollRepo },
         { provide: EMPLOYEE_REPOSITORY, useValue: employeeRepo },
         { provide: ATTENDANCE_REPOSITORY, useValue: attendanceRepo },
+        { provide: HrFinanceAdapter, useValue: financeAdapter },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();

@@ -14,8 +14,14 @@ export class AddDownpaymentProofToLabContracts1718668800003 implements Migration
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_url;`);
-    await queryRunner.query(`ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_filename;`);
-    await queryRunner.query(`ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_uploaded_at;`);
+    await queryRunner.query(
+      `ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_url;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_filename;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE lab_contracts DROP COLUMN IF EXISTS down_payment_proof_uploaded_at;`,
+    );
   }
 }

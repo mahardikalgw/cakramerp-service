@@ -27,8 +27,7 @@ export class DocumentGenerationRestClient {
   private readonly serviceUrl: string;
 
   constructor() {
-    this.serviceUrl =
-      envConfig.documentService?.url || 'http://localhost:8080';
+    this.serviceUrl = envConfig.documentService?.url || 'http://localhost:8080';
   }
 
   async generateSync(
@@ -65,11 +64,12 @@ export class DocumentGenerationRestClient {
     } catch {
       // Handle empty or non-JSON response body
       if (!response.ok) {
-        throw new Error(
-          `Document service returned HTTP ${response.status}`,
-        );
+        throw new Error(`Document service returned HTTP ${response.status}`);
       }
-      body = { status: 'failed', errorMessage: 'Empty response from document service' };
+      body = {
+        status: 'failed',
+        errorMessage: 'Empty response from document service',
+      };
     }
 
     if (!response.ok || body.status === 'failed') {
@@ -81,9 +81,7 @@ export class DocumentGenerationRestClient {
       );
     }
 
-    this.logger.log(
-      `Document generation completed: ${body.minioPath}`,
-    );
+    this.logger.log(`Document generation completed: ${body.minioPath}`);
     return body;
   }
 }

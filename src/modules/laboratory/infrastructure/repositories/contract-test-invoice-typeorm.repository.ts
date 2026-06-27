@@ -8,7 +8,10 @@ import {
 import { ContractTestInvoiceTypeOrmEntity } from '../entities/contract-test-invoice-typeorm.entity';
 import { ContractTestInvoiceResultTypeOrmEntity } from '../entities/contract-test-invoice-result-typeorm.entity';
 import { ContractTestInvoiceRepositoryPort } from '../../domain/repositories/contract-test-invoice-repository.port';
-import { FindOptions, FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  FindOptions,
+  FindResult,
+} from '../../../../shared/kernel/domain/repositories/repository.port';
 
 @Injectable()
 export class ContractTestInvoiceTypeOrmRepository
@@ -23,22 +26,28 @@ export class ContractTestInvoiceTypeOrmRepository
 
   constructor(dataSource: DataSource) {
     super(dataSource);
-    this.repository = dataSource.getRepository(ContractTestInvoiceTypeOrmEntity);
-    this.lineRepo = dataSource.getRepository(ContractTestInvoiceResultTypeOrmEntity);
+    this.repository = dataSource.getRepository(
+      ContractTestInvoiceTypeOrmEntity,
+    );
+    this.lineRepo = dataSource.getRepository(
+      ContractTestInvoiceResultTypeOrmEntity,
+    );
   }
 
   // ─── Mapping ────────────────────────────────────────────────────────────
 
-  private toLineDomain(entity: ContractTestInvoiceResultTypeOrmEntity): ContractTestInvoiceLine {
+  private toLineDomain(
+    entity: ContractTestInvoiceResultTypeOrmEntity,
+  ): ContractTestInvoiceLine {
     return new ContractTestInvoiceLine({
       id: entity.id,
       invoiceId: entity.invoiceId,
       testResultId: entity.testResultId,
       serviceName: entity.serviceName,
       sampleCode: entity.sampleCode,
-      unitPrice: Number(entity.unitPrice) ?? 0,
+      unitPrice: Number(entity.unitPrice ?? 0),
       quantity: entity.quantity ?? 1,
-      totalPrice: Number(entity.totalPrice) ?? 0,
+      totalPrice: Number(entity.totalPrice ?? 0),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -54,12 +63,12 @@ export class ContractTestInvoiceTypeOrmRepository
       billingPeriodStart: entity.billingPeriodStart,
       billingPeriodEnd: entity.billingPeriodEnd,
       totalSamples: entity.totalSamples ?? 0,
-      baseAmount: Number(entity.baseAmount) ?? 0,
-      taxPercent: Number(entity.taxPercent) ?? 11,
-      taxAmount: Number(entity.taxAmount) ?? 0,
-      totalAmount: Number(entity.totalAmount) ?? 0,
-      initialFeeApplied: Number(entity.initialFeeApplied) ?? 0,
-      amountDue: Number(entity.amountDue) ?? 0,
+      baseAmount: Number(entity.baseAmount ?? 0),
+      taxPercent: Number(entity.taxPercent ?? 11),
+      taxAmount: Number(entity.taxAmount ?? 0),
+      totalAmount: Number(entity.totalAmount ?? 0),
+      initialFeeApplied: Number(entity.initialFeeApplied ?? 0),
+      amountDue: Number(entity.amountDue ?? 0),
       status: entity.status as ContractTestInvoice['status'],
       dueDate: entity.dueDate,
       issuedAt: entity.issuedAt,
@@ -143,19 +152,18 @@ export class ContractTestInvoiceTypeOrmRepository
       .addOrderBy('i.invoiceNumber', 'DESC')
       .skip(skip)
       .take(limit);
-    if (options?.status) qb.andWhere('i.status = :status', { status: options.status });
+    if (options?.status)
+      qb.andWhere('i.status = :status', { status: options.status });
     const [entities, total] = await qb.getManyAndCount();
     return { data: entities.map((e) => this.toDomain(e)), total };
   }
 
-  async findAll(
-    options?: {
-      status?: string;
-      contractId?: string;
-      page?: number;
-      limit?: number;
-    },
-  ): Promise<FindResult<ContractTestInvoice>> {
+  async findAll(options?: {
+    status?: string;
+    contractId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<FindResult<ContractTestInvoice>> {
     const limit = options?.limit ?? 20;
     const page = options?.page ?? 1;
     const skip = (page - 1) * limit;
@@ -207,8 +215,12 @@ export class ContractTestInvoiceTypeOrmRepository
     // Persist header + line items in a transaction so the per-result rows
     // can never end up half-written relative to the invoice header.
     return this.dataSource.transaction(async (manager) => {
-      const headerRepo = manager.getRepository(ContractTestInvoiceTypeOrmEntity);
-      const lineRepo = manager.getRepository(ContractTestInvoiceResultTypeOrmEntity);
+      const headerRepo = manager.getRepository(
+        ContractTestInvoiceTypeOrmEntity,
+      );
+      const lineRepo = manager.getRepository(
+        ContractTestInvoiceResultTypeOrmEntity,
+      );
 
       const entity = this.toEntity(invoice);
       const savedHeader = await headerRepo.save(entity);
@@ -233,7 +245,9 @@ export class ContractTestInvoiceTypeOrmRepository
         await lineRepo.save(rows);
       }
 
-      const reloaded = await headerRepo.findOne({ where: { id: headerId } as any });
+      const reloaded = await headerRepo.findOne({
+        where: { id: headerId } as any,
+      });
       return this.toDomain(reloaded!);
     });
   }

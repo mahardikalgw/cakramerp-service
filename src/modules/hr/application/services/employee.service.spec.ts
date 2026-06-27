@@ -5,7 +5,7 @@ import { EmployeeService } from './employee.service';
 import { EMPLOYEE_REPOSITORY } from '../../domain/repositories/employee-repository.port';
 import { DEPARTMENT_REPOSITORY } from '../../domain/repositories/department-repository.port';
 import { POSITION_REPOSITORY } from '../../domain/repositories/position-repository.port';
-import { USER_SERVICE } from '../../../user/application/ports/user-service.port';
+import { USER_PROVISIONING_PORT } from '../../../../shared/kernel/domain/ports/user-provisioning.port';
 import { CreateEmployeeCommand } from '../commands/create-employee.command';
 import { UpdateEmployeeCommand } from '../commands/update-employee.command';
 
@@ -14,7 +14,7 @@ describe('EmployeeService', () => {
   let employeeRepo: any;
   let departmentRepo: any;
   let positionRepo: any;
-  let userService: any;
+  let userProvisioning: any;
   let dataSource: any;
 
   beforeEach(async () => {
@@ -46,16 +46,9 @@ describe('EmployeeService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     };
-    userService = {
-      create: jest.fn(),
-      findAll: jest.fn(),
-      findById: jest.fn(),
-      findByEmail: jest.fn(),
-      update: jest.fn(),
-      changePassword: jest.fn(),
-      delete: jest.fn(),
-      deactivate: jest.fn(),
-      logAuditAction: jest.fn(),
+    userProvisioning = {
+      createUser: jest.fn(),
+      linkUserToEmployee: jest.fn(),
     };
     dataSource = {
       query: jest.fn(),
@@ -68,7 +61,7 @@ describe('EmployeeService', () => {
         { provide: EMPLOYEE_REPOSITORY, useValue: employeeRepo },
         { provide: DEPARTMENT_REPOSITORY, useValue: departmentRepo },
         { provide: POSITION_REPOSITORY, useValue: positionRepo },
-        { provide: USER_SERVICE, useValue: userService },
+        { provide: USER_PROVISIONING_PORT, useValue: userProvisioning },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();
@@ -157,8 +150,8 @@ describe('EmployeeService', () => {
       departmentRepo.findById.mockResolvedValue({ id: 'dept-1' });
       positionRepo.findById.mockResolvedValue({ id: 'pos-1' });
       employeeRepo.create.mockResolvedValue(createdEmployee);
-      userService.create.mockResolvedValue(createdUser);
-      dataSource.query.mockResolvedValue(undefined);
+      userProvisioning.createUser.mockResolvedValue(createdUser);
+      userProvisioning.linkUserToEmployee.mockResolvedValue(undefined);
 
       const result = await service.create(command);
 
@@ -238,12 +231,12 @@ describe('EmployeeService', () => {
 
       employeeRepo.getLastEmployeeNumber.mockResolvedValue(null);
       employeeRepo.create.mockResolvedValue(createdEmployee);
-      userService.create.mockResolvedValue(createdUser);
-      dataSource.query.mockResolvedValue(undefined);
+      userProvisioning.createUser.mockResolvedValue(createdUser);
+      userProvisioning.linkUserToEmployee.mockResolvedValue(undefined);
 
       await service.create(command);
 
-      expect(userService.create).toHaveBeenCalledWith(
+      expect(userProvisioning.createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           email: 'john@test.com',
           firstName: 'John',
@@ -251,9 +244,9 @@ describe('EmployeeService', () => {
           status: 'active',
         }),
       );
-      expect(dataSource.query).toHaveBeenCalledWith(
-        'UPDATE users SET employee_id = $1 WHERE id = $2',
-        ['emp-1', 'user-1'],
+      expect(userProvisioning.linkUserToEmployee).toHaveBeenCalledWith(
+        'user-1',
+        'emp-1',
       );
     });
 
@@ -263,15 +256,16 @@ describe('EmployeeService', () => {
 
       employeeRepo.getLastEmployeeNumber.mockResolvedValue(null);
       employeeRepo.create.mockResolvedValue(createdEmployee);
-      userService.create.mockRejectedValue(new Error('User already exists'));
-      dataSource.query.mockResolvedValue(undefined);
+      userProvisioning.createUser.mockRejectedValue(
+        new Error('User already exists'),
+      );
 
       await service.create(command);
 
-      expect(dataSource.query).toHaveBeenCalledWith(
-        'UPDATE users SET employee_id = $1 WHERE email = $2 AND employee_id IS NULL',
-        ['emp-1', 'john@test.com'],
-      );
+      // Should not throw even if user creation fails
+      expect(userProvisioning.createUser).toHaveBeenCalled();
+      expect(userProvisioning.linkUserToEmployee).not.toHaveBeenCalled();
+      expect(employeeRepo.create).toHaveBeenCalled();
     });
 
     it('should skip user creation when email is not provided', async () => {
@@ -283,7 +277,7 @@ describe('EmployeeService', () => {
 
       await service.create(command);
 
-      expect(userService.create).not.toHaveBeenCalled();
+      expect(userProvisioning.createUser).not.toHaveBeenCalled();
       expect(dataSource.query).not.toHaveBeenCalled();
     });
 
@@ -393,15 +387,15 @@ describe('EmployeeService', () => {
 
       employeeRepo.findById.mockResolvedValue(existing);
       employeeRepo.update.mockResolvedValue(updated);
-      userService.create.mockResolvedValue(createdUser);
-      dataSource.query.mockResolvedValue(undefined);
+      userProvisioning.createUser.mockResolvedValue(createdUser);
+      userProvisioning.linkUserToEmployee.mockResolvedValue(undefined);
 
       await service.update('1', command);
 
-      expect(userService.create).toHaveBeenCalled();
-      expect(dataSource.query).toHaveBeenCalledWith(
-        'UPDATE users SET employee_id = $1 WHERE id = $2',
-        ['1', 'user-2'],
+      expect(userProvisioning.createUser).toHaveBeenCalled();
+      expect(userProvisioning.linkUserToEmployee).toHaveBeenCalledWith(
+        'user-2',
+        '1',
       );
     });
 
@@ -422,7 +416,7 @@ describe('EmployeeService', () => {
 
       await service.update('1', command);
 
-      expect(userService.create).not.toHaveBeenCalled();
+      expect(userProvisioning.createUser).not.toHaveBeenCalled();
     });
 
     it('should map baseSalary to basicSalary and hireDate to joinDate', async () => {

@@ -139,14 +139,17 @@ export class TestResultTypeOrmRepository
   }
 
   async findCompletedByContractAndPeriod(
-    contractId: string, periodStart: Date, periodEnd: Date,
+    contractId: string,
+    periodStart: Date,
+    periodEnd: Date,
   ): Promise<TestResult[]> {
-    const entities = await this.repository.createQueryBuilder('r')
+    const entities = await this.repository
+      .createQueryBuilder('r')
       .where('r.contract_id = :contractId', { contractId })
       .andWhere('r.status = :status', { status: 'confirmed' })
       .andWhere('r.confirmed_at >= :start', { start: periodStart })
       .andWhere('r.confirmed_at < :end', { end: periodEnd })
       .getMany();
-    return entities.map(e => this.toDomain(e));
+    return entities.map((e) => this.toDomain(e));
   }
 }

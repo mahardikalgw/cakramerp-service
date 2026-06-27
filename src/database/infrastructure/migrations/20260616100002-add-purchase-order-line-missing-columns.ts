@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddPurchaseOrderLineMissingColumns20260616100002
-  implements MigrationInterface
-{
+export class AddPurchaseOrderLineMissingColumns20260616100002 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE purchase_order_lines

@@ -22,9 +22,7 @@ import { PostApprovalTestingResultService } from '../../../application/services/
 @Controller('laboratory')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PostApprovalTestingResultController {
-  constructor(
-    private readonly service: PostApprovalTestingResultService,
-  ) {}
+  constructor(private readonly service: PostApprovalTestingResultService) {}
 
   @Get('post-approval/testing-results/by-unit')
   @RequirePermissions('test-results:read')
@@ -130,7 +128,9 @@ export class PostApprovalTestingResultController {
 
   @Patch('post-approval/testing-results/:id/upload-signed-certificate')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   @RequirePermissions('test-results:update')
   async uploadSignedCertificate(
     @Param('id') id: string,
@@ -141,7 +141,12 @@ export class PostApprovalTestingResultController {
     const user = req.user ?? {};
     const userName =
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'System';
-    return this.service.uploadSignedCertificate(id, file, user.id ?? 'unknown', userName);
+    return this.service.uploadSignedCertificate(
+      id,
+      file,
+      user.id ?? 'unknown',
+      userName,
+    );
   }
 
   @Get('post-approval/testing-results/:id/download-signed-certificate')

@@ -7,7 +7,10 @@ import { PostApprovalTestingScheduleRepositoryPort } from '../../domain/reposito
 
 @Injectable()
 export class PostApprovalTestingScheduleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<PostApprovalTestingSchedule, TestingScheduleTypeOrmEntity>
+  extends BaseTypeOrmRepositoryAdapter<
+    PostApprovalTestingSchedule,
+    TestingScheduleTypeOrmEntity
+  >
   implements PostApprovalTestingScheduleRepositoryPort
 {
   protected readonly repository: Repository<TestingScheduleTypeOrmEntity>;
@@ -30,7 +33,8 @@ export class PostApprovalTestingScheduleTypeOrmRepository
       notes: entity.notes,
       laboranId: entity.laboranId,
       laboranName: entity.laboranName,
-      status: (entity.status ?? 'pending') as PostApprovalTestingSchedule['status'],
+      status: (entity.status ??
+        'pending') as PostApprovalTestingSchedule['status'],
       confirmedBy: entity.confirmedBy,
       confirmedByName: entity.confirmedByName,
       confirmedAt: entity.confirmedAt,
@@ -63,12 +67,16 @@ export class PostApprovalTestingScheduleTypeOrmRepository
     return entity;
   }
 
-  async findByContractId(contractId: string): Promise<PostApprovalTestingSchedule[]> {
+  async findByContractId(
+    contractId: string,
+  ): Promise<PostApprovalTestingSchedule[]> {
     const entities = await this.repository.find({ where: { contractId } });
     return entities.map((e) => this.toDomain(e));
   }
 
-  async findByLaboranId(laboranId: string): Promise<PostApprovalTestingSchedule[]> {
+  async findByLaboranId(
+    laboranId: string,
+  ): Promise<PostApprovalTestingSchedule[]> {
     const entities = await this.repository.find({ where: { laboranId } });
     return entities.map((e) => this.toDomain(e));
   }
