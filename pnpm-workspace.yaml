@@ -1,0 +1,13 @@
+# Disable the supply-chain minimum-release-age policy (0 = no delay).
+# Newer pnpm enforces a non-zero default that rejects just-published
+# transitive deps in CI. See https://pnpm.io/settings
+minimumReleaseAge: 0
+
+# Dependencies allowed to run install/build scripts.
+onlyBuiltDependencies:
+  - '@firebase/util'
+  - '@nestjs/core'
+  - '@scarf/scarf'
+  - msgpackr-extract
+  - protobufjs
+  - unrs-resolver
