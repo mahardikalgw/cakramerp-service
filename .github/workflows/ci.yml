@@ -196,10 +196,10 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
             docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest
-            docker stop cakramerp-app 2>/dev/null || true
-            docker rm cakramerp-app 2>/dev/null || true
+            docker stop cakramerp-service 2>/dev/null || true
+            docker rm cakramerp-service 2>/dev/null || true
             docker run -d \
-              --name cakramerp-app \
+              --name cakramerp-service \
               --restart unless-stopped \
               --network host \
               --env-file /opt/cakramerp/app.env \
