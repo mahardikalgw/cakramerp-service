@@ -45,12 +45,8 @@ RUN addgroup -g 1001 -S appgroup && \
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./
 
-# Copy built application
+# Copy built application (includes compiled migrations in dist/)
 COPY --from=builder /app/dist ./dist
-
-# Copy migration files (needed at runtime)
-COPY --from=builder /app/src/database/infrastructure/migrations \
-  ./dist/database/infrastructure/migrations
 
 # Set environment
 ENV NODE_ENV=production
