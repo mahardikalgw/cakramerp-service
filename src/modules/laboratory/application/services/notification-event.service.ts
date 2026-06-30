@@ -11,6 +11,7 @@ import { Customer } from '../../../customer/domain/entities/customer.entity';
 import { PostApprovalTestingSchedule } from '../../domain/entities/post-approval-testing-schedule.entity';
 import { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 import { PostApprovalLabContract } from '../../domain/entities/post-approval-lab-contract.entity';
+import { ContractTestInvoice } from '../../domain/entities/contract-test-invoice.entity';
 
 @Injectable()
 export class NotificationEventService {
@@ -504,6 +505,58 @@ export class NotificationEventService {
       });
     } catch (err: any) {
       this.logger.error(`onMonthlyInvoiceGenerated failed: ${err?.message}`);
+    }
+  }
+
+  /**
+   * Fires when a sample-test (contract-billing) invoice is issued — both for
+   * the admin manual trigger and the customer auto-trigger. Resolves the
+   * customer from the contract and dispatches email + push + in-app.
+   * Failures are logged but never thrown (fire-and-forget friendly).
+   */
+  async onContractTestInvoiceIssued(
+    invoice: ContractTestInvoice,
+    contract: PostApprovalLabContract,
+  ): Promise<void> {
+    try {
+      const customerUserId = await this.resolveCustomerUserId(
+        contract.customerId,
+      );
+      if (!customerUserId) return;
+      const customerEmail = await this.resolveCustomerEmail(customerUserId);
+      const portalUrl = `${this.appBaseUrl}/portal/lab/contract-test-invoices/${invoice.id}`;
+
+      await this.notificationService.dispatch({
+        recipientUserId: customerUserId,
+        recipientEmail: customerEmail,
+        eventType: 'contract_test_invoice_issued',
+        title: `Invoice Issued — ${invoice.invoiceNumber}`,
+        message: `Your sample-test invoice ${invoice.invoiceNumber} for contract ${contract.contractNumber} has been issued. Amount due: ${invoice.amountDue}.`,
+        actionUrl: portalUrl,
+        actionLabel: 'View Invoice',
+        entityType: 'invoice',
+        entityId: invoice.id,
+        channels: {
+          email: {
+            subject: `Invoice Issued — ${invoice.invoiceNumber}`,
+            html: this.emailService.buildContractTestInvoiceIssuedHtml({
+              invoiceNumber: invoice.invoiceNumber,
+              contractNumber: contract.contractNumber,
+              totalSamples: invoice.totalSamples,
+              amountDue: String(invoice.amountDue),
+              actionUrl: portalUrl,
+            }),
+          },
+          push: {
+            title: 'Invoice Issued',
+            body: `Invoice ${invoice.invoiceNumber} — amount due ${invoice.amountDue}`,
+            data: { screen: 'contract_test_invoices', entityId: invoice.id },
+          },
+          inApp: true,
+        },
+      });
+    } catch (err: any) {
+      this.logger.error(`onContractTestInvoiceIssued failed: ${err?.message}`);
     }
   }
 

@@ -11,6 +11,8 @@ export interface ContractTestInvoiceRepositoryPort {
   save(invoice: ContractTestInvoice): Promise<ContractTestInvoice>;
   findById(id: string): Promise<ContractTestInvoice | null>;
   findByContractId(contractId: string): Promise<ContractTestInvoice[]>;
+  /** All invoices attached to a given testing schedule (used for idempotency checks). */
+  findByScheduleId(scheduleId: string): Promise<ContractTestInvoice[]>;
   findByCustomerId(
     customerId: string,
     options?: { status?: string; page?: number; limit?: number },

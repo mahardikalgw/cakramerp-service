@@ -134,6 +134,14 @@ export class ContractTestInvoiceTypeOrmRepository
     return entities.map((e) => this.toDomain(e));
   }
 
+  async findByScheduleId(scheduleId: string): Promise<ContractTestInvoice[]> {
+    const entities = await this.repository.find({
+      where: { testingScheduleId: scheduleId } as any,
+      order: { createdAt: 'DESC' },
+    });
+    return entities.map((e) => this.toDomain(e));
+  }
+
   async findByCustomerId(
     customerId: string,
     options?: { status?: string; page?: number; limit?: number },

@@ -196,6 +196,15 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
             docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest
+
+            echo "▶ Running database migrations..."
+            docker run --rm \
+              --network host \
+              --env-file /opt/cakramerp/app.env \
+              ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} \
+              node dist/database/migrate.js
+            echo "✓ Migrations complete"
+
             docker stop cakramerp-service 2>/dev/null || true
             docker rm cakramerp-service 2>/dev/null || true
             docker run -d \

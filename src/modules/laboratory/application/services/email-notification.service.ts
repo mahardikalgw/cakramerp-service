@@ -277,6 +277,33 @@ export class EmailNotificationService {
     `;
   }
 
+  buildContractTestInvoiceIssuedHtml(data: {
+    invoiceNumber: string;
+    contractNumber: string;
+    totalSamples: number;
+    amountDue: string;
+    actionUrl: string;
+  }): string {
+    return `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 8px;">
+        <div style="background: #ffffff; border-radius: 8px; padding: 32px; border: 1px solid #e5e7eb;">
+          <h1 style="font-size: 20px; font-weight: 600; color: #111827; margin: 0 0 8px;">Sample-Test Invoice Issued</h1>
+          <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px;">Your sample-test invoice has been issued and is ready for viewing.</p>
+          <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #6b7280; width: 140px;">Invoice Number</td><td style="padding: 8px 0; color: #111827; font-weight: 500;">${data.invoiceNumber}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">Contract Number</td><td style="padding: 8px 0; color: #111827; font-weight: 500;">${data.contractNumber}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">Total Samples</td><td style="padding: 8px 0; color: #111827; font-weight: 500;">${data.totalSamples}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">Amount Due</td><td style="padding: 8px 0; color: #111827; font-weight: 500;">${data.amountDue}</td></tr>
+          </table>
+          <div style="margin-top: 24px;">
+            <a href="${data.actionUrl}" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">View Invoice</a>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: #9ca3af; margin-top: 16px; text-align: center;">Cakra ERP Laboratory &mdash; Notification</p>
+      </div>
+    `;
+  }
+
   buildContractGeneratedHtml(data: {
     contractNumber: string;
     projectName: string;

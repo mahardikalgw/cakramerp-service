@@ -67,13 +67,28 @@ export class ContractTestInvoiceService {
     testingScheduleId: string | null,
     adminUserId: string,
     adminUserName?: string,
-  ): Promise<ContractTestInvoice> {
+    actorRole: 'admin' | 'customer' = 'admin',
+  ): Promise<ContractTestInvoice | null> {
     const contract = await this.contractRepo.findById(contractId);
     if (!contract) throw new NotFoundException('Contract not found');
     if (contract.billingType !== 'contract') {
       throw new BadRequestException(
         'Billing sample-test invoices is only supported for contract-billing contracts',
       );
+    }
+
+    // Idempotency: if an invoice already exists for this schedule, return it
+    // instead of creating a duplicate. This makes both the admin manual trigger
+    // and the customer auto-trigger safe to re-invoke.
+    if (testingScheduleId) {
+      const existing =
+        await this.repository.findByScheduleId(testingScheduleId);
+      if (existing.length > 0) {
+        this.logger.debug(
+          `Invoice already exists for schedule ${testingScheduleId}, skipping generation`,
+        );
+        return existing[0];
+      }
     }
 
     // The monthly cron already produces period-based invoices; this flow is
@@ -209,7 +224,7 @@ export class ContractTestInvoiceService {
       action: 'contract_test_invoice_generated',
       performedBy: adminUserId,
       performedByName: adminUserName,
-      performedByRole: 'admin',
+      performedByRole: actorRole,
       details: {
         invoiceId: saved.id,
         invoiceNumber: saved.invoiceNumber,

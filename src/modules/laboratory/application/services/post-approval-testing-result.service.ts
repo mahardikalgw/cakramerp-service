@@ -25,6 +25,7 @@ import type { LabScheduleSampleRepositoryPort } from '../../domain/repositories/
 import { POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 import type { PostApprovalTestingScheduleRepositoryPort } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 import { NotificationEventService } from './notification-event.service';
+import { ContractTestInvoiceService } from './contract-test-invoice.service';
 
 @Injectable()
 export class PostApprovalTestingResultService {
@@ -49,6 +50,7 @@ export class PostApprovalTestingResultService {
     private readonly attachmentRepo: Repository<TestResultAttachmentTypeOrmEntity>,
     private readonly activityLog: LabActivityLogService,
     private readonly notificationEventService: NotificationEventService,
+    private readonly contractTestInvoiceService: ContractTestInvoiceService,
   ) {}
 
   async findAll(options?: {
@@ -659,6 +661,32 @@ export class PostApprovalTestingResultService {
           void this.notificationEventService
             .onScheduleCompleted(scheduleCheck, confirmedContract)
             .catch(() => {});
+
+          if (confirmedContract.billingType === 'contract') {
+            void this.contractTestInvoiceService
+              .generateForSchedule(
+                saved.contractId,
+                saved.scheduleId,
+                userId,
+                userName,
+                'customer',
+              )
+              .then((invoice) => {
+                if (invoice) {
+                  void this.notificationEventService
+                    .onContractTestInvoiceIssued(invoice, confirmedContract)
+                    .catch(() => {});
+                  this.logger.log(
+                    `Auto-generated invoice ${invoice.invoiceNumber} for completed schedule ${saved.scheduleId}`,
+                  );
+                }
+              })
+              .catch((err) =>
+                this.logger.error(
+                  `Auto-invoice generation failed for schedule ${saved.scheduleId}: ${err?.message}`,
+                ),
+              );
+          }
         }
       } catch {
         /* ignore */

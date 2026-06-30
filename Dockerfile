@@ -60,4 +60,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health/live || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
+
+# Default: run the application.
+# Override with "node dist/database/migrate.js" to run migrations only.
 CMD ["node", "dist/main.js"]
