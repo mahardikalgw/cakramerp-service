@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Client } from 'minio';
+import type { Readable } from 'stream';
 import { envConfig } from '../../../../config/env.config';
 
 @Injectable()
@@ -42,6 +43,10 @@ export class MinioClientService implements OnModuleInit {
     expiry = 3600,
   ): Promise<string> {
     return this.minioClient.presignedGetObject(bucket, objectName, expiry);
+  }
+
+  async getObjectStream(bucket: string, objectName: string): Promise<Readable> {
+    return this.minioClient.getObject(bucket, objectName);
   }
 
   async deleteFile(bucket: string, objectName: string): Promise<void> {

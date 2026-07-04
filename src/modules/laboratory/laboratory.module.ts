@@ -174,6 +174,8 @@ import { PostApprovalLabContractService } from './application/services/post-appr
 import { PostApprovalTestingScheduleService } from './application/services/post-approval-testing-schedule.service';
 import { PostApprovalTestingResultService } from './application/services/post-approval-testing-result.service';
 import { PostApprovalDocumentArchiveService } from './application/services/post-approval-document-archive.service';
+import { SyncController } from './infrastructure/http/controllers/sync.controller';
+import { SyncService } from './application/services/sync.service';
 import { PostApprovalLabContractTypeOrmRepository } from './infrastructure/repositories/post-approval-lab-contract-typeorm.repository';
 import { LabContractSampleTypeOrmRepository } from './infrastructure/repositories/lab-contract-sample-typeorm.repository';
 import { PostApprovalTestingScheduleTypeOrmRepository } from './infrastructure/repositories/post-approval-testing-schedule-typeorm.repository';
@@ -262,6 +264,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     PostApprovalTestingScheduleController,
     PostApprovalTestingResultController,
     PostApprovalDocumentArchiveController,
+    SyncController,
     ContractInvoiceController,
     ContractTestInvoiceController,
   ],
@@ -401,6 +404,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
       provide: LAB_SCHEDULE_SAMPLE_REPOSITORY,
       useClass: LabScheduleSampleTypeOrmRepository,
     },
+    SyncService,
     ContractSigningDeadlineJob,
     ContractMonthlyBillingJob,
   ],
