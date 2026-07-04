@@ -239,7 +239,8 @@ export class CustomerPortalService {
         customerId: customer.id as string,
         customerName: customer.name ?? '',
         testingServiceId: firstLineServiceId,
-        sampleQuantity: dto.sampleQuantity ?? 0,
+        sampleQuantity: lines.reduce(
+          (sum, l) => sum + (l.sampleQuantity ?? 0), 0),
         totalAmount,
         status: 'draft',
         lines: poLines as any,

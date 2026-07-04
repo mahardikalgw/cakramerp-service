@@ -275,7 +275,9 @@ export class TestingRequestService {
           );
         }
         if (!(contract as any).isUnlimited) {
-          const qtyToDeduct = existing.sampleQuantity ?? 1;
+          const totalQty = (existing.lines || []).reduce(
+            (sum, l) => sum + (l.sampleQuantity ?? 0), 0);
+          const qtyToDeduct = totalQty > 0 ? totalQty : 1;
           contract.usedQuota += qtyToDeduct;
           contract.remainingQuota =
             (contract.totalQuota ?? 0) - contract.usedQuota;
@@ -363,7 +365,8 @@ export class TestingRequestService {
           customerId: existing.customerId,
           customerName,
           testingServiceId: existing.lines?.[0]?.testingServiceId ?? '',
-          sampleQuantity: existing.sampleQuantity ?? 0,
+          sampleQuantity: (existing.lines || []).reduce(
+            (sum, l) => sum + (l.sampleQuantity ?? 0), 0),
           totalAmount,
           status: 'draft',
           lines: poLines as any,
