@@ -276,7 +276,7 @@ export class PostApprovalTestingResultService {
     const attachment = attachments[0];
     const bucket = 'documents';
     const objectName = attachment.fileUrl.replace(`${bucket}/`, '');
-    const url = await this.minioClient.getPresignedUrl(bucket, objectName);
+    const url = this.minioClient.getPublicDownloadUrl(bucket, objectName);
     if (!url) return null;
 
     return { url, fileName: attachment.fileName };

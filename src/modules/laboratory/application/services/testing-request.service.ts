@@ -847,11 +847,7 @@ export class TestingRequestService {
       };
     }
     const objectName = urlField.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl(
-      'documents',
-      objectName,
-      3600,
-    );
+    const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     // Extract filename from Minio path if not stored separately
     const filename =
       filenameField ||
@@ -877,11 +873,7 @@ export class TestingRequestService {
       };
     }
     const objectName = existing.paymentProofUrl.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl(
-      'documents',
-      objectName,
-      3600,
-    );
+    const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: existing.paymentProofFilename };
   }
 

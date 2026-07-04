@@ -1,7 +1,19 @@
 services:
   app:
     build: .
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1200M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     ports:
       - "${PORT:-3000}:3000"
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=900
+      - DB_LOGGING=false

@@ -47,6 +47,7 @@ describe('ContractTestInvoiceService.generateForSchedule', () => {
     const minioService = {
       uploadFile: jest.fn(),
       getPresignedUrl: jest.fn(),
+      getPublicDownloadUrl: jest.fn(),
       ...overrides.minioService,
     };
     const activityLog = {

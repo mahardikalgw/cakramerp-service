@@ -86,10 +86,7 @@ export class PostApprovalDocumentArchiveService {
       throw new NotFoundException('No document available');
 
     const objectName = archive.signedDocumentUrl || archive.minioPath;
-    const url = await this.minioService.getPresignedUrl(
-      'documents',
-      objectName,
-    );
+    const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return {
       url,
       filename: archive.originalFilename || archive.documentNumber + '.pdf',

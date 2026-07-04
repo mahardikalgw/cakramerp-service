@@ -70,7 +70,7 @@ export class SyncService {
   private async findUpdatedSince(tableName: string, since: Date): Promise<any[]> {
     try {
       const rows = await this.entityManager.query(
-        `SELECT * FROM "${tableName}" WHERE "updated_at" > $1 OR "updated_at" IS NULL ORDER BY "updated_at" ASC`,
+        `SELECT * FROM "${tableName}" WHERE "updated_at" > $1 OR "updated_at" IS NULL ORDER BY "updated_at" ASC LIMIT 1000`,
         [since.toISOString()],
       );
       return rows ?? [];

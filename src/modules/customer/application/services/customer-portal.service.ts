@@ -590,11 +590,7 @@ export class CustomerPortalService {
       };
     }
     const objectName = request.signedDocumentUrl.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl(
-      'documents',
-      objectName,
-      3600,
-    );
+    const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: request.signedDocumentFilename };
   }
 
@@ -610,11 +606,7 @@ export class CustomerPortalService {
       };
     }
     const objectName = request.paymentProofUrl.replace('documents/', '');
-    const url = await this.minioService.getPresignedUrl(
-      'documents',
-      objectName,
-      3600,
-    );
+    const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: request.paymentProofFilename };
   }
 
@@ -662,11 +654,7 @@ export class CustomerPortalService {
       throw new NotFoundException('Document not ready');
     }
 
-    const url = await this.minioService.getPresignedUrl(
-      doc.minioBucket,
-      doc.minioPath.replace(`${doc.minioBucket}/`, ''),
-      3600,
-    );
+    const url = await this.docHelper.getDownloadUrl(doc.id);
 
     return {
       url,
@@ -689,11 +677,7 @@ export class CustomerPortalService {
       throw new NotFoundException('Invoice document not ready');
     }
 
-    const url = await this.minioService.getPresignedUrl(
-      doc.minioBucket,
-      doc.minioPath.replace(`${doc.minioBucket}/`, ''),
-      3600,
-    );
+    const url = await this.docHelper.getDownloadUrl(doc.id);
 
     return {
       url,

@@ -45,6 +45,15 @@ export class MinioClientService implements OnModuleInit {
     return this.minioClient.presignedGetObject(bucket, objectName, expiry);
   }
 
+  /**
+   * Build a public backend URL that proxies the requested MinIO object.
+   * This keeps the MinIO endpoint (often localhost:9000) off the client.
+   */
+  getPublicDownloadUrl(bucket: string, objectName: string): string {
+    const baseUrl = (envConfig.apiUrl || '').replace(/\/$/, '');
+    return `${baseUrl}/documents/download?bucket=${encodeURIComponent(bucket)}&object=${encodeURIComponent(objectName)}`;
+  }
+
   async getObjectStream(bucket: string, objectName: string): Promise<Readable> {
     return this.minioClient.getObject(bucket, objectName);
   }

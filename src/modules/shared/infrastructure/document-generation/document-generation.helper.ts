@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { envConfig } from '../../../../config/env.config';
 import { DocumentGenerationRestClient } from './document-generation-rest-client.service';
 import { MinioClientService } from './minio-client.service';
 import { GeneratedDocumentTypeOrmEntity } from './entities/generated-document.entity';
@@ -156,13 +157,7 @@ export class DocumentGenerationHelper {
 
   async getDownloadUrl(documentId: string): Promise<string> {
     const doc = await this.getDocument(documentId);
-    const url = await this.minioClient.getPresignedUrl(
-      doc.minioBucket,
-      doc.minioPath.replace(`${doc.minioBucket}/`, ''),
-    );
-    if (!url) {
-      throw new NotFoundException('Presigned document URL is not available');
-    }
-    return url;
+    const baseUrl = (envConfig.apiUrl || '').replace(/\/$/, '');
+    return `${baseUrl}/documents/${doc.id}/download`;
   }
 }

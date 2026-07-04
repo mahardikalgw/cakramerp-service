@@ -1,13 +1,16 @@
 import {
+  BadRequestException,
   Controller,
   Get,
-  Post,
-  Param,
-  Body,
-  Res,
   NotFoundException,
+  Param,
+  Post,
+  Body,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { DocumentGenerationHelper } from './document-generation.helper';
 import { MinioClientService } from './minio-client.service';
@@ -32,6 +35,7 @@ export class DocumentController {
   }
 
   @Get(':id/download')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({ summary: 'Download document file directly' })
   async downloadDocument(
     @Param('id') id: string,
@@ -50,6 +54,40 @@ export class DocumentController {
 
     const contentType = doc.contentType || 'application/octet-stream';
     const filename = encodeURIComponent(doc.fileName || `document-${id}`);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${filename}"; filename*=UTF-8''${filename}`,
+    );
+
+    stream.pipe(res);
+  }
+
+  @Get('download')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Download arbitrary MinIO object through backend proxy',
+  })
+  async downloadObject(
+    @Query('bucket') bucket: string,
+    @Query('object') objectName: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!bucket || !objectName) {
+      throw new BadRequestException(
+        'bucket and object query parameters are required',
+      );
+    }
+
+    const stream = await this.minioClient.getObjectStream(bucket, objectName);
+
+    const filename = encodeURIComponent(
+      objectName.split('/').pop() || 'download',
+    );
+    const contentType = objectName.toLowerCase().endsWith('.pdf')
+      ? 'application/pdf'
+      : 'application/octet-stream';
 
     res.setHeader('Content-Type', contentType);
     res.setHeader(
