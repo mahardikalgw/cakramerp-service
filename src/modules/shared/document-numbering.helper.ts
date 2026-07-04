@@ -28,7 +28,7 @@ export async function generateNextDocumentNumber(
   if (Number.isNaN(seq)) {
     // Prefix collision / data corruption fallback: use timestamp to guarantee uniqueness.
     const ts = Date.now() % 1_000_000;
-    return `${prefix}${ts.toString().padStart(padWidth, '0')}`;
+    return `${prefix}${ts.toString().padStart(6, '0')}`;
   }
 
   return `${prefix}${(seq + 1).toString().padStart(padWidth, '0')}`;
