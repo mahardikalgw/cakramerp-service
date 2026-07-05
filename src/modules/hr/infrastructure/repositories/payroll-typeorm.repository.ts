@@ -61,7 +61,7 @@ export class PayrollTypeOrmRepository implements PayrollRepositoryPort {
   }
 
   async deleteRun(id: string): Promise<void> {
-    await this.payrollRunRepo.delete({ id });
+    await this.payrollRunRepo.softDelete(id);
   }
 
   async createDetail(data: any): Promise<any> {

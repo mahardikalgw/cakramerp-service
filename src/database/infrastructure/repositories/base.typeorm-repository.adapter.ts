@@ -80,7 +80,7 @@ export abstract class BaseTypeOrmRepositoryAdapter<
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repository.delete(id);
+    const result = await this.repository.softDelete(id);
     return (result.affected ?? 0) > 0;
   }
 

@@ -70,7 +70,7 @@ export class AssetTypeOrmRepository implements AssetRepositoryPort {
   }
 
   async delete(id: string): Promise<void> {
-    await this.assetRepo.delete(id);
+    await this.assetRepo.softDelete(id);
   }
 
   async getLastAssetNumber(prefix: string): Promise<string | null> {

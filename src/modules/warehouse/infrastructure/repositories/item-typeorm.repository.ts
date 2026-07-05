@@ -60,6 +60,6 @@ export class ItemTypeOrmRepository implements ItemRepositoryPort {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }

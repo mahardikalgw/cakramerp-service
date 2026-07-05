@@ -66,6 +66,6 @@ export class CustomerTypeOrmRepository implements CustomerRepositoryPort {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }

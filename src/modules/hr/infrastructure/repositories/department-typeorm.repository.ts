@@ -56,6 +56,6 @@ export class DepartmentTypeOrmRepository implements DepartmentRepositoryPort {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repo.delete(id);
+    await this.repo.softDelete(id);
   }
 }
