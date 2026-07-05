@@ -10,6 +10,7 @@ import {
   IsIn,
   IsUUID,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UploadPortalDocumentDto {
   @IsString()
@@ -92,6 +93,7 @@ export class PortalTestingRequestLineDto {
   sampleCode?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   sampleQuantity?: number;
