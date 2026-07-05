@@ -30,6 +30,11 @@ export class AddSoftDelete20260705000001 implements MigrationInterface {
     await this.addColumn(queryRunner, 'user_roles');
     await this.addColumn(queryRunner, 'role_permissions');
 
+    // ── System tables (needed for TypeORM @DeleteDateColumn queries) ──────
+    await this.addColumn(queryRunner, 'notifications');
+    await this.addColumn(queryRunner, 'roles');
+    await this.addColumn(queryRunner, 'permissions');
+
     // ── Core business tables ──────────────────────────────────────────────
     await this.addColumn(queryRunner, 'users');
     await this.addColumn(queryRunner, 'customers');
@@ -163,5 +168,10 @@ export class AddSoftDelete20260705000001 implements MigrationInterface {
     // ── IAM pivot tables ──────────────────────────────────────────────────
     await this.dropColumn(queryRunner, 'role_permissions');
     await this.dropColumn(queryRunner, 'user_roles');
+
+    // ── System tables ─────────────────────────────────────────────────────
+    await this.dropColumn(queryRunner, 'permissions');
+    await this.dropColumn(queryRunner, 'roles');
+    await this.dropColumn(queryRunner, 'notifications');
   }
 }
