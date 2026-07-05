@@ -609,6 +609,7 @@ export class CustomerPortalService {
     const objectName = request.paymentProofUrl.replace('documents/', '');
     const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: request.paymentProofFilename };
+  }
 
   async deleteSignedDocumentFile(
     userId: string,
@@ -644,8 +645,6 @@ export class CustomerPortalService {
     request.paymentProofFilename = null;
     request.paymentProofUploadedAt = null;
     return this.testingRequestRepo.save(request);
-  }
-
   }
 
   async getMyContracts(userId: string) {
