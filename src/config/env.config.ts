@@ -20,7 +20,7 @@ export const envConfig = {
   },
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || 'https://labmuliajo.com,http://localhost:3000',
   redis: {
     url: process.env.REDIS_URL || undefined,
     host: process.env.REDIS_HOST || 'localhost',
