@@ -4,6 +4,14 @@ export class AddSoftDelete20260705000001 implements MigrationInterface {
   name = 'AddSoftDelete20260705000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // ── IAM pivot tables (needed by TypeORM @DeleteDateColumn join queries) ──
+    await queryRunner.query(
+      `ALTER TABLE user_roles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ NULL;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE role_permissions ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ NULL;`,
+    );
+
     // ── Core business tables ──────────────────────────────────────────────
     await queryRunner.query(
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ NULL;`,
@@ -672,6 +680,14 @@ export class AddSoftDelete20260705000001 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX IF EXISTS idx_users_deleted_at;`);
     await queryRunner.query(
       `ALTER TABLE users DROP COLUMN IF EXISTS deleted_at;`,
+    );
+
+    // ── IAM pivot tables ──────────────────────────────────────────────────
+    await queryRunner.query(
+      `ALTER TABLE role_permissions DROP COLUMN IF EXISTS deleted_at;`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE user_roles DROP COLUMN IF EXISTS deleted_at;`,
     );
   }
 }
