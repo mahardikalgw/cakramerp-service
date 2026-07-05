@@ -62,5 +62,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Default: run the application.
-# Override with "node dist/database/migrate.js" to run migrations only.
+# Migrations are executed automatically and blocking during startup (see src/main.ts).
+# You can still run migrations only with: node dist/database/migrate.js
 CMD ["node", "dist/main.js"]

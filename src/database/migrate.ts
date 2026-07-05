@@ -13,7 +13,7 @@ async function runMigrations() {
     await dataSource.initialize();
     console.log('Database connected. Running migrations...');
 
-    const migrations = await dataSource.runMigrations();
+    const migrations = await dataSource.runMigrations({ transaction: 'each' });
     console.log(`Successfully ran ${migrations.length} migration(s).`);
 
     if (migrations.length === 0) {
