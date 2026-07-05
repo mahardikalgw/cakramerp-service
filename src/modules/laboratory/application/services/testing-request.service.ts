@@ -846,7 +846,8 @@ export class TestingRequestService {
         filename: filenameField || 'signed-document.pdf',
       };
     }
-    const objectName = urlField.replace('documents/', '');
+    // uploadFile() stores path as "bucket/objectName", strip bucket prefix
+    const objectName = urlField.replace(/^[^/]+\//, '');
     const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     // Extract filename from Minio path if not stored separately
     const filename =
@@ -872,9 +873,71 @@ export class TestingRequestService {
         filename: existing.paymentProofFilename,
       };
     }
-    const objectName = existing.paymentProofUrl.replace('documents/', '');
+    // uploadFile() stores path as "bucket/objectName", strip bucket prefix
+    const objectName = existing.paymentProofUrl.replace(/^[^/]+\//, '');
     const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: existing.paymentProofFilename };
+  }
+
+  async deletePaymentProof(
+    id: string,
+    deletedByUserId: string,
+    deletedByName?: string,
+  ): Promise<TestingRequest> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new NotFoundException('Testing request not found');
+    if (!existing.paymentProofUrl) {
+      throw new NotFoundException('No payment proof to delete');
+    }
+    // Only delete from MinIO if it is a stored path (not an external URL)
+    if (!existing.paymentProofUrl.startsWith('http')) {
+      const objectName = existing.paymentProofUrl.replace(/^[^/]+\//, '');
+      await this.minioService.deleteFile('documents', objectName);
+    }
+    existing.paymentProofUrl = null as any;
+    existing.paymentProofFilename = null as any;
+    existing.paymentProofUploadedAt = null as any;
+    const saved = await this.repository.save(existing);
+    void this.activityLog.log({
+      testingRequestId: id,
+      action: 'payment_proof_deleted',
+      performedBy: deletedByUserId,
+      performedByName: deletedByName,
+      performedByRole: 'admin',
+      details: {},
+    });
+    return saved;
+  }
+
+  async deleteSignedDocument(
+    id: string,
+    deletedByUserId: string,
+    deletedByName?: string,
+  ): Promise<TestingRequest> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new NotFoundException('Testing request not found');
+    const urlField = existing.signedContractUrl || existing.signedDocumentUrl;
+    if (!urlField) {
+      throw new NotFoundException('No signed document to delete');
+    }
+    if (!urlField.startsWith('http')) {
+      const objectName = urlField.replace(/^[^/]+\//, '');
+      await this.minioService.deleteFile('documents', objectName);
+    }
+    existing.signedDocumentUrl = null as any;
+    existing.signedContractUrl = null as any;
+    existing.signedDocumentFilename = null as any;
+    existing.signedDocumentUploadedAt = null as any;
+    const saved = await this.repository.save(existing);
+    void this.activityLog.log({
+      testingRequestId: id,
+      action: 'signed_document_deleted',
+      performedBy: deletedByUserId,
+      performedByName: deletedByName,
+      performedByRole: 'admin',
+      details: {},
+    });
+    return saved;
   }
 
   async verifyDocumentsAndGrantQuota(

@@ -85,11 +85,25 @@ export class PostApprovalDocumentArchiveService {
     if (!archive.signedDocumentUrl && !archive.minioPath)
       throw new NotFoundException('No document available');
 
+    // objectName is stored without bucket prefix in this service
     const objectName = archive.signedDocumentUrl || archive.minioPath;
     const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return {
       url,
       filename: archive.originalFilename || archive.documentNumber + '.pdf',
     };
+  }
+
+  async deleteDocument(id: string): Promise<{ success: boolean }> {
+    const archive = await this.repository.findById(id);
+    if (!archive) throw new NotFoundException('Document archive not found');
+
+    const objectName = archive.signedDocumentUrl || archive.minioPath;
+    if (objectName) {
+      await this.minioService.deleteFile('documents', objectName);
+    }
+
+    await this.repository.delete(id);
+    return { success: true };
   }
 }

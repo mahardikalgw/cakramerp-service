@@ -26,43 +26,8 @@ export class DocumentController {
     private readonly minioClient: MinioClientService,
   ) {}
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get document by ID' })
-  async getDocument(
-    @Param('id') id: string,
-  ): Promise<GeneratedDocumentTypeOrmEntity> {
-    return this.docHelper.getDocument(id);
-  }
-
-  @Get(':id/download')
-  @Throttle({ default: { limit: 60, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Download document file directly' })
-  async downloadDocument(
-    @Param('id') id: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    const doc = await this.docHelper.getDocument(id);
-    if (!doc?.minioPath || !doc?.minioBucket) {
-      throw new NotFoundException('Document file not available');
-    }
-
-    const objectName = doc.minioPath.replace(`${doc.minioBucket}/`, '');
-    const stream = await this.minioClient.getObjectStream(
-      doc.minioBucket,
-      objectName,
-    );
-
-    const contentType = doc.contentType || 'application/octet-stream';
-    const filename = encodeURIComponent(doc.fileName || `document-${id}`);
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${filename}"; filename*=UTF-8''${filename}`,
-    );
-
-    stream.pipe(res);
-  }
+  // NOTE: static routes ('download', 'entity/:documentType/:entityId') must be
+  // declared BEFORE the wildcard @Get(':id') so NestJS matches them first.
 
   @Get('download')
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
@@ -114,5 +79,45 @@ export class DocumentController {
   ): Promise<{ requestId: string; status: string }> {
     const doc = await this.docHelper.generateAsync(request);
     return { requestId: doc.id, status: doc.status };
+  }
+
+  // Wildcard routes must come AFTER all static routes above.
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get document by ID' })
+  async getDocument(
+    @Param('id') id: string,
+  ): Promise<GeneratedDocumentTypeOrmEntity> {
+    return this.docHelper.getDocument(id);
+  }
+
+  @Get(':id/download')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Download document file directly' })
+  async downloadDocument(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const doc = await this.docHelper.getDocument(id);
+    if (!doc?.minioPath || !doc?.minioBucket) {
+      throw new NotFoundException('Document file not available');
+    }
+
+    const objectName = doc.minioPath.replace(`${doc.minioBucket}/`, '');
+    const stream = await this.minioClient.getObjectStream(
+      doc.minioBucket,
+      objectName,
+    );
+
+    const contentType = doc.contentType || 'application/octet-stream';
+    const filename = encodeURIComponent(doc.fileName || `document-${id}`);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${filename}"; filename*=UTF-8''${filename}`,
+    );
+
+    stream.pipe(res);
   }
 }

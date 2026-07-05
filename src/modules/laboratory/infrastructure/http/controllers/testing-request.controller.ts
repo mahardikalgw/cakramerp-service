@@ -238,6 +238,32 @@ export class TestingRequestController {
     return this.testingRequestService.getInvoiceDownloadUrl(id);
   }
 
+  @Delete('testing-requests/:id/payment-proof')
+  @RequirePermissions('testing-requests:upload-document')
+  async deletePaymentProof(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.deletePaymentProof(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
+
+  @Delete('testing-requests/:id/signed-document')
+  @RequirePermissions('testing-requests:upload-document')
+  async deleteSignedDocument(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.deleteSignedDocument(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
+
   @Delete('testing-requests/:id')
   @RequirePermissions('testing-requests:delete')
   async deleteTestingRequest(@Param('id') id: string) {

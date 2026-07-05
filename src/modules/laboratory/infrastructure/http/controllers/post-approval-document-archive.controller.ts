@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -70,5 +71,11 @@ export class PostApprovalDocumentArchiveController {
   @RequirePermissions('archives:read')
   async getDownloadUrl(@Param('id') id: string) {
     return this.service.getDownloadUrl(id);
+  }
+
+  @Delete('post-approval/archives/:id')
+  @RequirePermissions('archives:delete')
+  async deleteDocument(@Param('id') id: string) {
+    return this.service.deleteDocument(id);
   }
 }
