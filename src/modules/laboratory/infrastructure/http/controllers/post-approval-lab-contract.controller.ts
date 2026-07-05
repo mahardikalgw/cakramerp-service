@@ -115,7 +115,6 @@ export class PostApprovalLabContractController {
         testingServiceId?: string;
         serviceName: string;
         sampleCode?: string;
-        sampleDescription?: string;
         sampleQuantity: number;
       }>;
     },

@@ -171,7 +171,6 @@ export class PostApprovalLabContractService {
         testingServiceId: line.testingServiceId,
         serviceName: line.serviceName || 'Unknown Service',
         sampleCode: sample?.sampleCode ?? line.sampleCode,
-        sampleDescription: line.sampleDescription,
         sampleQuantity: quantity,
         unitPrice,
         totalPrice,
@@ -181,7 +180,6 @@ export class PostApprovalLabContractService {
       docLines.push({
         serviceName: line.serviceName || 'Unknown Service',
         sampleCode: sample?.sampleCode ?? line.sampleCode ?? '-',
-        sampleDescription: line.sampleDescription || '',
         sampleQuantity: String(quantity),
         unitPrice: unitPrice.toLocaleString('id-ID'),
         totalPrice: totalPrice.toLocaleString('id-ID'),
@@ -215,7 +213,6 @@ export class PostApprovalLabContractService {
       customerName: request.customerName || '',
       projectName: request.projectName,
       projectLocation: request.projectLocation,
-      testingType: request.testingType,
       billingType: request.billingType,
       totalQuota,
       usedQuota: 0,
@@ -276,7 +273,6 @@ export class PostApprovalLabContractService {
           customerAddress: request.projectLocation || '-',
           projectName: saved.projectName || '-',
           projectLocation: saved.projectLocation || '-',
-          testingType: saved.testingType || '-',
           billingType: saved.billingType || '-',
           isCash: isCash ? 'true' : 'false',
           contractTerm: isCash
@@ -397,7 +393,6 @@ export class PostApprovalLabContractService {
       customerName: request.customerName || '',
       projectName: request.projectName,
       projectLocation: request.projectLocation,
-      testingType: request.testingType,
       billingType: request.billingType,
       totalQuota: -1,
       usedQuota: 0,
@@ -436,7 +431,6 @@ export class PostApprovalLabContractService {
           customerAddress: request.projectLocation || '-',
           projectName: saved.projectName || '-',
           projectLocation: saved.projectLocation || '-',
-          testingType: saved.testingType || '-',
           billingType: saved.billingType || '-',
           isCash: 'false',
           totalQuota: 'Unlimited',
@@ -587,7 +581,6 @@ export class PostApprovalLabContractService {
       docLines.push({
         serviceName: line.serviceName || 'Unknown Service',
         sampleCode: sample?.sampleCode ?? line.sampleCode ?? '-',
-        sampleDescription: line.sampleDescription || '',
         sampleQuantity: String(quantity),
         unitPrice: unitPrice.toLocaleString('id-ID'),
         totalPrice: totalPrice.toLocaleString('id-ID'),
@@ -613,7 +606,6 @@ export class PostApprovalLabContractService {
           customerAddress: request.projectLocation || '-',
           projectName: contract.projectName || '-',
           projectLocation: contract.projectLocation || '-',
-          testingType: contract.testingType || '-',
           billingType: contract.billingType || '-',
           totalQuota: String(contract.totalQuota),
           usedQuota: String(contract.usedQuota),
@@ -924,7 +916,6 @@ export class PostApprovalLabContractService {
           customerAddress: request.projectLocation || '-',
           projectName: request.projectName || '-',
           projectLocation: request.projectLocation || '-',
-          testingType: request.testingType || '-',
           billingType: 'contract',
           isCash: 'false',
           totalQuota: 'Unlimited',
@@ -1014,7 +1005,6 @@ export class PostApprovalLabContractService {
       testingServiceId?: string;
       serviceName: string;
       sampleCode?: string;
-      sampleDescription?: string;
       sampleQuantity: number;
     }>,
   ): Promise<LabContractSample[]> {
@@ -1051,7 +1041,7 @@ export class PostApprovalLabContractService {
           sampleCode,
           customerId: contract.customerId,
           customerName: contract.customerName,
-          description: s.sampleDescription ?? null,
+          description: null,
           quantity: s.sampleQuantity ?? 1,
           status: 'awaiting_delivery',
         } as any),
@@ -1063,7 +1053,6 @@ export class PostApprovalLabContractService {
         testingServiceId: s.testingServiceId ?? null,
         serviceName: s.serviceName,
         sampleCode: sampleCode,
-        sampleDescription: s.sampleDescription ?? null,
         sampleQuantity: s.sampleQuantity ?? 1,
         unitPrice,
         totalPrice: unitPrice * (s.sampleQuantity ?? 1),

@@ -41,7 +41,6 @@ export class LabContractSampleTypeOrmRepository
       testingServiceId: entity.testingServiceId,
       serviceName: entity.serviceName,
       sampleCode: entity.sampleCode,
-      sampleDescription: entity.sampleDescription,
       sampleQuantity: entity.sampleQuantity ?? 1,
       usedQuantity: entity.usedQuantity ?? 0,
       completedQuantity: entity.completedQuantity ?? 0,
@@ -63,7 +62,6 @@ export class LabContractSampleTypeOrmRepository
     entity.testingServiceId = domain.testingServiceId ?? '';
     entity.serviceName = domain.serviceName;
     entity.sampleCode = domain.sampleCode ?? '';
-    entity.sampleDescription = domain.sampleDescription ?? '';
     entity.sampleQuantity = domain.sampleQuantity ?? 1;
     entity.usedQuantity = domain.usedQuantity ?? 0;
     entity.completedQuantity = domain.completedQuantity ?? 0;

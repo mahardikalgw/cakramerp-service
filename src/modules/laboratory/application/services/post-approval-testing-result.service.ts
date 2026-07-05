@@ -85,7 +85,6 @@ export class PostApprovalTestingResultService {
     let customerName = '';
     let projectName = '';
     let projectLocation = '';
-    let testingType = '';
     let sampleCode = '';
     let serviceName = '';
     let scheduleDate = '';
@@ -100,7 +99,6 @@ export class PostApprovalTestingResultService {
           customerName = contract.customerName ?? '';
           projectName = contract.projectName ?? '';
           projectLocation = contract.projectLocation ?? '';
-          testingType = contract.testingType ?? '';
         }
       } catch {
         /* ignore */
@@ -160,7 +158,6 @@ export class PostApprovalTestingResultService {
       customerName,
       projectName,
       projectLocation,
-      testingType,
       sampleCode,
       serviceName,
       scheduleDate,
@@ -178,6 +175,9 @@ export class PostApprovalTestingResultService {
     const enriched = await this.findByIdEnriched(id);
 
     const parameters = (enriched.resultData as any)?.parameters ?? [];
+    const berat = (enriched.resultData as any)?.berat ?? '';
+    const luas = (enriched.resultData as any)?.luas ?? '';
+    const retakan = (enriched.resultData as any)?.retakan ?? '';
 
     const lines = parameters.map((p: any) => ({
       name: p.parameter ?? '',
@@ -214,6 +214,9 @@ export class PostApprovalTestingResultService {
         resultNumber: enriched.resultNumber || '',
         sampleUnit: String(enriched.sampleUnit ?? ''),
         contractNumber: enriched.contractNumber || '',
+        berat,
+        luas,
+        retakan,
       },
       lines,
     });

@@ -92,10 +92,6 @@ export class PortalTestingRequestLineDto {
   sampleCode?: string;
 
   @IsOptional()
-  @IsString()
-  sampleDescription?: string;
-
-  @IsOptional()
   @IsInt()
   @Min(1)
   sampleQuantity?: number;
@@ -147,10 +143,6 @@ export class CreatePortalTestingRequestDto {
   projectAddress?: string;
 
   @IsOptional()
-  @IsString()
-  testingType?: string;
-
-  @IsOptional()
   @IsInt()
   @Min(1)
   sampleQuantity?: number;
@@ -184,10 +176,6 @@ export class UpdatePortalTestingRequestDto {
   @IsOptional()
   @IsString()
   projectLocation?: string;
-
-  @IsOptional()
-  @IsString()
-  testingType?: string;
 
   @IsOptional()
   @IsIn(['normal', 'urgent'])

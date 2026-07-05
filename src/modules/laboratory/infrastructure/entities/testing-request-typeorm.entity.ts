@@ -16,9 +16,6 @@ export class TestingRequestTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   declare projectLocation: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  declare testingType: string;
-
   @Column({ type: 'int', nullable: true })
   declare sampleQuantity: number;
 

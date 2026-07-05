@@ -136,7 +136,6 @@ export class TestingRequestService {
     customerId: string;
     projectName: string;
     projectLocation?: string;
-    testingType?: string;
     sampleQuantity?: number;
     scheduleDate?: string;
     notes?: string;
@@ -171,7 +170,6 @@ export class TestingRequestService {
       customerId: dto.customerId,
       projectName: dto.projectName,
       projectLocation: dto.projectLocation,
-      testingType: dto.testingType,
       sampleQuantity: dto.sampleQuantity,
       scheduleDate: dto.scheduleDate,
       notes: dto.notes,
@@ -216,7 +214,6 @@ export class TestingRequestService {
       customerId?: string;
       projectName?: string;
       projectLocation?: string;
-      testingType?: string;
       sampleQuantity?: number;
       scheduleDate?: string;
       notes?: string;

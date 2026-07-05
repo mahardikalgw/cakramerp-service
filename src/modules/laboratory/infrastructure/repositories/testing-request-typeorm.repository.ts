@@ -40,7 +40,6 @@ export class TestingRequestTypeOrmRepository
       customerName: (entity as any).customerName ?? undefined,
       projectName: entity.projectName,
       projectLocation: entity.projectLocation,
-      testingType: entity.testingType,
       sampleQuantity: entity.sampleQuantity,
       scheduleDate: entity.scheduleDate,
       notes: entity.notes,
@@ -101,7 +100,6 @@ export class TestingRequestTypeOrmRepository
                 testingServiceId: line.testingServiceId,
                 serviceName: line.serviceName,
                 sampleCode: line.sampleCode ?? null,
-                sampleDescription: line.sampleDescription ?? null,
                 sampleQuantity: line.sampleQuantity,
                 notes: line.notes,
                 createdAt: line.createdAt,
@@ -121,7 +119,6 @@ export class TestingRequestTypeOrmRepository
     entity.customerId = domain.customerId || (null as any);
     entity.projectName = domain.projectName ?? '';
     entity.projectLocation = domain.projectLocation ?? '';
-    entity.testingType = domain.testingType ?? '';
     entity.sampleQuantity = domain.sampleQuantity ?? 0;
     entity.scheduleDate = domain.scheduleDate
       ? new Date(domain.scheduleDate)
@@ -188,7 +185,6 @@ export class TestingRequestTypeOrmRepository
         lineEntity.testingServiceId = line.testingServiceId;
         lineEntity.serviceName = line.serviceName;
         lineEntity.sampleCode = line.sampleCode ?? null;
-        lineEntity.sampleDescription = line.sampleDescription ?? null;
         lineEntity.sampleQuantity = line.sampleQuantity;
         lineEntity.notes = line.notes ?? '';
         return lineEntity;

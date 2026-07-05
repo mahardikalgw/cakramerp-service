@@ -18,7 +18,6 @@ export class TestingRequestLine extends BaseEntity {
   declare testingServiceId: string | null;
   declare serviceName: string | null;
   declare sampleCode: string | null;
-  declare sampleDescription: string | null;
   declare sampleQuantity: number;
   declare notes: string | null;
   declare createdAt: Date;
@@ -41,7 +40,6 @@ export class TestingRequest extends BaseEntity {
   declare customerName?: string;
   declare projectName: string;
   declare projectLocation: string | null;
-  declare testingType: string | null;
   declare sampleQuantity: number;
   declare scheduleDate: Date | string | null;
   declare notes: string | null;

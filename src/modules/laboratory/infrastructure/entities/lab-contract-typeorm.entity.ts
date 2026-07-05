@@ -25,9 +25,6 @@ export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   declare projectLocation: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  declare testingType: string;
-
   @Column({ type: 'varchar', length: 50, nullable: true })
   declare billingType: string;
 

@@ -17,7 +17,6 @@ export class LabContractSample extends BaseEntity {
   declare testingServiceId: string | null;
   declare serviceName: string;
   declare sampleCode: string | null;
-  declare sampleDescription: string | null;
   declare sampleQuantity: number;
   declare usedQuantity: number;
   declare completedQuantity: number;
@@ -47,7 +46,6 @@ export class PostApprovalLabContract extends BaseEntity {
   declare customerName: string;
   declare projectName: string | null;
   declare projectLocation: string | null;
-  declare testingType: string | null;
   declare billingType: string | null;
   declare totalQuota: number;
   declare usedQuota: number;

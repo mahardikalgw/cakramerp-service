@@ -48,7 +48,6 @@ export class PostApprovalLabContractTypeOrmRepository
       testingServiceId: entity.testingServiceId,
       serviceName: entity.serviceName,
       sampleCode: entity.sampleCode,
-      sampleDescription: entity.sampleDescription,
       sampleQuantity: entity.sampleQuantity ?? 1,
       usedQuantity: entity.usedQuantity ?? 0,
       completedQuantity: entity.completedQuantity ?? 0,
@@ -122,7 +121,6 @@ export class PostApprovalLabContractTypeOrmRepository
       customerName: entity.customerName,
       projectName: entity.projectName,
       projectLocation: entity.projectLocation,
-      testingType: entity.testingType,
       billingType: entity.billingType,
       totalQuota: entity.totalQuota ?? 0,
       usedQuota: entity.usedQuota ?? 0,
@@ -167,7 +165,6 @@ export class PostApprovalLabContractTypeOrmRepository
     entity.customerName = domain.customerName;
     entity.projectName = domain.projectName ?? '';
     entity.projectLocation = domain.projectLocation ?? '';
-    entity.testingType = domain.testingType ?? '';
     entity.billingType = domain.billingType ?? '';
     entity.totalQuota = domain.totalQuota ?? 0;
     entity.usedQuota = domain.usedQuota ?? 0;

@@ -258,7 +258,6 @@ export class CustomerPortalService {
       projectName: dto.projectName,
       projectLocation: dto.projectLocation,
       projectAddress: dto.projectAddress,
-      testingType: dto.testingType,
       sampleQuantity: dto.sampleQuantity,
       priority: dto.priority ?? 'normal',
       notes: dto.notes,
@@ -280,7 +279,6 @@ export class CustomerPortalService {
         testingServiceId: line.testingServiceId ?? null,
         serviceName: line.serviceName ?? null,
         sampleCode: line.sampleCode ?? null,
-        sampleDescription: line.sampleDescription ?? null,
         sampleQuantity: line.sampleQuantity,
         notes: line.notes ?? line.sampleNotes ?? null,
       })) as any,
@@ -288,28 +286,34 @@ export class CustomerPortalService {
 
     const savedRequest = await this.testingRequestRepo.save(entity);
 
-    // Create samples for each line
+    // Create samples for each line, respecting sampleQuantity
     let sampleSeq = 1;
 
     for (const line of lines) {
-      const sample = new Sample({
-        sampleCode:
-          line.sampleCode ??
-          `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
-        sampleTypeId: null,
-        sampleTypeName: null,
-        testingRequestId: savedRequest.id,
-        testingRequestNumber: savedRequest.requestNumber,
-        customerId: customer.id as string,
-        customerName: customer.name ?? '',
-        weight: null,
-        location: dto.projectLocation ?? null,
-        description: line.sampleDescription ?? null,
-        status: 'awaiting_delivery',
-        notes: line.sampleNotes ?? null,
-      });
-      await this.sampleRepo.save(sample);
-      sampleSeq++;
+      const qty = line.sampleQuantity && line.sampleQuantity > 0 ? line.sampleQuantity : 1;
+      for (let i = 0; i < qty; i++) {
+        const sample = new Sample({
+          sampleCode:
+            qty === 1 && line.sampleCode
+              ? line.sampleCode
+              : line.sampleCode
+                ? `${line.sampleCode}-${(i + 1).toString().padStart(2, '0')}`
+                : `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
+          sampleTypeId: null,
+          sampleTypeName: null,
+          testingRequestId: savedRequest.id,
+          testingRequestNumber: savedRequest.requestNumber,
+          customerId: customer.id as string,
+          customerName: customer.name ?? '',
+          weight: null,
+          location: dto.projectLocation ?? null,
+          description: null,
+          status: 'awaiting_delivery',
+          notes: line.sampleNotes ?? null,
+        });
+        await this.sampleRepo.save(sample);
+        sampleSeq++;
+      }
     }
 
     return savedRequest;
@@ -419,7 +423,6 @@ export class CustomerPortalService {
     if (dto.projectName !== undefined) request.projectName = dto.projectName;
     if (dto.projectLocation !== undefined)
       request.projectLocation = dto.projectLocation;
-    if (dto.testingType !== undefined) request.testingType = dto.testingType;
     if (dto.priority !== undefined) request.priority = dto.priority;
     if (dto.notes !== undefined) request.notes = dto.notes;
     if (dto.additionalNotes !== undefined)
@@ -435,7 +438,6 @@ export class CustomerPortalService {
             testingServiceId: line.testingServiceId ?? null,
             serviceName: line.serviceName ?? null,
             sampleCode: line.sampleCode ?? null,
-            sampleDescription: line.sampleDescription ?? null,
             sampleQuantity: line.sampleQuantity ?? 0,
             notes: line.notes ?? line.sampleNotes ?? null,
           }),

@@ -39,10 +39,6 @@ export class CreateTestingRequestHttpDto {
   projectLocation?: string;
 
   @IsOptional()
-  @IsString()
-  testingType?: string;
-
-  @IsOptional()
   @IsInt()
   @Min(0)
   sampleQuantity?: number;
@@ -76,10 +72,6 @@ export class UpdateTestingRequestHttpDto {
   @IsOptional()
   @IsString()
   projectLocation?: string;
-
-  @IsOptional()
-  @IsString()
-  testingType?: string;
 
   @IsOptional()
   @IsInt()

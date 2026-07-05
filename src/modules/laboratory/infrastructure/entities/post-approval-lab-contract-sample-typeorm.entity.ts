@@ -18,9 +18,6 @@ export class PostApprovalLabContractSampleTypeOrmEntity extends TypeOrmBaseEntit
   @Column({ type: 'varchar', length: 100, nullable: true })
   declare sampleCode: string;
 
-  @Column({ type: 'text', nullable: true })
-  declare sampleDescription: string;
-
   @Column({ type: 'int', default: 1 })
   declare sampleQuantity: number;
 

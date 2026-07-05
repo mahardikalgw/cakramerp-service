@@ -14,6 +14,8 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import type { SampleRepositoryPort } from '../../../../laboratory/domain/repositories/sample-repository.port';
+import { SAMPLE_REPOSITORY } from '../../../../laboratory/domain/repositories/sample-repository.port';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
@@ -45,6 +47,8 @@ export class CustomerPortalLabController {
     private readonly customerRepo: CustomerRepositoryPort,
     @Inject(USER_REPOSITORY)
     private readonly userRepo: UserRepositoryPort,
+    @Inject(SAMPLE_REPOSITORY)
+    private readonly sampleRepo: SampleRepositoryPort,
   ) {}
 
   private async resolveCustomerId(userId: string): Promise<string> {
@@ -360,7 +364,6 @@ export class CustomerPortalLabController {
         testingServiceId?: string;
         serviceName: string;
         sampleCode?: string;
-        sampleDescription?: string;
         sampleQuantity: number;
       }>;
     },
@@ -428,6 +431,21 @@ export class CustomerPortalLabController {
       ...result,
       data: result.data.filter((c: any) => c.customerId === customerId),
     };
+  }
+
+  @Get('testing-requests/:id/samples')
+  @UseGuards(JwtAuthGuard)
+  async getTestingRequestSamples(
+    @Req() req: any,
+    @Param('id') id: string,
+  ) {
+    const customerId = await this.resolveCustomerId(req.user.id);
+    const request = await this.testingRequestService.findById(id);
+    if (!request) throw new NotFoundException('Testing request not found');
+    if ((request as any).customerId !== customerId)
+      throw new ForbiddenException('Access denied');
+    const samples = await this.sampleRepo.findByTestingRequestId(id);
+    return samples;
   }
 
   @Get('closed-contracts/:id/archive-data')

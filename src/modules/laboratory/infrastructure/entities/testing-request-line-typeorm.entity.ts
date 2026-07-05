@@ -16,9 +16,6 @@ export class TestingRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'sample_code' })
   declare sampleCode: string | null;
 
-  @Column({ type: 'text', nullable: true, name: 'sample_description' })
-  declare sampleDescription: string | null;
-
   @Column({ type: 'int', nullable: true })
   declare sampleQuantity: number;
 
