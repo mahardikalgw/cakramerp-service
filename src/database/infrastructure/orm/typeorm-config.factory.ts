@@ -19,7 +19,7 @@ export class TypeOrmConfigFactory {
         __dirname + '/../../../modules/**/infrastructure/**/*.entity{.ts,.js}',
       ],
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      migrationsRun: false,
+      migrationsRun: true,
     };
 
     if (config.replicas.length > 0) {
