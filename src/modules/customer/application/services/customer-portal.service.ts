@@ -294,11 +294,9 @@ export class CustomerPortalService {
       for (let i = 0; i < qty; i++) {
         const sample = new Sample({
           sampleCode:
-            qty === 1 && line.sampleCode
+            line.sampleCode
               ? line.sampleCode
-              : line.sampleCode
-                ? `${line.sampleCode}-${(i + 1).toString().padStart(2, '0')}`
-                : `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
+              : `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
           sampleTypeId: null,
           sampleTypeName: null,
           testingRequestId: savedRequest.id,
@@ -611,6 +609,43 @@ export class CustomerPortalService {
     const objectName = request.paymentProofUrl.replace('documents/', '');
     const url = this.minioService.getPublicDownloadUrl('documents', objectName);
     return { url, filename: request.paymentProofFilename };
+
+  async deleteSignedDocumentFile(
+    userId: string,
+    requestId: string,
+  ): Promise<TestingRequest> {
+    const request = await this.getMyTestingRequest(userId, requestId);
+    if (!request.signedDocumentUrl) {
+      throw new NotFoundException('No signed document uploaded');
+    }
+    if (!request.signedDocumentUrl.startsWith('http')) {
+      const objectName = request.signedDocumentUrl.replace('documents/', '');
+      await this.minioService.deleteFile('documents', objectName);
+    }
+    request.signedDocumentUrl = null;
+    request.signedDocumentFilename = null;
+    request.signedDocumentUploadedAt = null;
+    return this.testingRequestRepo.save(request);
+  }
+
+  async deletePaymentProofFile(
+    userId: string,
+    requestId: string,
+  ): Promise<TestingRequest> {
+    const request = await this.getMyTestingRequest(userId, requestId);
+    if (!request.paymentProofUrl) {
+      throw new NotFoundException('No payment proof uploaded');
+    }
+    if (!request.paymentProofUrl.startsWith('http')) {
+      const objectName = request.paymentProofUrl.replace('documents/', '');
+      await this.minioService.deleteFile('documents', objectName);
+    }
+    request.paymentProofUrl = null;
+    request.paymentProofFilename = null;
+    request.paymentProofUploadedAt = null;
+    return this.testingRequestRepo.save(request);
+  }
+
   }
 
   async getMyContracts(userId: string) {
