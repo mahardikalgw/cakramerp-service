@@ -19,7 +19,6 @@ export class UploadPortalDocumentDto {
   @IsString()
   fileName: string;
 }
-import { Type } from 'class-transformer';
 
 export class CustomerRegisterDto {
   @IsEmail()
