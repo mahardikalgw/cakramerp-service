@@ -3,7 +3,7 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 
 @Entity('samples')
 export class SampleTypeOrmEntity extends TypeOrmBaseEntity {
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50 })
   declare sampleCode: string;
 
   @Column({ type: 'uuid', nullable: true })
