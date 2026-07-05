@@ -46,9 +46,9 @@ export class StripSampleCodeSuffix20260705000002 implements MigrationInterface {
       WHERE sample_code ~ '-\\d{2}$'
     `);
 
-    // ── post_approval_lab_contract_samples ────────────────────────────────────
+    // ── lab_contract_samples ─────────────────────────────────────────────────
     await queryRunner.query(`
-      UPDATE post_approval_lab_contract_samples
+      UPDATE lab_contract_samples
       SET sample_code = REGEXP_REPLACE(sample_code, '-\\d{2}$', '')
       WHERE sample_code ~ '-\\d{2}$'
     `);
@@ -86,7 +86,7 @@ export class StripSampleCodeSuffix20260705000002 implements MigrationInterface {
         AND r.cnt > 1
     `);
 
-    // post_approval_lab_contract_samples — group by contract_id.
+    // lab_contract_samples — group by contract_id.
     await queryRunner.query(`
       WITH ranked AS (
         SELECT
@@ -100,9 +100,9 @@ export class StripSampleCodeSuffix20260705000002 implements MigrationInterface {
           COUNT(*) OVER (
             PARTITION BY contract_id, sample_code
           ) AS cnt
-        FROM post_approval_lab_contract_samples
+        FROM lab_contract_samples
       )
-      UPDATE post_approval_lab_contract_samples s
+      UPDATE lab_contract_samples s
       SET sample_code = s.sample_code || '-' || LPAD(r.rn::text, 2, '0')
       FROM ranked r
       WHERE s.id = r.id
