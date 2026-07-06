@@ -263,6 +263,7 @@ export class HrController {
       dto.workStartTime,
       dto.workEndTime,
       dto.breakDurationMinutes,
+      dto.username,
     );
     return this.employeeService.update(id, command);
   }

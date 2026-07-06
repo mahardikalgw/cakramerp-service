@@ -60,6 +60,17 @@ export class EmployeeService implements EmployeeServicePort {
     const employee = await this.employeeRepo.findById(id);
     if (!employee) throw new NotFoundException('Employee not found');
 
+    // Fetch linked user's username
+    const userRow = await this.dataSource.query(
+      `SELECT username FROM users WHERE employee_id = $1 LIMIT 1`,
+      [id],
+    );
+    if (userRow?.[0]?.username) {
+      (employee as any).username = userRow[0].username;
+    } else {
+      (employee as any).username = null;
+    }
+
     const documents = await this.employeeRepo.getDocuments(id);
     const history = await this.employeeRepo.getHistory(id);
 
@@ -172,6 +183,18 @@ export class EmployeeService implements EmployeeServicePort {
       updateData.breakDurationMinutes = command.breakDurationMinutes;
 
     const updatedEmployee = await this.employeeRepo.update(id, updateData);
+
+    // Update username on the linked user account if provided
+    if (command.username !== undefined) {
+      try {
+        await this.dataSource.query(
+          `UPDATE users SET username = $1 WHERE employee_id = $2`,
+          [command.username || null, id],
+        );
+      } catch {
+        // silently skip if update fails (e.g. username already taken)
+      }
+    }
 
     // Auto-create user account if email is being set and employee doesn't have one yet
     const newEmail = command.email ?? employee.email;
