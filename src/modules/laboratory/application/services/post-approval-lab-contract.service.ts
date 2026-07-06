@@ -226,6 +226,17 @@ export class PostApprovalLabContractService {
       generatedBy: adminUserId,
       generatedByName: adminUserName,
       expiresAt,
+      // For contract billing, lock the scope to only services from the request lines
+      allowedServiceIds:
+        request.billingType === 'contract' && (request.lines ?? []).length > 0
+          ? [
+              ...new Set(
+                (request.lines ?? [])
+                  .filter((l) => l.testingServiceId)
+                  .map((l) => l.testingServiceId!),
+              ),
+            ]
+          : null,
     });
 
     const saved = await this.repository.save(contract);
@@ -1023,6 +1034,19 @@ export class PostApprovalLabContractService {
 
     const created: LabContractSample[] = [];
     for (const s of samples) {
+      // Enforce scope — if allowedServiceIds is set, reject services outside scope
+      if (
+        contract.allowedServiceIds &&
+        contract.allowedServiceIds.length > 0 &&
+        s.testingServiceId &&
+        !contract.allowedServiceIds.includes(s.testingServiceId)
+      ) {
+        throw new BadRequestException(
+          `Testing service ${s.testingServiceId} is not in the scope of this contract. ` +
+            `Allowed services: ${contract.allowedServiceIds.join(', ')}`,
+        );
+      }
+
       let unitPrice = 0;
       if (s.testingServiceId) {
         try {

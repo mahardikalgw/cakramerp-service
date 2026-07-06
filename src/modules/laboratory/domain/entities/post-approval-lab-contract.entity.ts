@@ -78,6 +78,8 @@ export class PostApprovalLabContract extends BaseEntity {
   declare closedAt: Date | null;
   declare closedBy: string | null;
   declare closedByName: string | null;
+  /** Service IDs that are allowed for samples under this contract (contract billing only). */
+  declare allowedServiceIds: string[] | null;
   declare lines: LabContractSample[];
   declare createdAt: Date;
   declare updatedAt: Date;

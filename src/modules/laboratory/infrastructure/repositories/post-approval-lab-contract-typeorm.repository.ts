@@ -150,6 +150,7 @@ export class PostApprovalLabContractTypeOrmRepository
       closedAt: (entity as any).closedAt ?? null,
       closedBy: (entity as any).closedBy ?? null,
       closedByName: (entity as any).closedByName ?? null,
+      allowedServiceIds: entity.allowedServiceIds ?? null,
       lines: [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -194,6 +195,7 @@ export class PostApprovalLabContractTypeOrmRepository
     (entity as any).closedAt = domain.closedAt ?? null;
     (entity as any).closedBy = domain.closedBy ?? null;
     (entity as any).closedByName = domain.closedByName ?? null;
+    entity.allowedServiceIds = domain.allowedServiceIds ?? null;
     return entity;
   }
 

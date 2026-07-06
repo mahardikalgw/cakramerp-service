@@ -163,6 +163,19 @@ export class LabContractTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   })
   declare closedByName: string | null;
 
+  /**
+   * JSON array of testing service UUIDs that are in scope for this contract.
+   * When set, addContractSamples() will reject any sample whose
+   * testingServiceId is not in this list.
+   */
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    name: 'allowed_service_ids',
+    default: null,
+  })
+  declare allowedServiceIds: string[] | null;
+
   @OneToMany(
     () => LabContractAttachmentTypeOrmEntity,
     (attachment) => attachment.labContract,
