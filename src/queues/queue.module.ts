@@ -13,6 +13,7 @@ import {
 import { PAYROLL_QUEUE_NAME } from './payroll.constants';
 import { QueueHealthService } from './queue-health.service';
 import { AuditModule } from '../modules/audit/audit.module';
+import { HrModule } from '../modules/hr/hr.module';
 
 const redisUrl = envConfig.redis?.url;
 const connection = redisUrl
@@ -38,6 +39,7 @@ const connection = redisUrl
       { name: PAYROLL_QUEUE_NAME },
     ),
     AuditModule,
+    HrModule,
   ],
   providers: [
     GlPostingProcessor,
