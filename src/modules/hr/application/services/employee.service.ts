@@ -109,6 +109,7 @@ export class EmployeeService implements EmployeeServicePort {
           lastName: command.lastName,
           roles: [],
           status: 'active',
+          ...(command.username ? { username: command.username } : {}),
         });
         // Link user to employee
         await this.userProvisioning.linkUserToEmployee(user.id, employee.id);

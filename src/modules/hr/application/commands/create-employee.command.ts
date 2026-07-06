@@ -12,5 +12,6 @@ export class CreateEmployeeCommand {
     public readonly workStartTime?: string,
     public readonly workEndTime?: string,
     public readonly breakDurationMinutes?: number,
+    public readonly username?: string,
   ) {}
 }

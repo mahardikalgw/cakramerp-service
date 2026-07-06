@@ -6,6 +6,8 @@ import {
   IsIn,
   IsUUID,
   Min,
+  MinLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateEmployeeHttpDto {
@@ -55,6 +57,14 @@ export class CreateEmployeeHttpDto {
   @IsOptional()
   @IsNumber()
   breakDurationMinutes?: number;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @Matches(/^[a-zA-Z0-9_]+$/, {
+    message: 'Username can only contain letters, numbers and underscores',
+  })
+  username?: string;
 }
 
 export class UpdateEmployeeHttpDto {
