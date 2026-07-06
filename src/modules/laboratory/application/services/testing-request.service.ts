@@ -155,8 +155,7 @@ export class TestingRequestService {
       notes?: string;
     }[];
   }): Promise<TestingRequest> {
-    const lastNumber = await this.getLastRequestNumber();
-    const requestNumber = this.generateRequestNumber(lastNumber);
+    const requestNumber = await this.repository.generateNextRequestNumber();
 
     const submittedBy = dto.submittedBy ?? 'admin';
     // Customer-submitted requests are auto-submitted

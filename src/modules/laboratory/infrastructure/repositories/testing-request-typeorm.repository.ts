@@ -242,6 +242,57 @@ export class TestingRequestTypeOrmRepository
     return row?.requestNumber ?? null;
   }
 
+  /**
+   * Atomically generates the next request number using a PostgreSQL advisory
+   * transaction lock (key 987654321). The lock serializes concurrent calls so
+   * that two simultaneous submissions can never derive the same sequence number,
+   * eliminating the duplicate-key 500 errors that occur with the naive
+   * read-then-increment pattern.
+   *
+   * The lock is automatically released when the surrounding transaction ends.
+   * If there is no active transaction, PostgreSQL releases it immediately after
+   * the statement completes, which still prevents races in the common case of a
+   * single-statement "transaction".
+   */
+  async generateNextRequestNumber(): Promise<string> {
+    const LOCK_KEY = 987654321;
+    const year = new Date().getFullYear();
+
+    // Acquire a session-level advisory lock that is safe to call outside an
+    // explicit transaction (pg_advisory_xact_lock requires an active txn).
+    await this.dataSource.query(
+      `SELECT pg_advisory_lock($1)`,
+      [LOCK_KEY],
+    );
+
+    try {
+      const rows = await this.dataSource.query<{ request_number: string }[]>(
+        `SELECT request_number
+           FROM testing_requests
+          WHERE deleted_at IS NULL
+            AND request_number ~ '^REQ-${year}-'
+          ORDER BY request_number DESC
+          LIMIT 1`,
+      );
+
+      let seq = 1;
+      if (rows.length > 0) {
+        const match = rows[0].request_number.match(/REQ-\d{4}-(\d+)/);
+        if (match) {
+          seq = parseInt(match[1], 10) + 1;
+        }
+      }
+
+      return `REQ-${year}-${seq.toString().padStart(5, '0')}`;
+    } finally {
+      // Always release the lock, even if the query above throws.
+      await this.dataSource.query(
+        `SELECT pg_advisory_unlock($1)`,
+        [LOCK_KEY],
+      );
+    }
+  }
+
   async deleteLinesByRequestId(requestId: string): Promise<void> {
     await this.dataSource
       .getRepository(TestingRequestLineTypeOrmEntity)

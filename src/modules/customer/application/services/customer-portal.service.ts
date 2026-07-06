@@ -251,8 +251,7 @@ export class CustomerPortalService {
       labPurchaseOrderId = savedPO.id;
     }
 
-    const lastNumber = await this.testingRequestRepo.getLastRequestNumber();
-    const requestNumber = this.generateRequestNumber(lastNumber);
+    const requestNumber = await this.testingRequestRepo.generateNextRequestNumber();
 
     const entity = new TestingRequest({
       requestNumber,
