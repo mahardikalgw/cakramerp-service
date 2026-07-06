@@ -23,7 +23,9 @@ describe('AuthService', () => {
   const mockUserRepository = {
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    findByUsername: jest.fn(),
     existsByEmail: jest.fn(),
+    existsByUsername: jest.fn(),
     save: jest.fn(),
     bumpTokenVersion: jest.fn(),
   };
