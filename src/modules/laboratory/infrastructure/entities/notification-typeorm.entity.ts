@@ -3,9 +3,6 @@ import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/
 
 @Entity('notifications')
 @Index('idx_notifications_recipient', ['recipientUserId'])
-@Index('idx_notifications_unread', ['recipientUserId', 'isRead'], {
-  where: 'is_read = false',
-})
 @Index('idx_notifications_created_at', ['createdAt'])
 @Index('idx_notifications_entity', ['entityType', 'entityId'])
 export class NotificationTypeOrmEntity extends SoftDeletableTypeOrmEntity {
