@@ -282,8 +282,7 @@ export class TestingRequestTypeOrmRepository
                )
              ) AS max_seq
              FROM testing_requests
-            WHERE deleted_at IS NULL
-              AND request_number ~ $1`,
+            WHERE request_number ~ $1`,
           [`^REQ-${year}-`],
         );
 
