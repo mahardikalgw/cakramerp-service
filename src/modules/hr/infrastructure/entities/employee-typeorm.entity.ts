@@ -1,8 +1,8 @@
 import { Entity, Column } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('employees')
-export class EmployeeTypeOrmEntity extends TypeOrmBaseEntity {
+export class EmployeeTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   declare employeeNumber: string;
 

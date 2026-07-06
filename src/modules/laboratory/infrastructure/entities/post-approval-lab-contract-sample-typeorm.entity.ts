@@ -1,8 +1,8 @@
 import { Entity, Column } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('lab_contract_samples')
-export class PostApprovalLabContractSampleTypeOrmEntity extends TypeOrmBaseEntity {
+export class PostApprovalLabContractSampleTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare contractId: string;
 

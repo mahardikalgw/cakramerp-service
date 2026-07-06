@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { PurchaseOrderLineTypeOrmEntity } from './purchase-order-line-typeorm.entity';
 
 @Entity('purchase_orders')
-export class PurchaseOrderTypeOrmEntity extends TypeOrmBaseEntity {
+export class PurchaseOrderTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 100, unique: true, name: 'order_number' })
   declare poNumber: string;
 

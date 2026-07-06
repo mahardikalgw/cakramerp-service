@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToMany, JoinTable, Index } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { RoleTypeOrmEntity } from '../../../iam/infrastructure/entities/role-typeorm.entity';
 
 export enum UserStatusTypeOrm {
@@ -9,7 +9,7 @@ export enum UserStatusTypeOrm {
 }
 
 @Entity('users')
-export class UserTypeOrmEntity extends TypeOrmBaseEntity {
+export class UserTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   @Index()
   declare email: string;

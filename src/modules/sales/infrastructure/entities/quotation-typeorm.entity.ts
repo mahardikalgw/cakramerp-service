@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { QuotationLineTypeOrmEntity } from './quotation-line-typeorm.entity';
 
 @Entity('quotations')
-export class QuotationTypeOrmEntity extends TypeOrmBaseEntity {
+export class QuotationTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
   declare quotationNumber: string;
 

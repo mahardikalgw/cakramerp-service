@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { PurchaseOrderTypeOrmEntity } from './purchase-order-typeorm.entity';
 
 @Entity('purchase_order_lines')
-export class PurchaseOrderLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class PurchaseOrderLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @ManyToOne(() => PurchaseOrderTypeOrmEntity, (order) => order.lines, {
     onDelete: 'CASCADE',
   })

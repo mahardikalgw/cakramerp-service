@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { DailyReportTypeOrmEntity } from './daily-report-typeorm.entity';
 
 @Entity('daily_report_lines')
-export class DailyReportLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class DailyReportLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare dailyReportId: string;
 

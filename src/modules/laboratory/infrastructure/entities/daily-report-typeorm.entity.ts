@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { DailyReportLineTypeOrmEntity } from './daily-report-line-typeorm.entity';
 
 @Entity('daily_reports')
-export class DailyReportTypeOrmEntity extends TypeOrmBaseEntity {
+export class DailyReportTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   declare reportNumber: string;
 

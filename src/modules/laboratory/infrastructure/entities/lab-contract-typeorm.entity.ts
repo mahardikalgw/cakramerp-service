@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { LabContractAttachmentTypeOrmEntity } from './lab-contract-attachment-typeorm.entity';
 
 @Entity('lab_contracts')
-export class LabContractTypeOrmEntity extends TypeOrmBaseEntity {
+export class LabContractTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   declare contractNumber: string;
 

@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { PurchaseRequestLineTypeOrmEntity } from './purchase-request-line-typeorm.entity';
 
 @Entity('purchase_requests')
-export class PurchaseRequestTypeOrmEntity extends TypeOrmBaseEntity {
+export class PurchaseRequestTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
   declare prNumber: string;
 

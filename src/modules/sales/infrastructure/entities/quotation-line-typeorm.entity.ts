@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { QuotationTypeOrmEntity } from './quotation-typeorm.entity';
 
 @Entity('quotation_lines')
-export class QuotationLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class QuotationLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare quotationId: string;
 

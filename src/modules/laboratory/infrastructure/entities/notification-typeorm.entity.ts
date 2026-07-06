@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('notifications')
 @Index('idx_notifications_recipient', ['recipientUserId'])
@@ -8,7 +8,7 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
 })
 @Index('idx_notifications_created_at', ['createdAt'])
 @Index('idx_notifications_entity', ['entityType', 'entityId'])
-export class NotificationTypeOrmEntity extends TypeOrmBaseEntity {
+export class NotificationTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', name: 'recipient_user_id' })
   declare recipientUserId: string;
 

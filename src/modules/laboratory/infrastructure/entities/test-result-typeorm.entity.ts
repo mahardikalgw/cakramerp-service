@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { TestResultAttachmentTypeOrmEntity } from './test-result-attachment-typeorm.entity';
 
 @Entity('test_results')
-export class TestResultTypeOrmEntity extends TypeOrmBaseEntity {
+export class TestResultTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   declare resultNumber: string;
 

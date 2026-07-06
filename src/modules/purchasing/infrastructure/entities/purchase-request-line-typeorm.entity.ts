@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { PurchaseRequestTypeOrmEntity } from './purchase-request-typeorm.entity';
 
 @Entity('purchase_request_lines')
-export class PurchaseRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class PurchaseRequestLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare purchaseRequestId: string;
 

@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { PurchaseReturnLineTypeOrmEntity } from './purchase-return-line-typeorm.entity';
 
 @Entity('purchase_returns')
-export class PurchaseReturnTypeOrmEntity extends TypeOrmBaseEntity {
+export class PurchaseReturnTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
   declare returnNumber: string;
 

@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { TestingRequestTypeOrmEntity } from './testing-request-typeorm.entity';
 
 @Entity('testing_request_lines')
-export class TestingRequestLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class TestingRequestLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare testingRequestId: string;
 

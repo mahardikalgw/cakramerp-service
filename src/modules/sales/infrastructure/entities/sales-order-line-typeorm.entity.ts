@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { SalesOrderTypeOrmEntity } from './sales-order-typeorm.entity';
 
 @Entity('sales_order_lines')
-export class SalesOrderLineTypeOrmEntity extends TypeOrmBaseEntity {
+export class SalesOrderLineTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare salesOrderId: string;
 
