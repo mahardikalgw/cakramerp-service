@@ -87,7 +87,8 @@ export class UserTypeOrmRepository
     const qb = this.repository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.roles', 'r')
-      .leftJoinAndSelect('r.permissions', 'p');
+      .leftJoinAndSelect('r.permissions', 'p')
+      .where('u.deleted_at IS NULL');
 
     if (options?.filters?.search) {
       const search = options.filters.search;

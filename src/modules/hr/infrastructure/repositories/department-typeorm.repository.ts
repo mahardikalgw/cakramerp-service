@@ -18,6 +18,7 @@ export class DepartmentTypeOrmRepository implements DepartmentRepositoryPort {
     limit?: number;
   }): Promise<{ data: any[]; total: number }> {
     const qb = this.repo.createQueryBuilder('dept');
+    qb.where('dept.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere('dept.name ILIKE :search', { search: `%${filters.search}%` });

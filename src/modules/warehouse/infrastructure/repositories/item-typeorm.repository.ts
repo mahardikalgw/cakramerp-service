@@ -19,6 +19,7 @@ export class ItemTypeOrmRepository implements ItemRepositoryPort {
     limit?: number;
   }): Promise<{ data: ItemTypeOrmEntity[]; total: number }> {
     const qb = this.repo.createQueryBuilder('i');
+    qb.where('i.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere('(i.name ILIKE :search OR i.code ILIKE :search)', {

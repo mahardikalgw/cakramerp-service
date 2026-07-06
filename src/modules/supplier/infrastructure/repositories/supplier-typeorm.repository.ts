@@ -18,6 +18,7 @@ export class SupplierTypeOrmRepository implements SupplierRepositoryPort {
     limit?: number;
   }): Promise<{ data: SupplierTypeOrmEntity[]; total: number }> {
     const qb = this.repo.createQueryBuilder('s');
+    qb.where('s.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere(

@@ -37,7 +37,8 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
       .leftJoin(DepartmentTypeOrmEntity, 'dept', 'dept.id = emp.departmentId')
       .leftJoin(PositionTypeOrmEntity, 'pos', 'pos.id = emp.positionId')
       .addSelect('dept.name', 'departmentName')
-      .addSelect('pos.name', 'positionName');
+      .addSelect('pos.name', 'positionName')
+      .where('emp.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere(

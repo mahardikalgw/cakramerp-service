@@ -19,6 +19,7 @@ export class PositionTypeOrmRepository implements PositionRepositoryPort {
     limit?: number;
   }): Promise<{ data: any[]; total: number }> {
     const qb = this.repo.createQueryBuilder('pos');
+    qb.where('pos.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere('pos.name ILIKE :search', { search: `%${filters.search}%` });

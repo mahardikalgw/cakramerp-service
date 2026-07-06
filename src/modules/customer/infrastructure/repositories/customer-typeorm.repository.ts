@@ -18,6 +18,7 @@ export class CustomerTypeOrmRepository implements CustomerRepositoryPort {
     limit?: number;
   }): Promise<{ data: CustomerTypeOrmEntity[]; total: number }> {
     const qb = this.repo.createQueryBuilder('c');
+    qb.where('c.deleted_at IS NULL');
 
     if (filters?.search) {
       qb.andWhere(
