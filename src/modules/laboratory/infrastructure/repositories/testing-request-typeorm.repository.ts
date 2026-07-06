@@ -244,52 +244,59 @@ export class TestingRequestTypeOrmRepository
 
   /**
    * Atomically generates the next request number using a PostgreSQL advisory
-   * transaction lock (key 987654321). The lock serializes concurrent calls so
-   * that two simultaneous submissions can never derive the same sequence number,
-   * eliminating the duplicate-key 500 errors that occur with the naive
-   * read-then-increment pattern.
+   * lock (key 987654321). All three queries — lock, SELECT, unlock — run on
+   * the SAME dedicated connection via a TypeORM QueryRunner so the
+   * session-scoped advisory lock actually serializes concurrent callers.
    *
-   * The lock is automatically released when the surrounding transaction ends.
-   * If there is no active transaction, PostgreSQL releases it immediately after
-   * the statement completes, which still prevents races in the common case of a
-   * single-statement "transaction".
+   * Bug fixes over the previous implementation:
+   *  1. Dedicated connection: pg_advisory_lock is session-scoped; running the
+   *     lock/select/unlock on arbitrary pool connections made the lock useless.
+   *     QueryRunner.connect() pins all queries to one physical connection.
+   *  2. Numeric sort: the old ORDER BY request_number DESC sorted
+   *     lexicographically, so REQ-2026-00009 > REQ-2026-00010, causing
+   *     duplicates the moment the sequence reaches two digits.
+   *     MAX + CAST to integer is used instead.
    */
   async generateNextRequestNumber(): Promise<string> {
     const LOCK_KEY = 987654321;
     const year = new Date().getFullYear();
 
-    // Acquire a session-level advisory lock that is safe to call outside an
-    // explicit transaction (pg_advisory_xact_lock requires an active txn).
-    await this.dataSource.query(
-      `SELECT pg_advisory_lock($1)`,
-      [LOCK_KEY],
-    );
+    // createQueryRunner() + connect() acquires a dedicated connection from
+    // the pool. Every queryRunner.query() call goes to that same connection,
+    // so the session-scoped advisory lock is effective for the whole section.
+    const qr = this.dataSource.createQueryRunner();
+    await qr.connect();
 
     try {
-      const rows = await this.dataSource.query<{ request_number: string }[]>(
-        `SELECT request_number
-           FROM testing_requests
-          WHERE deleted_at IS NULL
-            AND request_number ~ '^REQ-${year}-'
-          ORDER BY request_number DESC
-          LIMIT 1`,
-      );
+      await qr.query(`SELECT pg_advisory_lock($1)`, [LOCK_KEY]);
+      try {
+        // Cast the numeric suffix to INTEGER before taking MAX so the
+        // comparison is numeric, not lexicographic.
+        // (Lexicographic: REQ-2026-00009 > REQ-2026-00010, which causes
+        // duplicates the moment the sequence reaches two digits.)
+        const rows: { max_seq: number | null }[] = await qr.query(
+          `SELECT MAX(
+               CAST(
+                 SUBSTRING(request_number FROM 'REQ-\\d{4}-(\\d+)')
+                 AS INTEGER
+               )
+             ) AS max_seq
+             FROM testing_requests
+            WHERE deleted_at IS NULL
+              AND request_number ~ $1`,
+          [`^REQ-${year}-`],
+        );
 
-      let seq = 1;
-      if (rows.length > 0) {
-        const match = rows[0].request_number.match(/REQ-\d{4}-(\d+)/);
-        if (match) {
-          seq = parseInt(match[1], 10) + 1;
-        }
+        const maxSeq = rows[0]?.max_seq ?? null;
+        const seq = maxSeq !== null ? Number(maxSeq) + 1 : 1;
+        return `REQ-${year}-${seq.toString().padStart(5, '0')}`;
+      } finally {
+        // Always release the advisory lock before returning the connection.
+        await qr.query(`SELECT pg_advisory_unlock($1)`, [LOCK_KEY]);
       }
-
-      return `REQ-${year}-${seq.toString().padStart(5, '0')}`;
     } finally {
-      // Always release the lock, even if the query above throws.
-      await this.dataSource.query(
-        `SELECT pg_advisory_unlock($1)`,
-        [LOCK_KEY],
-      );
+      // Return the connection to the pool regardless of success or failure.
+      await qr.release();
     }
   }
 
