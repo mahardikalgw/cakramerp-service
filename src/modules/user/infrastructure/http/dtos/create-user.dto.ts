@@ -5,6 +5,7 @@ import {
   IsArray,
   IsIn,
   MinLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateUserHttpDto {
@@ -20,6 +21,14 @@ export class CreateUserHttpDto {
 
   @IsString()
   lastName: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @Matches(/^[a-zA-Z0-9_]+$/, {
+    message: 'Username can only contain letters, numbers and underscores',
+  })
+  username?: string;
 
   @IsOptional()
   @IsArray()

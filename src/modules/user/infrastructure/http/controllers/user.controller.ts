@@ -45,6 +45,7 @@ export class UserController {
       dto.lastName,
       dto.roleIds,
       dto.status,
+      dto.username,
     );
     const user = await this.userService.create(command);
     return UserResponseDto.fromDomain(user);
@@ -89,6 +90,7 @@ export class UserController {
       dto.lastName,
       dto.status,
       dto.roleIds,
+      dto.username,
     );
     const user = await this.userService.update(id, command);
     return UserResponseDto.fromDomain(user);

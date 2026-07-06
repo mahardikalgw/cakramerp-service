@@ -36,9 +36,17 @@ export class UserService implements UserServicePort {
       throw new ConflictException('Email already registered');
     }
 
+    if (command.username) {
+      const usernameTaken = await this.userRepository.existsByUsername(command.username);
+      if (usernameTaken) {
+        throw new ConflictException('Username already taken');
+      }
+    }
+
     const passwordHash = await bcryptjs.hash(command.password, 12);
     const user = new User({
       email: command.email,
+      username: command.username ?? null,
       passwordHash,
       firstName: command.firstName,
       lastName: command.lastName,
@@ -92,6 +100,17 @@ export class UserService implements UserServicePort {
     if (command.status !== undefined) {
       if (command.status === 'active') user.activate();
       else if (command.status === 'inactive') user.deactivate();
+    }
+
+    if (command.username !== undefined) {
+      // Allow clearing username (null) or setting a new one
+      if (command.username !== null) {
+        const usernameTaken = await this.userRepository.existsByUsername(command.username);
+        if (usernameTaken && user.username !== command.username) {
+          throw new ConflictException('Username already taken');
+        }
+      }
+      user.username = command.username;
     }
 
     // Handle role assignments if provided

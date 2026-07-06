@@ -4,5 +4,6 @@ export class UpdateUserCommand {
     public readonly lastName?: string,
     public readonly status?: string,
     public readonly roleIds?: string[],
+    public readonly username?: string | null,
   ) {}
 }

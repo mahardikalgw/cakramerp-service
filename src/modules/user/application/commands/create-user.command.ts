@@ -6,5 +6,6 @@ export class CreateUserCommand {
     public readonly lastName: string,
     public readonly roleIds?: string[],
     public readonly status?: 'active' | 'inactive' | 'suspended',
+    public readonly username?: string,
   ) {}
 }
