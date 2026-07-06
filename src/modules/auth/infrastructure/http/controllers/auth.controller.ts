@@ -57,7 +57,7 @@ export class AuthController {
     @Req() req: any,
   ): Promise<TokenResponseDto> {
     const ipAddress = req.ip ?? req.connection?.remoteAddress;
-    const command = new LoginCommand(dto.email, dto.password, ipAddress);
+    const command = new LoginCommand(dto.identifier, dto.password, ipAddress);
     const result = await this.authService.login(command);
     return TokenResponseDto.fromResult(result);
   }
@@ -95,6 +95,7 @@ export class AuthController {
     return {
       id: fullUser.id,
       email: fullUser.email,
+      username: fullUser.username ?? null,
       firstName: fullUser.firstName,
       lastName: fullUser.lastName,
       roles: fullUser.roles ?? [],

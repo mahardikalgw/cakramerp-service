@@ -66,16 +66,30 @@ export class AuthService implements AuthServicePort {
   }
 
   async login(command: LoginCommand): Promise<AuthTokensResult> {
-    const user = await this.userRepository.findByEmail(command.email);
+    // Determine if identifier looks like an email (contains @)
+    const isEmail = command.identifier.includes('@');
+
+    // Try email lookup first, then fall back to username
+    let user = isEmail
+      ? await this.userRepository.findByEmail(command.identifier)
+      : await this.userRepository.findByUsername(command.identifier);
+
+    // If not found by the primary strategy, try the other one
+    if (!user) {
+      user = isEmail
+        ? await this.userRepository.findByUsername(command.identifier)
+        : await this.userRepository.findByEmail(command.identifier);
+    }
+
     if (!user) {
       await this.enqueueAuditLog({
         userId: 'unknown',
-        userName: command.email,
+        userName: command.identifier,
         action: 'login_failed',
         module: 'auth',
         recordId: '',
         ipAddress: command.ipAddress,
-        payload: { reason: 'user_not_found', email: command.email },
+        payload: { reason: 'user_not_found', identifier: command.identifier },
       }).catch(() => {});
       throw new UnauthorizedException('Invalid credentials');
     }

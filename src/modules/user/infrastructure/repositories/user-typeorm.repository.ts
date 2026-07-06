@@ -33,6 +33,7 @@ export class UserTypeOrmRepository
     return new User({
       id: entity.id,
       email: entity.email,
+      username: entity.username ?? null,
       passwordHash: entity.passwordHash,
       firstName: entity.firstName,
       lastName: entity.lastName,
@@ -48,6 +49,7 @@ export class UserTypeOrmRepository
     const entity = new UserTypeOrmEntity();
     entity.id = domain.id;
     entity.email = domain.email;
+    entity.username = domain.username ?? null;
     entity.passwordHash = domain.passwordHash;
     entity.firstName = domain.firstName;
     entity.lastName = domain.lastName;
@@ -76,6 +78,19 @@ export class UserTypeOrmRepository
 
   async existsByEmail(email: string): Promise<boolean> {
     const count = await this.repository.count({ where: { email } });
+    return count > 0;
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    const entity = await this.repository.findOne({
+      where: { username },
+      relations: ['roles', 'roles.permissions'],
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    const count = await this.repository.count({ where: { username } });
     return count > 0;
   }
 

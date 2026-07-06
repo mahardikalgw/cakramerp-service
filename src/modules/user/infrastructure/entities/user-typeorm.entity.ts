@@ -14,6 +14,10 @@ export class UserTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Index()
   declare email: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true, unique: true, name: 'username' })
+  @Index()
+  declare username: string | null;
+
   @Column({ type: 'varchar', length: 255, name: 'password_hash' })
   declare passwordHash: string;
 

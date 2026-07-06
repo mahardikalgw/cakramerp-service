@@ -9,6 +9,7 @@ export enum UserStatus {
 export class User extends BaseEntity {
   declare id: string;
   declare email: string;
+  declare username: string | null;
   declare passwordHash: string;
   declare firstName: string;
   declare lastName: string;
