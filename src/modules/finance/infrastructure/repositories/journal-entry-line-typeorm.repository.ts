@@ -85,6 +85,31 @@ export class JournalEntryLineTypeOrmRepository implements JournalEntryLineReposi
     await this.repo.delete({ journalEntryId });
   }
 
+  async sumByAccountIdsAndDateRange(
+    accountIds: string[],
+    start: Date,
+    end: Date,
+  ): Promise<{ accountId: string; totalDebit: number; totalCredit: number }[]> {
+    if (accountIds.length === 0) return [];
+
+    const rows = await this.repo
+      .createQueryBuilder('line')
+      .innerJoin(JournalEntryTypeOrmEntity, 'je', 'je.id = line.journalEntryId')
+      .select('line.accountId', 'accountId')
+      .addSelect('SUM(line.debit)', 'totalDebit')
+      .addSelect('SUM(line.credit)', 'totalCredit')
+      .where('line.accountId IN (:...accountIds)', { accountIds })
+      .andWhere('je.date BETWEEN :start AND :end', { start, end })
+      .groupBy('line.accountId')
+      .getRawMany();
+
+    return rows.map((r: any) => ({
+      accountId: r.accountId,
+      totalDebit: parseFloat(r.totalDebit) || 0,
+      totalCredit: parseFloat(r.totalCredit) || 0,
+    }));
+  }
+
   private toDomain(entity: JournalEntryLineTypeOrmEntity): JournalEntryLine {
     return new JournalEntryLine({
       id: entity.id,

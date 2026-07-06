@@ -1,6 +1,10 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
 
+@Index('IDX_item_stock_balances_item_id', ['itemId'])
+@Index('IDX_item_stock_balances_item_warehouse', ['itemId', 'warehouseId'], {
+  unique: true,
+})
 @Entity('item_stock_balances')
 export class ItemStockBalanceTypeOrmEntity extends TypeOrmBaseEntity {
   @Column({ type: 'uuid' })

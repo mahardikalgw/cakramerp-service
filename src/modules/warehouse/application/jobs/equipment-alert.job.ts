@@ -28,7 +28,11 @@ export class EquipmentMaintenanceAlertJob {
 
     const schedules = await this.scheduleRepo
       .createQueryBuilder('ms')
-      .innerJoin(EquipmentUnitTypeOrmEntity, 'eq', 'eq.id = ms.equipmentId')
+      .innerJoinAndSelect(
+        EquipmentUnitTypeOrmEntity,
+        'eq',
+        'eq.id = ms.equipmentId',
+      )
       .where('ms.nextDueDate <= :dueDate', { dueDate: sevenDaysFromNow })
       .andWhere('eq.status = :status', { status: 'active' })
       .getMany();
@@ -39,10 +43,8 @@ export class EquipmentMaintenanceAlertJob {
     }
 
     for (const schedule of schedules) {
-      const equipment = await this.equipmentRepo.findOne({
-        where: { id: schedule.equipmentId },
-      });
-      if (!equipment) continue;
+      const equipment = schedule as any;
+      if (!equipment.unitId) continue;
 
       const dueDate = new Date(schedule.nextDueDate);
       const isOverdue = dueDate < today;

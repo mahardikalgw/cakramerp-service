@@ -1,25 +1,21 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Inject } from '@nestjs/common';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
-import type { UserIdentityPort } from '../../../../shared/kernel/domain/ports/user-identity.port';
-import { USER_IDENTITY_PORT } from '../../../../shared/kernel/domain/ports/user-identity.port';
 
 interface RequestWithUser {
   user?: {
     sub?: string;
+    id?: string;
+    permissions?: string[];
+    roles?: string[];
   };
 }
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    @Inject(USER_IDENTITY_PORT)
-    private readonly userIdentity: UserIdentityPort,
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -30,17 +26,17 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const userId = request.user?.sub ?? (request.user as any)?.id;
+    const user = request.user;
 
-    if (!userId) {
+    if (!user) {
       return false;
     }
 
-    const identity = await this.userIdentity.getIdentity(userId);
-    if (!identity) {
-      return false;
+    if (user.roles?.includes('admin')) {
+      return true;
     }
 
-    return requiredPermissions.every((p) => identity.permissions.includes(p));
+    const userPermissions = user.permissions ?? [];
+    return requiredPermissions.every((p) => userPermissions.includes(p));
   }
 }

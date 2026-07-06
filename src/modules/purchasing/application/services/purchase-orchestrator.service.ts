@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { PurchaseOrderService } from './purchase-order.service';
@@ -19,6 +20,7 @@ import { ProcurementFinanceAdapter } from '../adapters/procurement-finance.adapt
  */
 @Injectable()
 export class PurchaseOrchestratorService {
+  private readonly logger = new Logger(PurchaseOrchestratorService.name);
   constructor(
     private readonly dataSource: DataSource,
     private readonly purchaseOrderService: PurchaseOrderService,
@@ -33,7 +35,7 @@ export class PurchaseOrchestratorService {
       await this.financeAdapter.recordPOApprovalGl(poId);
     } catch (err) {
       // Approval is the user-facing action; surface the GL issue but don't undo it.
-      console.warn('PO approval GL queue failed', err);
+      this.logger.warn('PO approval GL queue failed', err);
     }
     return updated;
   }
@@ -98,7 +100,7 @@ export class PurchaseOrchestratorService {
     try {
       await this.financeAdapter.recordPurchaseReturnGl(returnId);
     } catch (err) {
-      console.warn('Purchase return GL queue failed', err);
+      this.logger.warn('Purchase return GL queue failed', err);
     }
     return updated;
   }

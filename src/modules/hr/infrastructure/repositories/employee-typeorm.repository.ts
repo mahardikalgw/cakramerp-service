@@ -67,43 +67,31 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
 
     const [rawData, total] = await qb.getManyAndCount();
 
-    // Fetch department and position names for the results
-    const data = await Promise.all(
-      rawData.map(async (emp) => {
-        const department = emp.departmentId
-          ? await this.departmentRepo.findOne({
-              where: { id: emp.departmentId },
-            })
-          : null;
-        const position = emp.positionId
-          ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
-          : null;
-        return {
-          ...emp,
-          departmentName: department?.name ?? null,
-          positionName: position?.name ?? null,
-        };
-      }),
-    );
+    // JOINs already fetched department/position in addSelect — use them directly
+    const data = rawData.map((emp: any) => ({
+      ...emp,
+      departmentName: emp.departmentName ?? null,
+      positionName: emp.positionName ?? null,
+    }));
 
     return { data, total };
   }
 
   async findById(id: string): Promise<any | null> {
-    const emp = await this.employeeRepo.findOne({ where: { id } });
+    const emp = await this.employeeRepo
+      .createQueryBuilder('emp')
+      .leftJoin(DepartmentTypeOrmEntity, 'dept', 'dept.id = emp.departmentId')
+      .leftJoin(PositionTypeOrmEntity, 'pos', 'pos.id = emp.positionId')
+      .addSelect('dept.name', 'departmentName')
+      .addSelect('pos.name', 'positionName')
+      .where('emp.id = :id', { id })
+      .getRawOne();
+
     if (!emp) return null;
-
-    const department = emp.departmentId
-      ? await this.departmentRepo.findOne({ where: { id: emp.departmentId } })
-      : null;
-    const position = emp.positionId
-      ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
-      : null;
-
     return {
       ...emp,
-      departmentName: department?.name ?? null,
-      positionName: position?.name ?? null,
+      departmentName: emp.departmentName ?? null,
+      positionName: emp.positionName ?? null,
     };
   }
 
@@ -111,8 +99,13 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
     siteId?: string,
     departmentId?: string,
   ): Promise<any[]> {
-    const qb = this.employeeRepo.createQueryBuilder('emp');
-    qb.where('emp.status = :status', { status: 'active' });
+    const qb = this.employeeRepo
+      .createQueryBuilder('emp')
+      .leftJoin(DepartmentTypeOrmEntity, 'dept', 'dept.id = emp.departmentId')
+      .leftJoin(PositionTypeOrmEntity, 'pos', 'pos.id = emp.positionId')
+      .addSelect('dept.name', 'departmentName')
+      .addSelect('pos.name', 'positionName')
+      .where('emp.status = :status', { status: 'active' });
 
     if (departmentId) {
       qb.andWhere('emp.departmentId = :departmentId', { departmentId });
@@ -120,23 +113,11 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
 
     const employees = await qb.orderBy('emp.fullName', 'ASC').getMany();
 
-    return Promise.all(
-      employees.map(async (emp) => {
-        const department = emp.departmentId
-          ? await this.departmentRepo.findOne({
-              where: { id: emp.departmentId },
-            })
-          : null;
-        const position = emp.positionId
-          ? await this.positionRepo.findOne({ where: { id: emp.positionId } })
-          : null;
-        return {
-          ...emp,
-          departmentName: department?.name ?? null,
-          positionName: position?.name ?? null,
-        };
-      }),
-    );
+    return employees.map((emp: any) => ({
+      ...emp,
+      departmentName: emp.departmentName ?? null,
+      positionName: emp.positionName ?? null,
+    }));
   }
 
   async create(data: any): Promise<any> {

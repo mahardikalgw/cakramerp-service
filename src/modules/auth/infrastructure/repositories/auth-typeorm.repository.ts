@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, MoreThan } from 'typeorm';
 import * as bcryptjs from 'bcryptjs';
 import { RefreshToken } from '../../domain/entities/refresh-token.entity';
 import { AuthRepositoryPort } from '../../domain/repositories/auth-repository.port';
@@ -41,12 +41,12 @@ export class AuthTypeOrmRepository
   }
 
   async findByTokenHash(hash: string): Promise<RefreshToken | null> {
-    // bcrypt generates a different hash each time, so we must use compare
-    // Load recent unexpired tokens and use bcrypt.compare
+    // Only load unexpired tokens, most recent first, capped at 5
+    // This reduces worst-case from 100 bcrypt.compare to 5
     const entities = await this.repository.find({
-      where: {},
+      where: { expiresAt: MoreThan(new Date()) },
       order: { createdAt: 'DESC' },
-      take: 100,
+      take: 5,
     });
     for (const entity of entities) {
       const match = await bcryptjs.compare(hash, entity.tokenHash);

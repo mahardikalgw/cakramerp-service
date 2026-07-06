@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { SalesOrderService } from './sales-order.service';
@@ -19,6 +20,7 @@ import { SalesFinanceAdapter } from '../adapters/sales-finance.adapter';
  */
 @Injectable()
 export class SalesOrchestratorService {
+  private readonly logger = new Logger(SalesOrchestratorService.name);
   constructor(
     private readonly dataSource: DataSource,
     private readonly salesOrderService: SalesOrderService,
@@ -32,7 +34,7 @@ export class SalesOrchestratorService {
     try {
       await this.financeAdapter.recordSOApprovalGl(soId);
     } catch (err) {
-      console.warn('SO approval GL queue failed', err);
+      this.logger.warn('SO approval GL queue failed', err);
     }
     return updated;
   }
@@ -96,12 +98,12 @@ export class SalesOrchestratorService {
         reason,
       );
     } catch (err) {
-      console.warn('Sales return warehouse reversal failed', err);
+      this.logger.warn('Sales return warehouse reversal failed', err);
     }
     try {
       await this.financeAdapter.recordSalesReturnGl(returnId);
     } catch (err) {
-      console.warn('Sales return GL queue failed', err);
+      this.logger.warn('Sales return GL queue failed', err);
     }
     return updated;
   }

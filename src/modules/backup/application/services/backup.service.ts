@@ -75,9 +75,7 @@ export class BackupService implements BackupServicePort {
     return this.backupHistoryRepository.findByBackupJobId(backupJobId);
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async restoreBackup(backupHistoryId: string): Promise<void> {
     // TODO: Implement actual restore logic using psql or similar
-    console.log(`Restoring backup: ${backupHistoryId}`);
   }
 }

@@ -70,6 +70,11 @@ export interface JournalEntryLineRepositoryPort {
   save(line: JournalEntryLine): Promise<JournalEntryLine>;
   saveMany(lines: JournalEntryLine[]): Promise<JournalEntryLine[]>;
   deleteByJournalEntryId(journalEntryId: string): Promise<void>;
+  sumByAccountIdsAndDateRange(
+    accountIds: string[],
+    start: Date,
+    end: Date,
+  ): Promise<{ accountId: string; totalDebit: number; totalCredit: number }[]>;
 }
 
 export interface ARInvoiceRepositoryPort extends RepositoryPort<ARInvoice> {

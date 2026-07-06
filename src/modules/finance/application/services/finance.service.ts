@@ -149,10 +149,10 @@ export class FinanceService implements FinanceServicePort {
         endOfLastMonth,
       );
 
-    // Cash position from all cash account lines (all time)
-    const cashLines =
+    // Cash position from aggregated DB sums (avoids loading all historical lines into memory)
+    const cashSum =
       cashAccountIds.length > 0
-        ? await this.journalLineRepo.findByAccountIdsAndDateRange(
+        ? await this.journalLineRepo.sumByAccountIdsAndDateRange(
             cashAccountIds,
             new Date('2000-01-01'),
             now,
@@ -181,9 +181,9 @@ export class FinanceService implements FinanceServicePort {
       new Decimal(0),
     );
 
-    // Cash position (debits - credits for asset accounts)
-    const cashPosition = cashLines.reduce(
-      (sum, line) => sum.plus(line.debit).minus(line.credit),
+    // Cash position from pre-aggregated sums
+    const cashPosition = cashSum.reduce(
+      (sum, r) => new Decimal(sum).plus(r.totalDebit).minus(r.totalCredit),
       new Decimal(0),
     );
 

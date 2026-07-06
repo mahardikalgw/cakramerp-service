@@ -1,6 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
+@Index('IDX_stock_ledger_item_id', ['itemId'])
+@Index('IDX_stock_ledger_warehouse_id', ['warehouseId'])
+@Index('IDX_stock_ledger_item_warehouse', ['itemId', 'warehouseId'])
 @Entity('stock_ledger')
 export class StockLedgerTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })

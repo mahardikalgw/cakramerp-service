@@ -1,6 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
+@Index('IDX_journal_entries_date', ['date'])
+@Index('IDX_journal_entries_status', ['status'])
 @Entity('journal_entries')
 export class JournalEntryTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 100, unique: true })

@@ -14,6 +14,8 @@ import {
   Req,
   Inject,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
@@ -33,6 +35,7 @@ import { DEPARTMENT_SERVICE } from '../../../application/ports/department-servic
 import type { DepartmentServicePort } from '../../../application/ports/department-service.port';
 import { POSITION_SERVICE } from '../../../application/ports/position-service.port';
 import type { PositionServicePort } from '../../../application/ports/position-service.port';
+import { PAYROLL_QUEUE_NAME } from '../../../../../queues/payroll.constants';
 
 import { CreateEmployeeCommand } from '../../../application/commands/create-employee.command';
 import { UpdateEmployeeCommand } from '../../../application/commands/update-employee.command';
@@ -83,6 +86,8 @@ export class HrController {
     private readonly departmentService: DepartmentServicePort,
     @Inject(POSITION_SERVICE)
     private readonly positionService: PositionServicePort,
+    @InjectQueue(PAYROLL_QUEUE_NAME)
+    private readonly payrollQueue: Queue,
   ) {}
 
   // ==================== Departments ====================
@@ -380,9 +385,18 @@ export class HrController {
 
   @Post('payroll/run')
   @RequirePermissions('payroll:create')
-  async runPayroll(@Body() dto: RunPayrollHttpDto) {
+  async runPayroll(@Body() dto: RunPayrollHttpDto, @Req() req: any) {
     const command = new RunPayrollCommand(dto.month, dto.year);
-    return this.payrollService.runPayroll(command.month, command.year);
+    const job = await this.payrollQueue.add('run-payroll', {
+      month: command.month,
+      year: command.year,
+      requestedBy: req.user?.id ?? 'unknown',
+    });
+    return {
+      status: 'queued',
+      jobId: job.id,
+      message: `Payroll for ${command.month}/${command.year} has been queued for processing`,
+    };
   }
 
   @Patch('payroll/:id/confirm')

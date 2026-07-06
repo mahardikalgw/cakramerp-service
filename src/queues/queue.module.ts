@@ -4,11 +4,13 @@ import { envConfig } from '../config/env.config';
 import { GlPostingProcessor } from './gl-posting.processor';
 import { AuditLogProcessor } from './audit-log.processor';
 import { NotificationProcessor } from './notification.processor';
+import { PayrollProcessor } from './payroll.processor';
 import { GL_POSTING_QUEUE_NAME } from './gl-posting.constants';
 import {
   AUDIT_LOG_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
 } from './audit-log.constants';
+import { PAYROLL_QUEUE_NAME } from './payroll.constants';
 import { QueueHealthService } from './queue-health.service';
 import { AuditModule } from '../modules/audit/audit.module';
 
@@ -33,6 +35,7 @@ const connection = redisUrl
       { name: GL_POSTING_QUEUE_NAME },
       { name: AUDIT_LOG_QUEUE_NAME },
       { name: NOTIFICATION_QUEUE_NAME },
+      { name: PAYROLL_QUEUE_NAME },
     ),
     AuditModule,
   ],
@@ -40,6 +43,7 @@ const connection = redisUrl
     GlPostingProcessor,
     AuditLogProcessor,
     NotificationProcessor,
+    PayrollProcessor,
     QueueHealthService,
   ],
   exports: [BullModule, QueueHealthService],

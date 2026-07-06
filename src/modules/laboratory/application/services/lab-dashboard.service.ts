@@ -34,19 +34,20 @@ export class LabDashboardService {
   ) {}
 
   async getAdminDashboard(): Promise<any> {
+    // Use limit:1 since meta.total returns the full count regardless of limit
     const activeRequests = await this.testingRequestRepo.findAll({
       filters: { status: 'submitted' },
-      limit: 1000,
+      limit: 1,
     });
     const activeContracts = await this.contractRepo.findAll({
       filters: { status: 'active' },
-      limit: 1000,
+      limit: 1,
     });
     const activePOs = await this.poRepo.findAll({
       filters: { status: 'active' },
-      limit: 1000,
+      limit: 1,
     });
-    const todaySchedules = await this.scheduleRepo.findAll({ limit: 1000 });
+    const todaySchedules = await this.scheduleRepo.findAll({ limit: 1 });
 
     return {
       activeTestingRequests: activeRequests.meta.total,
@@ -91,16 +92,16 @@ export class LabDashboardService {
   async getLabDashboard(): Promise<any> {
     const incomingSamples = await this.sampleRepo.findAll({
       filters: { status: 'awaiting_delivery' },
-      limit: 1000,
+      limit: 1,
     });
     const processingSamples = await this.sampleRepo.findAll({
       filters: { status: 'processing' },
-      limit: 1000,
+      limit: 1,
     });
-    const todaySchedules = await this.scheduleRepo.findAll({ limit: 1000 });
+    const todaySchedules = await this.scheduleRepo.findAll({ limit: 1 });
     const pendingResults = await this.testResultRepo.findAll({
       filters: { status: 'draft' },
-      limit: 1000,
+      limit: 1,
     });
 
     return {
@@ -114,15 +115,15 @@ export class LabDashboardService {
   async getCustomerDashboard(customerId: string): Promise<any> {
     const myRequests = await this.testingRequestRepo.findAll({
       filters: { customerId },
-      limit: 1000,
+      limit: 1,
     });
     const myContracts = await this.contractRepo.findAll({
       filters: { customerId, status: 'active' },
-      limit: 1000,
+      limit: 1,
     });
     const myReports = await this.dailyReportRepo.findAll({
       filters: { customerId },
-      limit: 1000,
+      limit: 1,
     });
 
     const quotaData = myContracts.data.map((c) => ({

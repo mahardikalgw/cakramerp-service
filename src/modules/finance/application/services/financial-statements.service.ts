@@ -190,28 +190,29 @@ export class FinancialStatementsService implements FinancialStatementsServicePor
     const liabilityAccounts = await this.accountRepo.findByType('liability');
     const equityAccounts = await this.accountRepo.findByType('equity');
 
-    const allLines = await this.journalLineRepo.findByDateRange(
+    // Aggregate in SQL instead of loading all rows into memory
+    const allAccountIds = [
+      ...assetAccounts.map((a) => a.id),
+      ...liabilityAccounts.map((a) => a.id),
+      ...equityAccounts.map((a) => a.id),
+    ];
+    const aggregated = await this.journalLineRepo.sumByAccountIdsAndDateRange(
+      allAccountIds,
       startDate,
       date,
+    );
+    const sumMap = new Map(
+      aggregated.map((r) => [r.accountId, r.totalDebit - r.totalCredit]),
     );
 
     const calcBalance = (
       accountId: string,
       type: 'asset' | 'liability' | 'equity',
     ): number => {
-      const lines = allLines.filter((l) => l.accountId === accountId);
-      if (type === 'asset') {
-        // Assets: debit increases, credit decreases
-        return lines.reduce(
-          (sum, l) => sum + l.debit.toNumber() - l.credit.toNumber(),
-          0,
-        );
-      }
+      const net = sumMap.get(accountId) ?? 0;
+      if (type === 'asset') return net;
       // Liabilities & Equity: credit increases, debit decreases
-      return lines.reduce(
-        (sum, l) => sum + l.credit.toNumber() - l.debit.toNumber(),
-        0,
-      );
+      return -net;
     };
 
     const assets: StatementLineItem[] = assetAccounts
@@ -238,26 +239,28 @@ export class FinancialStatementsService implements FinancialStatementsServicePor
       }))
       .filter((i) => i.amount !== 0);
 
-    // Add retained earnings (net profit) to equity
+    // Retained earnings via aggregated sums
     const revenueAccounts = await this.accountRepo.findByType('revenue');
     const expenseAccounts = await this.accountRepo.findByType('expense');
-    const totalRevenue = revenueAccounts.reduce(
-      (sum, acc) =>
-        sum +
-        allLines
-          .filter((l) => l.accountId === acc.id)
-          .reduce((s, l) => s + l.credit.toNumber() - l.debit.toNumber(), 0),
-      0,
+    const revenueExpenseIds = [
+      ...revenueAccounts.map((a) => a.id),
+      ...expenseAccounts.map((a) => a.id),
+    ];
+    const reAggregated = await this.journalLineRepo.sumByAccountIdsAndDateRange(
+      revenueExpenseIds,
+      startDate,
+      date,
     );
-    const totalExpenses = expenseAccounts.reduce(
-      (sum, acc) =>
-        sum +
-        allLines
-          .filter((l) => l.accountId === acc.id)
-          .reduce((s, l) => s + l.debit.toNumber() - l.credit.toNumber(), 0),
-      0,
-    );
-    const retainedEarnings = totalRevenue - totalExpenses;
+    const revenueAccountIds = new Set(revenueAccounts.map((a) => a.id));
+    let retainedEarnings = 0;
+    for (const r of reAggregated) {
+      const net = r.totalCredit - r.totalDebit; // credit-balance for revenue
+      if (revenueAccountIds.has(r.accountId)) {
+        retainedEarnings += net;
+      } else {
+        retainedEarnings -= r.totalDebit - r.totalCredit; // debit-balance for expense
+      }
+    }
     if (retainedEarnings !== 0) {
       equity.push({
         code: 'RE',
@@ -311,14 +314,15 @@ export class FinancialStatementsService implements FinancialStatementsServicePor
       };
     }
 
-    // Beginning balance (all cash transactions before period)
-    const priorLines = await this.journalLineRepo.findByAccountIdsAndDateRange(
-      cashAccountIds,
-      startDate,
-      new Date(from.getTime() - 1),
-    );
-    const beginningBalance = priorLines.reduce(
-      (sum, l) => sum + l.debit.toNumber() - l.credit.toNumber(),
+    // Beginning balance via SQL aggregation (avoids loading all historical lines)
+    const priorAggregated =
+      await this.journalLineRepo.sumByAccountIdsAndDateRange(
+        cashAccountIds,
+        startDate,
+        new Date(from.getTime() - 1),
+      );
+    const beginningBalance = priorAggregated.reduce(
+      (sum, r) => sum + r.totalDebit - r.totalCredit,
       0,
     );
 
