@@ -270,12 +270,7 @@ describe('BackupService', () => {
 
   describe('restoreBackup', () => {
     it('should restore a backup', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      await service.restoreBackup('h1');
-
-      expect(consoleSpy).toHaveBeenCalledWith('Restoring backup: h1');
-      consoleSpy.mockRestore();
+      await expect(service.restoreBackup('h1')).resolves.toBeUndefined();
     });
   });
 });

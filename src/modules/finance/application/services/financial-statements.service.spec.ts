@@ -16,6 +16,7 @@ describe('FinancialStatementsService', () => {
   const mockJournalLineRepo = {
     findByDateRange: jest.fn(),
     findByAccountIdsAndDateRange: jest.fn(),
+    sumByAccountIdsAndDateRange: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -76,7 +77,21 @@ describe('FinancialStatementsService', () => {
         { accountId: 'r1', debit: new Decimal(0), credit: new Decimal(8000) },
         { accountId: 'x1', debit: new Decimal(3000), credit: new Decimal(0) },
       ];
-      mockJournalLineRepo.findByDateRange.mockResolvedValue(allLines);
+      mockJournalLineRepo.sumByAccountIdsAndDateRange.mockResolvedValue([
+        { accountId: 'a1', totalDebit: 10000, totalCredit: 3000 },
+        { accountId: 'a2', totalDebit: 5000, totalCredit: 0 },
+        { accountId: 'l1', totalDebit: 0, totalCredit: 4000 },
+        { accountId: 'e1', totalDebit: 0, totalCredit: 5000 },
+      ]);
+      mockJournalLineRepo.sumByAccountIdsAndDateRange.mockResolvedValueOnce([
+        { accountId: 'a1', totalDebit: 10000, totalCredit: 3000 },
+        { accountId: 'a2', totalDebit: 5000, totalCredit: 0 },
+        { accountId: 'l1', totalDebit: 0, totalCredit: 4000 },
+        { accountId: 'e1', totalDebit: 0, totalCredit: 5000 },
+      ]).mockResolvedValueOnce([
+        { accountId: 'r1', totalDebit: 0, totalCredit: 8000 },
+        { accountId: 'x1', totalDebit: 3000, totalCredit: 0 },
+      ]);
 
       const result = await service.getBalanceSheet('2024-12-31');
 
@@ -99,9 +114,11 @@ describe('FinancialStatementsService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      mockJournalLineRepo.findByDateRange.mockResolvedValue([
-        { accountId: 'a1', debit: new Decimal(500), credit: new Decimal(500) },
-      ]);
+      mockJournalLineRepo.sumByAccountIdsAndDateRange
+        .mockResolvedValueOnce([
+          { accountId: 'a1', totalDebit: 500, totalCredit: 500 },
+        ])
+        .mockResolvedValueOnce([]);
 
       const result = await service.getBalanceSheet('2024-12-31');
 
@@ -121,10 +138,12 @@ describe('FinancialStatementsService', () => {
           { id: 'x1', code: '5100', name: 'Expense', type: 'expense' },
         ]);
 
-      mockJournalLineRepo.findByDateRange.mockResolvedValue([
-        { accountId: 'r1', debit: new Decimal(0), credit: new Decimal(10000) },
-        { accountId: 'x1', debit: new Decimal(6000), credit: new Decimal(0) },
-      ]);
+      mockJournalLineRepo.sumByAccountIdsAndDateRange
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { accountId: 'r1', totalDebit: 0, totalCredit: 10000 },
+          { accountId: 'x1', totalDebit: 6000, totalCredit: 0 },
+        ]);
 
       const result = await service.getBalanceSheet('2024-12-31');
 
