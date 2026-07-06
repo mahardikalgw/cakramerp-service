@@ -217,7 +217,7 @@ export class SalesOrderService {
         where: { salesOrderId: id },
       });
       for (const line of existingLines) {
-        await this.soLineRepo.delete(line.id);
+        await this.soLineRepo.softDelete(line.id);
       }
 
       let totalAmount = 0;
@@ -316,7 +316,7 @@ export class SalesOrderService {
     if (entity.status !== 'draft') {
       throw new BadRequestException('Only draft sales orders can be deleted');
     }
-    await this.soRepo.delete(id);
+    await this.soRepo.softDelete(id);
   }
 
   async cancel(id: string, reason?: string): Promise<SalesOrderTypeOrmEntity> {

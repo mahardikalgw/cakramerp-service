@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -91,5 +92,11 @@ export class ClosingController {
   @RequirePermissions('contracts:approve')
   async cancelClosing(@Param('id') id: string) {
     return this.closingService.cancelClosing(id);
+  }
+
+  @Delete('closings/:id')
+  @RequirePermissions('contracts:approve')
+  async deleteClosing(@Param('id') id: string) {
+    return this.closingService.delete(id);
   }
 }

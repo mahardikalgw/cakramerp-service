@@ -1133,4 +1133,15 @@ export class PostApprovalLabContractService {
     }
     return `SPL-${year}-${seq.toString().padStart(5, '0')}`;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const contract = await this.repository.findById(id);
+    if (!contract) throw new NotFoundException('Lab contract not found');
+    if (!['draft', 'cancelled'].includes(contract.status)) {
+      throw new BadRequestException(
+        'Only draft or cancelled contracts can be deleted',
+      );
+    }
+    return this.repository.delete(id);
+  }
 }

@@ -228,4 +228,13 @@ export class VerificationService {
     verification.rejectionReason = rejectionReason;
     return this.verificationRepo.save(verification);
   }
+
+  async delete(id: string): Promise<boolean> {
+    const verification = await this.verificationRepo.findById(id);
+    if (!verification) throw new NotFoundException('Verification not found');
+    if (verification.status === 'verified') {
+      throw new BadRequestException('Cannot delete a verified verification');
+    }
+    return this.verificationRepo.delete(id);
+  }
 }

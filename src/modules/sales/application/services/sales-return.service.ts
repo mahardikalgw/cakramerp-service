@@ -147,7 +147,7 @@ export class SalesReturnService {
         where: { salesReturnId: id },
       });
       for (const line of existingLines) {
-        await this.returnLineRepo.delete(line.id);
+        await this.returnLineRepo.softDelete(line.id);
       }
 
       let totalAmount = 0;
@@ -183,7 +183,7 @@ export class SalesReturnService {
     if (entity.status !== 'draft') {
       throw new BadRequestException('Only draft sales returns can be deleted');
     }
-    await this.returnRepo.delete(id);
+    await this.returnRepo.softDelete(id);
   }
 
   async approve(

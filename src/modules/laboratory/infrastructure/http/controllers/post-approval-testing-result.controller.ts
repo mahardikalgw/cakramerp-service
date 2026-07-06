@@ -11,6 +11,7 @@ import {
   UploadedFile,
   Req,
   NotFoundException,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
@@ -155,5 +156,11 @@ export class PostApprovalTestingResultController {
     const result = await this.service.getSignedCertificate(id);
     if (!result) throw new NotFoundException('Signed certificate not found');
     return result;
+  }
+
+  @Delete('post-approval/testing-results/:id')
+  @RequirePermissions('test-results:delete')
+  async deleteTestingResult(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

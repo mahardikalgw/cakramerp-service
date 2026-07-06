@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { ContractTestInvoiceTypeOrmEntity } from './contract-test-invoice-typeorm.entity';
 
 @Entity('contract_test_invoice_results')
-export class ContractTestInvoiceResultTypeOrmEntity extends TypeOrmBaseEntity {
+export class ContractTestInvoiceResultTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', name: 'invoice_id' })
   declare invoiceId: string;
 

@@ -1,8 +1,8 @@
 import { Entity, Column } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('archived_documents')
-export class ArchivedDocumentTypeOrmEntity extends TypeOrmBaseEntity {
+export class ArchivedDocumentTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 50 })
   declare documentType: string;
 

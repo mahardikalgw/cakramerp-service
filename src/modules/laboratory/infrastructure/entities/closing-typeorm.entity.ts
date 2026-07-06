@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { ClosingChecklistItemTypeOrmEntity } from './closing-checklist-item-typeorm.entity';
 
 @Entity('closings')
-export class ClosingTypeOrmEntity extends TypeOrmBaseEntity {
+export class ClosingTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 20 })
   declare entityType: string;
 

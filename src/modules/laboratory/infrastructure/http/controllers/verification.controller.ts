@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -98,5 +99,11 @@ export class VerificationController {
       req.user?.id ?? 'unknown',
       dto.rejectionReason,
     );
+  }
+
+  @Delete('verifications/:id')
+  @RequirePermissions('testing-requests:approve')
+  async deleteVerification(@Param('id') id: string) {
+    return this.verificationService.delete(id);
   }
 }

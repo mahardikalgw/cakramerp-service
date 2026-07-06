@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -91,5 +92,11 @@ export class LabCertificateController {
   @Get('certificates/verify/:qrHash')
   async verifyByQr(@Param('qrHash') qrHash: string) {
     return this.certificateService.verifyByQr(qrHash);
+  }
+
+  @Delete('certificates/:id')
+  @RequirePermissions('test-results:delete')
+  async deleteCertificate(@Param('id') id: string) {
+    return this.certificateService.delete(id);
   }
 }

@@ -314,4 +314,15 @@ export class PostApprovalTestingScheduleService {
 
     return saved;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const schedule = await this.repository.findById(id);
+    if (!schedule) throw new NotFoundException('Testing schedule not found');
+    if (!['cancelled', 'pending'].includes(schedule.status)) {
+      throw new BadRequestException(
+        'Only pending or cancelled schedules can be deleted',
+      );
+    }
+    return this.repository.delete(id);
+  }
 }

@@ -80,4 +80,13 @@ export class ContractInvoiceService {
 
     return saved;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const invoice = await this.repository.findById(id);
+    if (!invoice) throw new NotFoundException('Contract invoice not found');
+    if (invoice.status === 'paid') {
+      throw new BadRequestException('Cannot delete a paid invoice');
+    }
+    return this.repository.delete(id);
+  }
 }

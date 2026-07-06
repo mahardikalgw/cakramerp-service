@@ -160,7 +160,7 @@ export class QuotationService {
         where: { quotationId: id },
       });
       for (const line of existingLines) {
-        await this.lineRepo.delete(line.id);
+        await this.lineRepo.softDelete(line.id);
       }
 
       let totalAmount = 0;
@@ -207,7 +207,7 @@ export class QuotationService {
     if (entity.status !== 'draft') {
       throw new BadRequestException('Only draft quotations can be deleted');
     }
-    await this.quotationRepo.delete(id);
+    await this.quotationRepo.softDelete(id);
   }
 
   async send(id: string): Promise<QuotationTypeOrmEntity> {

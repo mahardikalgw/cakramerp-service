@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { ClosingTypeOrmEntity } from './closing-typeorm.entity';
 
 @Entity('closing_checklist_items')
-export class ClosingChecklistItemTypeOrmEntity extends TypeOrmBaseEntity {
+export class ClosingChecklistItemTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare closingId: string;
 

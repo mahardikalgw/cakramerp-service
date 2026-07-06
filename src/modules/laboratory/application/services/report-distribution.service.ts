@@ -168,4 +168,16 @@ export class ReportDistributionService {
   async getArchivedDocument(id: string) {
     return this.archiveRepo.findById(id);
   }
+
+  async deleteDistribution(id: string): Promise<boolean> {
+    const distribution = await this.distributionRepo.findById(id);
+    if (!distribution) throw new NotFoundException('Report distribution not found');
+    return this.distributionRepo.delete(id);
+  }
+
+  async deleteArchivedDocument(id: string): Promise<boolean> {
+    const archive = await this.archiveRepo.findById(id);
+    if (!archive) throw new NotFoundException('Archived document not found');
+    return this.archiveRepo.delete(id);
+  }
 }

@@ -9,6 +9,7 @@ import {
   Req,
   Inject,
   NotFoundException,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -150,5 +151,11 @@ export class PostApprovalTestingScheduleController {
       laboranName,
       statusNotes,
     });
+  }
+
+  @Delete('post-approval/testing-schedules/:id')
+  @RequirePermissions('testing-requests:approve')
+  async deleteSchedule(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

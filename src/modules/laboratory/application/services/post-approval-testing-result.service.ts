@@ -715,4 +715,15 @@ export class PostApprovalTestingResultService {
     const saved = await this.repository.save(result);
     return saved;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.repository.findById(id);
+    if (!result) throw new NotFoundException('Testing result not found');
+    if (!['draft', 'rejected'].includes(result.status)) {
+      throw new BadRequestException(
+        'Only draft or rejected testing results can be deleted',
+      );
+    }
+    return this.repository.delete(id);
+  }
 }

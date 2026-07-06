@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { TestResultTypeOrmEntity } from './test-result-typeorm.entity';
 
 @Entity('test_result_attachments')
-export class TestResultAttachmentTypeOrmEntity extends TypeOrmBaseEntity {
+export class TestResultAttachmentTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare testResultId: string;
 

@@ -1,9 +1,9 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { VerificationTypeOrmEntity } from './verification-typeorm.entity';
 
 @Entity('verification_checklist_items')
-export class VerificationChecklistItemTypeOrmEntity extends TypeOrmBaseEntity {
+export class VerificationChecklistItemTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare verificationId: string;
 

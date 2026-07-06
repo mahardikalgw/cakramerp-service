@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -99,5 +100,17 @@ export class ReportDistributionController {
   @RequirePermissions('daily-reports:read')
   async getArchive(@Param('id') id: string) {
     return this.distributionService.getArchivedDocument(id);
+  }
+
+  @Delete('report-distributions/:id')
+  @RequirePermissions('daily-reports:delete')
+  async deleteDistribution(@Param('id') id: string) {
+    return this.distributionService.deleteDistribution(id);
+  }
+
+  @Delete('archives/:id')
+  @RequirePermissions('daily-reports:delete')
+  async deleteArchive(@Param('id') id: string) {
+    return this.distributionService.deleteArchivedDocument(id);
   }
 }

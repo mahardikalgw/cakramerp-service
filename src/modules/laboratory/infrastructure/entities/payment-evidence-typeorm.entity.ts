@@ -1,8 +1,8 @@
 import { Entity, Column } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('payment_evidences')
-export class PaymentEvidenceTypeOrmEntity extends TypeOrmBaseEntity {
+export class PaymentEvidenceTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', nullable: true })
   declare labPurchaseOrderId: string;
 

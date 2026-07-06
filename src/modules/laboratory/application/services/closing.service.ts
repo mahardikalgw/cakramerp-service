@@ -217,4 +217,10 @@ export class ClosingService {
     closing.status = 'cancelled';
     return this.closingRepo.save(closing);
   }
+
+  async delete(id: string): Promise<boolean> {
+    const closing = await this.closingRepo.findById(id);
+    if (!closing) throw new NotFoundException('Closing not found');
+    return this.closingRepo.delete(id);
+  }
 }

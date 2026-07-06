@@ -1,9 +1,9 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 import { VerificationChecklistItemTypeOrmEntity } from './verification-checklist-item-typeorm.entity';
 
 @Entity('verifications')
-export class VerificationTypeOrmEntity extends TypeOrmBaseEntity {
+export class VerificationTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'varchar', length: 20 })
   declare entityType: string;
 

@@ -193,4 +193,10 @@ export class LabCertificateService {
   async getCertificateDownloadUrl(documentId: string): Promise<string> {
     return this.docHelper.getDownloadUrl(documentId);
   }
+
+  async delete(id: string): Promise<boolean> {
+    const certificate = await this.certificateRepo.findById(id);
+    if (!certificate) throw new NotFoundException('Certificate not found');
+    return this.certificateRepo.delete(id);
+  }
 }

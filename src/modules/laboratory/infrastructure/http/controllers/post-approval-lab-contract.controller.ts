@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -132,5 +133,11 @@ export class PostApprovalLabContractController {
   @RequirePermissions('contracts:read')
   async getArchiveData(@Param('id') id: string) {
     return this.service.getContractArchiveData(id);
+  }
+
+  @Delete('post-approval/contracts/:id')
+  @RequirePermissions('contracts:approve')
+  async deleteContract(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
@@ -56,5 +57,11 @@ export class ContractInvoiceController {
       user.id ?? 'unknown',
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
     );
+  }
+
+  @Delete('contract-invoices/:id')
+  @RequirePermissions('contracts:approve')
+  async deleteContractInvoice(@Param('id') id: string) {
+    return this.contractInvoiceService.delete(id);
   }
 }

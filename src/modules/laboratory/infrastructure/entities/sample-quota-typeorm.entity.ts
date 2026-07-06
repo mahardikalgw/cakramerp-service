@@ -1,11 +1,11 @@
 import { Entity, Column, Index } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('sample_quotas')
 @Index('idx_sample_quotas_request', ['testingRequestId'])
 @Index('idx_sample_quotas_service', ['testingServiceId'])
 @Index('idx_sample_quotas_customer', ['customerId'])
-export class SampleQuotaTypeOrmEntity extends TypeOrmBaseEntity {
+export class SampleQuotaTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid' })
   declare testingRequestId: string;
 
