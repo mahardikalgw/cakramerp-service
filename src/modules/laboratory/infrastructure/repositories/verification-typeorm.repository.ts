@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   Verification,
   VerificationChecklistItem,
@@ -11,7 +11,10 @@ import { VerificationRepositoryPort } from '../../domain/repositories/verificati
 
 @Injectable()
 export class VerificationTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<Verification, VerificationTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    Verification,
+    VerificationTypeOrmEntity
+  >
   implements VerificationRepositoryPort
 {
   protected readonly repository: Repository<VerificationTypeOrmEntity>;
@@ -91,7 +94,7 @@ export class VerificationTypeOrmRepository
     entityId: string,
   ): Promise<Verification | null> {
     const entity = await this.repository.findOne({
-      where: { entityType, entityId } as any,
+      where: { entityType, entityId, deletedAt: IsNull() } as any,
       relations: ['items'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -99,9 +102,13 @@ export class VerificationTypeOrmRepository
 
   async findByEntityNumber(entityNumber: string): Promise<Verification | null> {
     const entity = await this.repository.findOne({
-      where: { entityNumber } as any,
+      where: { entityNumber, deletedAt: IsNull() } as any,
       relations: ['items'],
     });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

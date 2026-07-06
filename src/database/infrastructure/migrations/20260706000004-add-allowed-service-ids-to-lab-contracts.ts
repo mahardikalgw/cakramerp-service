@@ -11,9 +11,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * Null means "no restriction" (cash-billing contracts and legacy contract
  * records created before this migration).
  */
-export class AddAllowedServiceIdsToLabContracts20260706000004
-  implements MigrationInterface
-{
+export class AddAllowedServiceIdsToLabContracts20260706000004 implements MigrationInterface {
   name = 'AddAllowedServiceIdsToLabContracts20260706000004';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

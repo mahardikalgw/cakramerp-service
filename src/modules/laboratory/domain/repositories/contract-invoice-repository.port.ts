@@ -20,4 +20,5 @@ export interface ContractInvoiceRepositoryPort {
   getLastInvoiceNumber(): Promise<string | null>;
   findAll(options?: FindOptions): Promise<FindResult<ContractInvoice>>;
   delete(id: string): Promise<boolean>;
+  softDelete(id: string): Promise<void>;
 }

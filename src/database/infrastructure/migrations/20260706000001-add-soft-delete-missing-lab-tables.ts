@@ -23,9 +23,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *   - lab_activity_logs
  *   - lab_certificates (extra safety - already in migration 1 but using IF NOT EXISTS)
  */
-export class AddSoftDeleteMissingLabTables20260706000001
-  implements MigrationInterface
-{
+export class AddSoftDeleteMissingLabTables20260706000001 implements MigrationInterface {
   name = 'AddSoftDeleteMissingLabTables20260706000001';
 
   private async addColumn(

@@ -14,4 +14,5 @@ export interface TestResultRepositoryPort extends RepositoryPort<TestResult> {
     periodStart: Date,
     periodEnd: Date,
   ): Promise<TestResult[]>;
+  softDelete(id: string): Promise<void>;
 }

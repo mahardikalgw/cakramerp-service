@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   LabPurchaseOrder,
   LabPurchaseOrderLine,
@@ -11,7 +11,7 @@ import { LabPurchaseOrderRepositoryPort } from '../../domain/repositories/lab-pu
 
 @Injectable()
 export class LabPurchaseOrderTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     LabPurchaseOrder,
     LabPurchaseOrderTypeOrmEntity
   >
@@ -91,7 +91,7 @@ export class LabPurchaseOrderTypeOrmRepository
 
   async findByPONumber(poNumber: string): Promise<LabPurchaseOrder | null> {
     const entity = await this.repository.findOne({
-      where: { poNumber },
+      where: { poNumber, deletedAt: IsNull() },
       relations: ['lines'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -101,10 +101,15 @@ export class LabPurchaseOrderTypeOrmRepository
     const query = this.repository
       .createQueryBuilder('lpo')
       .select('lpo.po_number', 'poNumber')
+      .where('lpo.deleted_at IS NULL')
       .orderBy('lpo.po_number', 'DESC')
       .limit(1);
 
     const row = await query.getRawOne();
     return row?.poNumber ?? null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

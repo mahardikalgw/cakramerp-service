@@ -1,15 +1,11 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../../../auth/infrastructure/guards/permissions.guard';
 import { RequirePermissions } from '../../../../auth/infrastructure/decorators/permissions.decorator';
-import { SyncService, SyncOperation } from '../../../application/services/sync.service';
+import {
+  SyncService,
+  SyncOperation,
+} from '../../../application/services/sync.service';
 
 @Controller('sync')
 @UseGuards(JwtAuthGuard, PermissionsGuard)

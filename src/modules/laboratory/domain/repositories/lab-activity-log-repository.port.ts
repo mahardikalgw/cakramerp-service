@@ -10,4 +10,5 @@ export interface LabActivityLogRepositoryPort {
     testingRequestId: string,
     options?: { limit?: number },
   ): Promise<LabActivityLog[]>;
+  softDelete(id: string): Promise<void>;
 }

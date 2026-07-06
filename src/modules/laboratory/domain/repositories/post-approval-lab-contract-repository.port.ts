@@ -13,4 +13,5 @@ export interface PostApprovalLabContractRepositoryPort extends RepositoryPort<Po
     testingRequestId: string,
   ): Promise<PostApprovalLabContract | null>;
   getLastContractNumber(): Promise<string | null>;
+  softDelete(id: string): Promise<void>;
 }

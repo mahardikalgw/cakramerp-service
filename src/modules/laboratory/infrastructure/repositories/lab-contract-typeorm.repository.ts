@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   LabContract,
   LabContractAttachment,
@@ -11,7 +11,10 @@ import { LabContractRepositoryPort } from '../../domain/repositories/lab-contrac
 
 @Injectable()
 export class LabContractTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<LabContract, LabContractTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    LabContract,
+    LabContractTypeOrmEntity
+  >
   implements LabContractRepositoryPort
 {
   protected readonly repository: Repository<LabContractTypeOrmEntity>;
@@ -105,7 +108,7 @@ export class LabContractTypeOrmRepository
     contractNumber: string,
   ): Promise<LabContract | null> {
     const entity = await this.repository.findOne({
-      where: { contractNumber },
+      where: { contractNumber, deletedAt: IsNull() },
       relations: ['attachments'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -115,10 +118,15 @@ export class LabContractTypeOrmRepository
     const query = this.repository
       .createQueryBuilder('lc')
       .select('lc.contract_number', 'contractNumber')
+      .where('lc.deleted_at IS NULL')
       .orderBy('lc.contract_number', 'DESC')
       .limit(1);
 
     const row = await query.getRawOne();
     return row?.contractNumber ?? null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

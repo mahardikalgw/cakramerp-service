@@ -8,6 +8,7 @@ export interface EmailDeliveryLogRepositoryPort {
     status: string;
     errorMessage?: string | null;
   }): Promise<void>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const EMAIL_DELIVERY_LOG_REPOSITORY = Symbol(

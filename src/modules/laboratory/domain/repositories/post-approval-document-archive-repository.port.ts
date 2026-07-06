@@ -13,4 +13,5 @@ export interface PostApprovalDocumentArchiveRepositoryPort extends RepositoryPor
   findByDocumentNumber(
     documentNumber: string,
   ): Promise<PostApprovalDocumentArchive | null>;
+  softDelete(id: string): Promise<void>;
 }

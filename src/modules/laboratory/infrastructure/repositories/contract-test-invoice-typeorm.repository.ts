@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   ContractTestInvoice,
   ContractTestInvoiceLine,
@@ -15,7 +15,7 @@ import {
 
 @Injectable()
 export class ContractTestInvoiceTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     ContractTestInvoice,
     ContractTestInvoiceTypeOrmEntity
   >
@@ -122,13 +122,15 @@ export class ContractTestInvoiceTypeOrmRepository
   // ─── Read helpers ───────────────────────────────────────────────────────
 
   async findById(id: string): Promise<ContractTestInvoice | null> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const entity = await this.repository.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
   async findByContractId(contractId: string): Promise<ContractTestInvoice[]> {
     const entities = await this.repository.find({
-      where: { contractId } as any,
+      where: { contractId, deletedAt: IsNull() } as any,
       order: { billingPeriodEnd: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -136,7 +138,7 @@ export class ContractTestInvoiceTypeOrmRepository
 
   async findByScheduleId(scheduleId: string): Promise<ContractTestInvoice[]> {
     const entities = await this.repository.find({
-      where: { testingScheduleId: scheduleId } as any,
+      where: { testingScheduleId: scheduleId, deletedAt: IsNull() } as any,
       order: { createdAt: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -156,6 +158,7 @@ export class ContractTestInvoiceTypeOrmRepository
       .createQueryBuilder('i')
       .innerJoin('lab_contracts', 'c', 'c.id = i.contract_id')
       .where('c.customer_id = :customerId', { customerId })
+      .andWhere('i.deleted_at IS NULL')
       .orderBy('i.billingPeriodEnd', 'DESC')
       .addOrderBy('i.invoiceNumber', 'DESC')
       .skip(skip)
@@ -163,6 +166,7 @@ export class ContractTestInvoiceTypeOrmRepository
     if (options?.status)
       qb.andWhere('i.status = :status', { status: options.status });
     const [entities, total] = await qb.getManyAndCount();
+
     return { data: entities.map((e) => this.toDomain(e)), total };
   }
 
@@ -180,7 +184,7 @@ export class ContractTestInvoiceTypeOrmRepository
     if (options?.contractId) where.contractId = options.contractId;
 
     const [entities, total] = await this.repository.findAndCount({
-      where,
+      where: { ...where, deletedAt: IsNull() } as any,
       take: limit,
       skip,
       order: { billingPeriodEnd: 'DESC' as any },
@@ -201,6 +205,7 @@ export class ContractTestInvoiceTypeOrmRepository
 
   async getLastInvoiceNumber(): Promise<string | null> {
     const entity = await this.repository.findOne({
+      where: { deletedAt: IsNull() } as any,
       order: { invoiceNumber: 'DESC' as any },
       select: ['invoiceNumber'] as any,
     });
@@ -213,6 +218,7 @@ export class ContractTestInvoiceTypeOrmRepository
       .select('COALESCE(SUM(i.initial_fee_applied), 0)', 'total')
       .where('i.contract_id = :contractId', { contractId })
       .andWhere("i.status <> 'cancelled'")
+      .andWhere('i.deleted_at IS NULL')
       .getRawOne();
     return Number(result?.total ?? 0);
   }
@@ -258,5 +264,9 @@ export class ContractTestInvoiceTypeOrmRepository
       });
       return this.toDomain(reloaded!);
     });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

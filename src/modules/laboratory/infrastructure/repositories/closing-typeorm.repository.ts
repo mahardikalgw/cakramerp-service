@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   Closing,
   ClosingChecklistItem,
@@ -11,7 +11,7 @@ import { ClosingRepositoryPort } from '../../domain/repositories/closing-reposit
 
 @Injectable()
 export class ClosingTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<Closing, ClosingTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<Closing, ClosingTypeOrmEntity>
   implements ClosingRepositoryPort
 {
   protected readonly repository: Repository<ClosingTypeOrmEntity>;
@@ -87,7 +87,7 @@ export class ClosingTypeOrmRepository
     entityId: string,
   ): Promise<Closing | null> {
     const entity = await this.repository.findOne({
-      where: { entityType, entityId } as any,
+      where: { entityType, entityId, deletedAt: IsNull() } as any,
       relations: ['items'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -95,9 +95,13 @@ export class ClosingTypeOrmRepository
 
   async findByEntityNumber(entityNumber: string): Promise<Closing | null> {
     const entity = await this.repository.findOne({
-      where: { entityNumber } as any,
+      where: { entityNumber, deletedAt: IsNull() } as any,
       relations: ['items'],
     });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

@@ -8,7 +8,9 @@ export class SyncService {
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  async getChangesSince(since: string | undefined): Promise<SyncChangesResponse> {
+  async getChangesSince(
+    since: string | undefined,
+  ): Promise<SyncChangesResponse> {
     const sinceDate = since ? new Date(since) : new Date(0);
 
     const [
@@ -67,7 +69,10 @@ export class SyncService {
     };
   }
 
-  private async findUpdatedSince(tableName: string, since: Date): Promise<any[]> {
+  private async findUpdatedSince(
+    tableName: string,
+    since: Date,
+  ): Promise<any[]> {
     try {
       const rows = await this.entityManager.query(
         `SELECT * FROM "${tableName}" WHERE "updated_at" > $1 OR "updated_at" IS NULL ORDER BY "updated_at" ASC LIMIT 1000`,
@@ -79,18 +84,27 @@ export class SyncService {
     }
   }
 
-  async processBulkOperations(operations: SyncOperation[]): Promise<SyncOperationResult[]> {
+  async processBulkOperations(
+    operations: SyncOperation[],
+  ): Promise<SyncOperationResult[]> {
     const results: SyncOperationResult[] = [];
-    
+
     for (const op of operations) {
       try {
         const tableName = this.getTableName(op.entityType);
         if (!tableName) {
-          results.push({ entityId: op.entityId, success: false, error: 'Unknown entity type' });
+          results.push({
+            entityId: op.entityId,
+            success: false,
+            error: 'Unknown entity type',
+          });
           continue;
         }
-        
-        await this.entityManager.query(`SELECT * FROM "${tableName}" WHERE "id" = $1`, [op.entityId]);
+
+        await this.entityManager.query(
+          `SELECT * FROM "${tableName}" WHERE "id" = $1`,
+          [op.entityId],
+        );
         results.push({ entityId: op.entityId, success: true });
       } catch (error: any) {
         results.push({
@@ -100,26 +114,26 @@ export class SyncService {
         });
       }
     }
-    
+
     return results;
   }
 
   private getTableName(entityType: string): string | null {
     const tableMap: Record<string, string> = {
-      'testing_request': 'testing_request',
-      'lab_contract': 'lab_contract',
-      'contract_test_invoice': 'contract_test_invoice',
-      'laboratory': 'laboratory',
-      'sample_type': 'sample_type',
-      'testing_service': 'testing_service',
-      'sample': 'sample',
-      'schedule': 'testing_schedule',
-      'post_approval_test_result': 'post_approval_testing_result',
-      'certificate': 'lab_certificate',
-      'daily_report': 'daily_report',
-      'distribution': 'report_distribution',
-      'test_result': 'test_result',
-      'contract_invoice': 'contract_invoice',
+      testing_request: 'testing_request',
+      lab_contract: 'lab_contract',
+      contract_test_invoice: 'contract_test_invoice',
+      laboratory: 'laboratory',
+      sample_type: 'sample_type',
+      testing_service: 'testing_service',
+      sample: 'sample',
+      schedule: 'testing_schedule',
+      post_approval_test_result: 'post_approval_testing_result',
+      certificate: 'lab_certificate',
+      daily_report: 'daily_report',
+      distribution: 'report_distribution',
+      test_result: 'test_result',
+      contract_invoice: 'contract_invoice',
     };
     return tableMap[entityType] ?? null;
   }

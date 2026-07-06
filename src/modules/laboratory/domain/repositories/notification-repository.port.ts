@@ -13,6 +13,7 @@ export interface NotificationRepositoryPort extends RepositoryPort<Notification>
     id: string,
     recipientUserId: string,
   ): Promise<boolean>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const NOTIFICATION_REPOSITORY = Symbol('NOTIFICATION_REPOSITORY');

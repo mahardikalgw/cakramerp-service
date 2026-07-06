@@ -7,4 +7,5 @@ export const LAB_SCHEDULE_SAMPLE_REPOSITORY = Symbol(
 
 export interface LabScheduleSampleRepositoryPort extends RepositoryPort<LabScheduleSample> {
   findByScheduleId(scheduleId: string): Promise<LabScheduleSample[]>;
+  softDelete(id: string): Promise<void>;
 }

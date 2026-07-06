@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { PostApprovalTestingSchedule } from '../../domain/entities/post-approval-testing-schedule.entity';
 import { TestingScheduleTypeOrmEntity } from '../entities/testing-schedule-typeorm.entity';
 import { PostApprovalTestingScheduleRepositoryPort } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 
 @Injectable()
 export class PostApprovalTestingScheduleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PostApprovalTestingSchedule,
     TestingScheduleTypeOrmEntity
   >
@@ -70,14 +70,22 @@ export class PostApprovalTestingScheduleTypeOrmRepository
   async findByContractId(
     contractId: string,
   ): Promise<PostApprovalTestingSchedule[]> {
-    const entities = await this.repository.find({ where: { contractId } });
+    const entities = await this.repository.find({
+      where: { contractId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
   }
 
   async findByLaboranId(
     laboranId: string,
   ): Promise<PostApprovalTestingSchedule[]> {
-    const entities = await this.repository.find({ where: { laboranId } });
+    const entities = await this.repository.find({
+      where: { laboranId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

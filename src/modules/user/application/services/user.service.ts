@@ -37,7 +37,9 @@ export class UserService implements UserServicePort {
     }
 
     if (command.username) {
-      const usernameTaken = await this.userRepository.existsByUsername(command.username);
+      const usernameTaken = await this.userRepository.existsByUsername(
+        command.username,
+      );
       if (usernameTaken) {
         throw new ConflictException('Username already taken');
       }
@@ -105,7 +107,9 @@ export class UserService implements UserServicePort {
     if (command.username !== undefined) {
       // Allow clearing username (null) or setting a new one
       if (command.username !== null) {
-        const usernameTaken = await this.userRepository.existsByUsername(command.username);
+        const usernameTaken = await this.userRepository.existsByUsername(
+          command.username,
+        );
         if (usernameTaken && user.username !== command.username) {
           throw new ConflictException('Username already taken');
         }

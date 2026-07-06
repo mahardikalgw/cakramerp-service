@@ -171,7 +171,8 @@ export class ReportDistributionService {
 
   async deleteDistribution(id: string): Promise<boolean> {
     const distribution = await this.distributionRepo.findById(id);
-    if (!distribution) throw new NotFoundException('Report distribution not found');
+    if (!distribution)
+      throw new NotFoundException('Report distribution not found');
     return this.distributionRepo.delete(id);
   }
 

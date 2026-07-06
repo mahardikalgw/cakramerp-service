@@ -5,4 +5,5 @@ export const TESTING_SERVICE_REPOSITORY = Symbol('TESTING_SERVICE_REPOSITORY');
 
 export interface TestingServiceRepositoryPort extends RepositoryPort<TestingService> {
   findByCode(code: string): Promise<TestingService | null>;
+  softDelete(id: string): Promise<void>;
 }

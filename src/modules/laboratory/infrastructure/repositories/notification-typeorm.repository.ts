@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { Notification } from '../../domain/entities/notification.entity';
 import { NotificationTypeOrmEntity } from '../entities/notification-typeorm.entity';
 import { NotificationRepositoryPort } from '../../domain/repositories/notification-repository.port';
 
 @Injectable()
 export class NotificationTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<Notification, NotificationTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    Notification,
+    NotificationTypeOrmEntity
+  >
   implements NotificationRepositoryPort
 {
   protected readonly repository: Repository<NotificationTypeOrmEntity>;
@@ -65,7 +68,7 @@ export class NotificationTypeOrmRepository
     recipientUserId: string,
     options?: { unreadOnly?: boolean; page?: number; limit?: number },
   ): Promise<Notification[]> {
-    const where: any = { recipientUserId };
+    const where: any = { recipientUserId, deletedAt: IsNull() };
     if (options?.unreadOnly) where.isRead = false;
     const entities = await this.repository.find({
       where,
@@ -78,7 +81,7 @@ export class NotificationTypeOrmRepository
 
   async countUnreadByRecipientUserId(recipientUserId: string): Promise<number> {
     return this.repository.count({
-      where: { recipientUserId, isRead: false } as any,
+      where: { recipientUserId, isRead: false, deletedAt: IsNull() } as any,
     });
   }
 
@@ -108,5 +111,9 @@ export class NotificationTypeOrmRepository
       { isRead: true, readAt: new Date() },
     );
     return (result.affected ?? 0) > 0;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

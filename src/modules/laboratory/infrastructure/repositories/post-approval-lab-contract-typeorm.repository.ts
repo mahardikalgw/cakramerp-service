@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, ILike, Or, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, ILike, IsNull, Or, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   PostApprovalLabContract,
   LabContractSample,
@@ -15,7 +15,7 @@ import {
 
 @Injectable()
 export class PostApprovalLabContractTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PostApprovalLabContract,
     LabContractTypeOrmEntity
   >
@@ -35,7 +35,9 @@ export class PostApprovalLabContractTypeOrmRepository
   private loadSamples(
     contractId: string,
   ): Promise<PostApprovalLabContractSampleTypeOrmEntity[]> {
-    return this.sampleRepo.find({ where: { contractId } as any });
+    return this.sampleRepo.find({
+      where: { contractId, deletedAt: IsNull() } as any,
+    });
   }
 
   private toContractSample(
@@ -60,7 +62,9 @@ export class PostApprovalLabContractTypeOrmRepository
   }
 
   async findById(id: string): Promise<PostApprovalLabContract | null> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const entity = await this.repository.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     if (!entity) return null;
     const contract = this.toDomain(entity);
     const sampleEntities = await this.loadSamples(id);
@@ -76,11 +80,17 @@ export class PostApprovalLabContractTypeOrmRepository
     const skip = (page - 1) * limit;
     const search = options?.search;
 
-    let where: any = options?.filters ?? {};
+    let where: any = {
+      ...(options?.filters ?? {}),
+      deletedAt: IsNull(),
+    };
 
     if (search && search.trim()) {
       const term = `%${search.trim()}%`;
-      const baseFilters = options?.filters ?? {};
+      const baseFilters = {
+        ...(options?.filters ?? {}),
+        deletedAt: IsNull(),
+      };
       where = [
         { ...baseFilters, contractNumber: ILike(term) },
         { ...baseFilters, projectName: ILike(term) },
@@ -202,7 +212,9 @@ export class PostApprovalLabContractTypeOrmRepository
   async findByContractNumber(
     contractNumber: string,
   ): Promise<PostApprovalLabContract | null> {
-    const entity = await this.repository.findOne({ where: { contractNumber } });
+    const entity = await this.repository.findOne({
+      where: { contractNumber, deletedAt: IsNull() },
+    });
     if (!entity) return null;
     const contract = this.toDomain(entity);
     const sampleEntities = await this.loadSamples(contract.id);
@@ -214,7 +226,7 @@ export class PostApprovalLabContractTypeOrmRepository
     testingRequestId: string,
   ): Promise<PostApprovalLabContract | null> {
     const entity = await this.repository.findOne({
-      where: { testingRequestId },
+      where: { testingRequestId, deletedAt: IsNull() },
     });
     if (!entity) return null;
     const contract = this.toDomain(entity);
@@ -225,9 +237,14 @@ export class PostApprovalLabContractTypeOrmRepository
 
   async getLastContractNumber(): Promise<string | null> {
     const entities = await this.repository.find({
+      where: { deletedAt: IsNull() },
       order: { contractNumber: 'DESC' as any },
       take: 1,
     });
     return entities[0]?.contractNumber ?? null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

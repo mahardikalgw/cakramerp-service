@@ -7,4 +7,5 @@ export interface SampleQuotaRepositoryPort extends RepositoryPort<SampleQuota> {
   findByTestingRequestId(requestId: string): Promise<SampleQuota[]>;
   findByCustomerId(customerId: string): Promise<SampleQuota[]>;
   saveMany(quotas: SampleQuota[]): Promise<SampleQuota[]>;
+  softDelete(id: string): Promise<void>;
 }

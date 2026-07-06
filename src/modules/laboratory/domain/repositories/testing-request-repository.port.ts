@@ -8,4 +8,5 @@ export interface TestingRequestRepositoryPort extends RepositoryPort<TestingRequ
   getLastRequestNumber(): Promise<string | null>;
   deleteLinesByRequestId(requestId: string): Promise<void>;
   findExpiredUnsignedContracts(now: Date): Promise<TestingRequest[]>;
+  softDelete(id: string): Promise<void>;
 }

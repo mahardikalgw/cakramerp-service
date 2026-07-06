@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { Sample } from '../../domain/entities/sample.entity';
 import { SampleTypeOrmEntity } from '../entities/sample-typeorm.entity';
 import { SampleRepositoryPort } from '../../domain/repositories/sample-repository.port';
 
 @Injectable()
 export class SampleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<Sample, SampleTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<Sample, SampleTypeOrmEntity>
   implements SampleRepositoryPort
 {
   protected readonly repository: Repository<SampleTypeOrmEntity>;
@@ -63,7 +63,7 @@ export class SampleTypeOrmRepository
 
   async findBySampleCode(sampleCode: string): Promise<Sample | null> {
     const entity = await this.repository.findOne({
-      where: { sampleCode } as any,
+      where: { sampleCode, deletedAt: IsNull() } as any,
     });
     return entity ? this.toDomain(entity) : null;
   }
@@ -74,6 +74,7 @@ export class SampleTypeOrmRepository
       .createQueryBuilder('s')
       .select('s.sample_code', 'sampleCode')
       .where('s.sample_code LIKE :prefix', { prefix: `SPL-${year}-%` })
+      .andWhere('s.deleted_at IS NULL')
       .orderBy('s.created_at', 'DESC')
       .limit(1)
       .getRawOne();
@@ -82,8 +83,12 @@ export class SampleTypeOrmRepository
 
   async findByTestingRequestId(testingRequestId: string): Promise<Sample[]> {
     const entities = await this.repository.find({
-      where: { testingRequestId } as any,
+      where: { testingRequestId, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

@@ -7,6 +7,7 @@ export interface VerificationRepositoryPort extends RepositoryPort<Verification>
     entityId: string,
   ): Promise<Verification | null>;
   findByEntityNumber(entityNumber: string): Promise<Verification | null>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const VERIFICATION_REPOSITORY = Symbol('VERIFICATION_REPOSITORY');

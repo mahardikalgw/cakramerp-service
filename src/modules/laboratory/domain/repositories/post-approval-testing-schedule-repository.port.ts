@@ -8,4 +8,5 @@ export const POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY = Symbol(
 export interface PostApprovalTestingScheduleRepositoryPort extends RepositoryPort<PostApprovalTestingSchedule> {
   findByContractId(contractId: string): Promise<PostApprovalTestingSchedule[]>;
   findByLaboranId(laboranId: string): Promise<PostApprovalTestingSchedule[]>;
+  softDelete(id: string): Promise<void>;
 }

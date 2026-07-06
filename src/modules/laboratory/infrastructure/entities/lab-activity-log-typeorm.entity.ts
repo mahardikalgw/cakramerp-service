@@ -1,11 +1,9 @@
 import { Entity, Column, Index } from 'typeorm';
-import { PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('lab_activity_logs')
-export class LabActivityLogTypeOrmEntity {
-  @PrimaryGeneratedColumn('uuid')
-  declare id: string;
-
+@Index(['createdAt'])
+export class LabActivityLogTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', name: 'testing_request_id' })
   @Index()
   declare testingRequestId: string;
@@ -34,8 +32,4 @@ export class LabActivityLogTypeOrmEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   declare details: Record<string, unknown> | null;
-
-  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  @Index()
-  declare createdAt: Date;
 }

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { PostApprovalDocumentArchive } from '../../domain/entities/post-approval-document-archive.entity';
 import { PostApprovalDocumentArchiveTypeOrmEntity } from '../entities/post-approval-document-archive-typeorm.entity';
 import { PostApprovalDocumentArchiveRepositoryPort } from '../../domain/repositories/post-approval-document-archive-repository.port';
 
 @Injectable()
 export class PostApprovalDocumentArchiveTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PostApprovalDocumentArchive,
     PostApprovalDocumentArchiveTypeOrmEntity
   >
@@ -68,7 +68,9 @@ export class PostApprovalDocumentArchiveTypeOrmRepository
   async findByContractId(
     contractId: string,
   ): Promise<PostApprovalDocumentArchive[]> {
-    const entities = await this.repository.find({ where: { contractId } });
+    const entities = await this.repository.find({
+      where: { contractId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
   }
 
@@ -76,7 +78,7 @@ export class PostApprovalDocumentArchiveTypeOrmRepository
     testingResultId: string,
   ): Promise<PostApprovalDocumentArchive | null> {
     const entity = await this.repository.findOne({
-      where: { testingResultId },
+      where: { testingResultId, deletedAt: IsNull() },
     });
     return entity ? this.toDomain(entity) : null;
   }
@@ -84,7 +86,13 @@ export class PostApprovalDocumentArchiveTypeOrmRepository
   async findByDocumentNumber(
     documentNumber: string,
   ): Promise<PostApprovalDocumentArchive | null> {
-    const entity = await this.repository.findOne({ where: { documentNumber } });
+    const entity = await this.repository.findOne({
+      where: { documentNumber, deletedAt: IsNull() },
+    });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

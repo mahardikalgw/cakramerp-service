@@ -52,7 +52,10 @@ async function bootstrap() {
     .map((o) => o.trim())
     .filter(Boolean);
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -74,7 +77,9 @@ async function bootstrap() {
     if (migrations.length === 0) {
       app.get(Logger).log('No pending database migrations.');
     } else {
-      app.get(Logger).log(`Applied ${migrations.length} database migration(s):`);
+      app
+        .get(Logger)
+        .log(`Applied ${migrations.length} database migration(s):`);
       for (const migration of migrations) {
         app.get(Logger).log(`  ✓ ${migration.name}`);
       }

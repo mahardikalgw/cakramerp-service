@@ -435,10 +435,7 @@ export class CustomerPortalLabController {
 
   @Get('testing-requests/:id/samples')
   @UseGuards(JwtAuthGuard)
-  async getTestingRequestSamples(
-    @Req() req: any,
-    @Param('id') id: string,
-  ) {
+  async getTestingRequestSamples(@Req() req: any, @Param('id') id: string) {
     const customerId = await this.resolveCustomerId(req.user.id);
     const request = await this.testingRequestService.findById(id);
     if (!request) throw new NotFoundException('Testing request not found');

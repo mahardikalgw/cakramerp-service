@@ -240,7 +240,9 @@ export class CustomerPortalService {
         customerName: customer.name ?? '',
         testingServiceId: firstLineServiceId,
         sampleQuantity: lines.reduce(
-          (sum, l) => sum + (l.sampleQuantity ?? 0), 0),
+          (sum, l) => sum + (l.sampleQuantity ?? 0),
+          0,
+        ),
         totalAmount,
         status: 'draft',
         lines: poLines as any,
@@ -290,13 +292,15 @@ export class CustomerPortalService {
     let sampleSeq = 1;
 
     for (const line of lines) {
-      const qty = line.sampleQuantity && line.sampleQuantity > 0 ? line.sampleQuantity : 1;
+      const qty =
+        line.sampleQuantity && line.sampleQuantity > 0
+          ? line.sampleQuantity
+          : 1;
       for (let i = 0; i < qty; i++) {
         const sample = new Sample({
-          sampleCode:
-            line.sampleCode
-              ? line.sampleCode
-              : `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
+          sampleCode: line.sampleCode
+            ? line.sampleCode
+            : `SMP-${new Date().getFullYear()}-${String(savedRequest.id).slice(0, 8)}-${sampleSeq.toString().padStart(3, '0')}`,
           sampleTypeId: null,
           sampleTypeName: null,
           testingRequestId: savedRequest.id,

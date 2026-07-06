@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   TestResult,
   TestResultAttachment,
@@ -11,7 +11,10 @@ import { TestResultRepositoryPort } from '../../domain/repositories/test-result-
 
 @Injectable()
 export class TestResultTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<TestResult, TestResultTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    TestResult,
+    TestResultTypeOrmEntity
+  >
   implements TestResultRepositoryPort
 {
   protected readonly repository: Repository<TestResultTypeOrmEntity>;
@@ -96,7 +99,7 @@ export class TestResultTypeOrmRepository
 
   async findByResultNumber(resultNumber: string): Promise<TestResult | null> {
     const entity = await this.repository.findOne({
-      where: { resultNumber },
+      where: { resultNumber, deletedAt: IsNull() },
       relations: ['attachments'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -106,6 +109,7 @@ export class TestResultTypeOrmRepository
     const row = await this.repository
       .createQueryBuilder('tr')
       .select('tr.result_number', 'resultNumber')
+      .andWhere('tr.deleted_at IS NULL')
       .orderBy('tr.result_number', 'DESC')
       .limit(1)
       .getRawOne();
@@ -114,7 +118,7 @@ export class TestResultTypeOrmRepository
 
   async findBySampleId(sampleId: string): Promise<TestResult[]> {
     const entities = await this.repository.find({
-      where: { sampleId } as any,
+      where: { sampleId, deletedAt: IsNull() } as any,
       relations: ['attachments'],
     });
     return entities.map((e) => this.toDomain(e));
@@ -124,7 +128,7 @@ export class TestResultTypeOrmRepository
     testingRequestId: string,
   ): Promise<TestResult[]> {
     const entities = await this.repository.find({
-      where: { testingRequestId } as any,
+      where: { testingRequestId, deletedAt: IsNull() } as any,
       relations: ['attachments'],
     });
     return entities.map((e) => this.toDomain(e));
@@ -132,7 +136,7 @@ export class TestResultTypeOrmRepository
 
   async findByContractId(contractId: string): Promise<TestResult[]> {
     const entities = await this.repository.find({
-      where: { contractId } as any,
+      where: { contractId, deletedAt: IsNull() } as any,
       relations: ['attachments'],
     });
     return entities.map((e) => this.toDomain(e));
@@ -146,10 +150,15 @@ export class TestResultTypeOrmRepository
     const entities = await this.repository
       .createQueryBuilder('r')
       .where('r.contract_id = :contractId', { contractId })
+      .andWhere('r.deleted_at IS NULL')
       .andWhere('r.status = :status', { status: 'confirmed' })
       .andWhere('r.confirmed_at >= :start', { start: periodStart })
       .andWhere('r.confirmed_at < :end', { end: periodEnd })
       .getMany();
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

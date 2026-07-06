@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { PaymentMethod } from '../../domain/entities/payment.entity';
 import { PaymentMethodTypeOrmEntity } from '../entities/payment-method-typeorm.entity';
 import { PaymentMethodRepositoryPort } from '../../domain/repositories/payment-repository.port';
 
 @Injectable()
 export class PaymentMethodTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PaymentMethod,
     PaymentMethodTypeOrmEntity
   >
@@ -50,8 +50,12 @@ export class PaymentMethodTypeOrmRepository
 
   async findActive(): Promise<PaymentMethod[]> {
     const entities = await this.repository.find({
-      where: { isActive: true } as any,
+      where: { isActive: true, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

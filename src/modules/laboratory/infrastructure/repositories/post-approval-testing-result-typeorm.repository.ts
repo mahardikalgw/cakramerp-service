@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 import { TestResultTypeOrmEntity } from '../entities/test-result-typeorm.entity';
 import { PostApprovalTestingResultRepositoryPort } from '../../domain/repositories/post-approval-testing-result-repository.port';
 
 @Injectable()
 export class PostApprovalTestingResultTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PostApprovalTestingResult,
     TestResultTypeOrmEntity
   >
@@ -85,14 +85,18 @@ export class PostApprovalTestingResultTypeOrmRepository
   async findBySampleId(
     sampleId: string,
   ): Promise<PostApprovalTestingResult | null> {
-    const entity = await this.repository.findOne({ where: { sampleId } });
+    const entity = await this.repository.findOne({
+      where: { sampleId, deletedAt: IsNull() },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
   async findByContractId(
     contractId: string,
   ): Promise<PostApprovalTestingResult[]> {
-    const entities = await this.repository.find({ where: { contractId } });
+    const entities = await this.repository.find({
+      where: { contractId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
   }
 
@@ -101,7 +105,7 @@ export class PostApprovalTestingResultTypeOrmRepository
     sampleUnit: number,
   ): Promise<PostApprovalTestingResult | null> {
     const entity = await this.repository.findOne({
-      where: { scheduleSampleId, sampleUnit },
+      where: { scheduleSampleId, sampleUnit, deletedAt: IsNull() },
     });
     return entity ? this.toDomain(entity) : null;
   }
@@ -109,7 +113,13 @@ export class PostApprovalTestingResultTypeOrmRepository
   async findByScheduleId(
     scheduleId: string,
   ): Promise<PostApprovalTestingResult[]> {
-    const entities = await this.repository.find({ where: { scheduleId } });
+    const entities = await this.repository.find({
+      where: { scheduleId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

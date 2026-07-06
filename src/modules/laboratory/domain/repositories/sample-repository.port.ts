@@ -7,4 +7,5 @@ export interface SampleRepositoryPort extends RepositoryPort<Sample> {
   findBySampleCode(sampleCode: string): Promise<Sample | null>;
   getLastSampleCode(): Promise<string | null>;
   findByTestingRequestId(testingRequestId: string): Promise<Sample[]>;
+  softDelete(id: string): Promise<void>;
 }

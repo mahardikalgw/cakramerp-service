@@ -5,4 +5,5 @@ export const SAMPLE_TYPE_REPOSITORY = Symbol('SAMPLE_TYPE_REPOSITORY');
 
 export interface SampleTypeRepositoryPort extends RepositoryPort<SampleType> {
   findByCode(code: string): Promise<SampleType | null>;
+  softDelete(id: string): Promise<void>;
 }

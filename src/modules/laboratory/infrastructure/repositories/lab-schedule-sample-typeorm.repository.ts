@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { LabScheduleSample } from '../../domain/entities/lab-schedule-sample.entity';
 import { LabScheduleSampleTypeOrmEntity } from '../entities/lab-schedule-sample-typeorm.entity';
 import { LabScheduleSampleRepositoryPort } from '../../domain/repositories/lab-schedule-sample-repository.port';
 
 @Injectable()
 export class LabScheduleSampleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     LabScheduleSample,
     LabScheduleSampleTypeOrmEntity
   >
@@ -49,7 +49,13 @@ export class LabScheduleSampleTypeOrmRepository
   }
 
   async findByScheduleId(scheduleId: string): Promise<LabScheduleSample[]> {
-    const entities = await this.repository.find({ where: { scheduleId } });
+    const entities = await this.repository.find({
+      where: { scheduleId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

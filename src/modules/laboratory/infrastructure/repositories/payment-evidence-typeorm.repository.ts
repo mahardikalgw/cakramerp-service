@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { PaymentEvidence } from '../../domain/entities/payment.entity';
 import { PaymentEvidenceTypeOrmEntity } from '../entities/payment-evidence-typeorm.entity';
 import { PaymentEvidenceRepositoryPort } from '../../domain/repositories/payment-repository.port';
 
 @Injectable()
 export class PaymentEvidenceTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     PaymentEvidence,
     PaymentEvidenceTypeOrmEntity
   >
@@ -62,15 +62,19 @@ export class PaymentEvidenceTypeOrmRepository
 
   async findByLabPurchaseOrderId(poId: string): Promise<PaymentEvidence[]> {
     const entities = await this.repository.find({
-      where: { labPurchaseOrderId: poId } as any,
+      where: { labPurchaseOrderId: poId, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
   }
 
   async findByLabContractId(contractId: string): Promise<PaymentEvidence[]> {
     const entities = await this.repository.find({
-      where: { labContractId: contractId } as any,
+      where: { labContractId: contractId, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

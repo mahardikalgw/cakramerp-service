@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { SampleQuota } from '../../domain/entities/sample-quota.entity';
 import { SampleQuotaTypeOrmEntity } from '../entities/sample-quota-typeorm.entity';
 import { SampleQuotaRepositoryPort } from '../../domain/repositories/sample-quota-repository.port';
 
 @Injectable()
 export class SampleQuotaTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<SampleQuota, SampleQuotaTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    SampleQuota,
+    SampleQuotaTypeOrmEntity
+  >
   implements SampleQuotaRepositoryPort
 {
   protected readonly repository: Repository<SampleQuotaTypeOrmEntity>;
@@ -51,7 +54,7 @@ export class SampleQuotaTypeOrmRepository
 
   async findByTestingRequestId(requestId: string): Promise<SampleQuota[]> {
     const entities = await this.repository.find({
-      where: { testingRequestId: requestId },
+      where: { testingRequestId: requestId, deletedAt: IsNull() },
       order: { createdAt: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -59,7 +62,7 @@ export class SampleQuotaTypeOrmRepository
 
   async findByCustomerId(customerId: string): Promise<SampleQuota[]> {
     const entities = await this.repository.find({
-      where: { customerId },
+      where: { customerId, deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -69,5 +72,9 @@ export class SampleQuotaTypeOrmRepository
     const entities = quotas.map((q) => this.toEntity(q));
     const saved = await this.repository.save(entities);
     return saved.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

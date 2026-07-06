@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { TestingService } from '../../domain/entities/testing-service.entity';
 import { TestingServiceTypeOrmEntity } from '../entities/testing-service-typeorm.entity';
 import { TestingServiceRepositoryPort } from '../../domain/repositories/testing-service-repository.port';
 
 @Injectable()
 export class TestingServiceTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     TestingService,
     TestingServiceTypeOrmEntity
   >
@@ -47,7 +47,13 @@ export class TestingServiceTypeOrmRepository
   }
 
   async findByCode(code: string): Promise<TestingService | null> {
-    const entity = await this.repository.findOne({ where: { code } as any });
+    const entity = await this.repository.findOne({
+      where: { code, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

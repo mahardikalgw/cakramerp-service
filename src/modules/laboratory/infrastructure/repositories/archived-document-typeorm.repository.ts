@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { ArchivedDocument } from '../../domain/entities/report-distribution.entity';
 import { ArchivedDocumentTypeOrmEntity } from '../entities/archived-document-typeorm.entity';
 import { ArchivedDocumentRepositoryPort } from '../../domain/repositories/report-distribution-repository.port';
 
 @Injectable()
 export class ArchivedDocumentTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     ArchivedDocument,
     ArchivedDocumentTypeOrmEntity
   >
@@ -66,15 +66,19 @@ export class ArchivedDocumentTypeOrmRepository
     entityId: string,
   ): Promise<ArchivedDocument | null> {
     const entity = await this.repository.findOne({
-      where: { documentType, entityId } as any,
+      where: { documentType, entityId, deletedAt: IsNull() } as any,
     });
     return entity ? this.toDomain(entity) : null;
   }
 
   async findByCustomerId(customerId: string): Promise<ArchivedDocument[]> {
     const entities = await this.repository.find({
-      where: { customerId } as any,
+      where: { customerId, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

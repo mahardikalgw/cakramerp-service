@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('device_tokens')
 @Index('idx_device_tokens_user', ['userId'])
@@ -7,7 +7,7 @@ import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/
   where: 'is_active = true',
 })
 @Index('idx_device_tokens_token', ['token'], { unique: true })
-export class DeviceTokenTypeOrmEntity extends TypeOrmBaseEntity {
+export class DeviceTokenTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', name: 'user_id' })
   declare userId: string;
 

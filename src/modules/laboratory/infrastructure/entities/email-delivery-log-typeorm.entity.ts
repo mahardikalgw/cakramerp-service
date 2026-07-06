@@ -1,9 +1,9 @@
 import { Entity, Column, Index } from 'typeorm';
-import { TypeOrmBaseEntity } from '../../../../database/infrastructure/entities/typeorm-base.entity';
+import { SoftDeletableTypeOrmEntity } from '../../../../database/infrastructure/entities/soft-deletable-typeorm-base.entity';
 
 @Entity('email_delivery_log')
 @Index('idx_email_log_notification', ['notificationId'])
-export class EmailDeliveryLogTypeOrmEntity extends TypeOrmBaseEntity {
+export class EmailDeliveryLogTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', nullable: true, name: 'notification_id' })
   declare notificationId: string | null;
 

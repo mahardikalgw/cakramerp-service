@@ -3,4 +3,6 @@ import { Laboratory } from '../entities/laboratory.entity';
 
 export const LABORATORY_REPOSITORY = Symbol('LABORATORY_REPOSITORY');
 
-export type LaboratoryRepositoryPort = RepositoryPort<Laboratory>;
+export interface LaboratoryRepositoryPort extends RepositoryPort<Laboratory> {
+  softDelete(id: string): Promise<void>;
+}

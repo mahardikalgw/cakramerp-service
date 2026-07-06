@@ -3,7 +3,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddSoftDelete20260705000001 implements MigrationInterface {
   name = 'AddSoftDelete20260705000001';
 
-  private async addColumn(queryRunner: QueryRunner, table: string): Promise<void> {
+  private async addColumn(
+    queryRunner: QueryRunner,
+    table: string,
+  ): Promise<void> {
     await queryRunner.query(`
       DO $$ BEGIN
         IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '${table}') THEN
@@ -14,7 +17,10 @@ export class AddSoftDelete20260705000001 implements MigrationInterface {
     `);
   }
 
-  private async dropColumn(queryRunner: QueryRunner, table: string): Promise<void> {
+  private async dropColumn(
+    queryRunner: QueryRunner,
+    table: string,
+  ): Promise<void> {
     await queryRunner.query(`
       DO $$ BEGIN
         IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '${table}') THEN

@@ -14,4 +14,5 @@ export interface TestingScheduleRepositoryPort extends RepositoryPort<TestingSch
     laboratoryId: string,
     date: string,
   ): Promise<TestingSchedule[]>;
+  softDelete(id: string): Promise<void>;
 }

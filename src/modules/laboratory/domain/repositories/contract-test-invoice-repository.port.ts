@@ -21,4 +21,5 @@ export interface ContractTestInvoiceRepositoryPort {
   getLastInvoiceNumber(): Promise<string | null>;
   /** Sum of `initial_fee_applied` across all non-cancelled invoices for a contract. */
   sumInitialFeeApplied(contractId: string): Promise<number>;
+  softDelete(id: string): Promise<void>;
 }

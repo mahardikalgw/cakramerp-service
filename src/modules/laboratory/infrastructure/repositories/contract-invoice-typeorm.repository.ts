@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { ContractInvoice } from '../../domain/entities/contract-invoice.entity';
 import { ContractInvoiceTypeOrmEntity } from '../entities/contract-invoice-typeorm.entity';
 import { ContractInvoiceRepositoryPort } from '../../domain/repositories/contract-invoice-repository.port';
@@ -11,7 +11,7 @@ import {
 
 @Injectable()
 export class ContractInvoiceTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     ContractInvoice,
     ContractInvoiceTypeOrmEntity
   >
@@ -65,13 +65,15 @@ export class ContractInvoiceTypeOrmRepository
   }
 
   async findById(id: string): Promise<ContractInvoice | null> {
-    const entity = await this.repository.findOne({ where: { id } as any });
+    const entity = await this.repository.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
   async findByContractId(contractId: string): Promise<ContractInvoice[]> {
     const entities = await this.repository.find({
-      where: { contractId } as any,
+      where: { contractId, deletedAt: IsNull() } as any,
       order: { billingPeriodStart: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -87,12 +89,14 @@ export class ContractInvoiceTypeOrmRepository
       .where('i.contract_id = :contractId', { contractId })
       .andWhere('i.billing_period_start = :start', { start })
       .andWhere('i.billing_period_end = :end', { end })
+      .andWhere('i.deleted_at IS NULL')
       .getOne();
     return entity ? this.toDomain(entity) : null;
   }
 
   async getLastInvoiceNumber(): Promise<string | null> {
     const entity = await this.repository.findOne({
+      where: { deletedAt: IsNull() } as any,
       order: { invoiceNumber: 'DESC' as any },
       select: ['invoiceNumber'] as any,
     });
@@ -105,7 +109,7 @@ export class ContractInvoiceTypeOrmRepository
     const skip = (page - 1) * limit;
 
     const [entities, total] = await this.repository.findAndCount({
-      where: options?.filters as any,
+      where: { ...(options?.filters as any), deletedAt: IsNull() },
       take: limit,
       skip,
       order: options?.orderBy
@@ -126,5 +130,9 @@ export class ContractInvoiceTypeOrmRepository
         hasPrevPage: page > 1,
       },
     };
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

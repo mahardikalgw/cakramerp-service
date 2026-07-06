@@ -8,4 +8,5 @@ export const LAB_PURCHASE_ORDER_REPOSITORY = Symbol(
 export interface LabPurchaseOrderRepositoryPort extends RepositoryPort<LabPurchaseOrder> {
   findByPONumber(poNumber: string): Promise<LabPurchaseOrder | null>;
   getLastPONumber(): Promise<string | null>;
+  softDelete(id: string): Promise<void>;
 }

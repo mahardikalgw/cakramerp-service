@@ -30,4 +30,8 @@ export class EmailDeliveryLogTypeOrmRepository implements EmailDeliveryLogReposi
     entity.errorMessage = log.errorMessage ?? null;
     await this.repository.save(entity);
   }
+
+  async softDelete(id: string): Promise<void> {
+    await this.repository.update(id, { deletedAt: new Date() });
+  }
 }

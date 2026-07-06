@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { SampleType } from '../../domain/entities/sample-type.entity';
 import { SampleTypeTypeOrmEntity } from '../entities/sample-type-typeorm.entity';
 import { SampleTypeRepositoryPort } from '../../domain/repositories/sample-type-repository.port';
 
 @Injectable()
 export class SampleTypeTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<SampleType, SampleTypeTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    SampleType,
+    SampleTypeTypeOrmEntity
+  >
   implements SampleTypeRepositoryPort
 {
   protected readonly repository: Repository<SampleTypeTypeOrmEntity>;
@@ -40,7 +43,13 @@ export class SampleTypeTypeOrmRepository
   }
 
   async findByCode(code: string): Promise<SampleType | null> {
-    const entity = await this.repository.findOne({ where: { code } as any });
+    const entity = await this.repository.findOne({
+      where: { code, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

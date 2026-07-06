@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { Laboratory } from '../../domain/entities/laboratory.entity';
 import { LaboratoryTypeOrmEntity } from '../entities/laboratory-typeorm.entity';
 import { LaboratoryRepositoryPort } from '../../domain/repositories/laboratory-repository.port';
 
 @Injectable()
 export class LaboratoryTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<Laboratory, LaboratoryTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    Laboratory,
+    LaboratoryTypeOrmEntity
+  >
   implements LaboratoryRepositoryPort
 {
   protected readonly repository: Repository<LaboratoryTypeOrmEntity>;
@@ -37,5 +40,9 @@ export class LaboratoryTypeOrmRepository
     entity.capacity = domain.capacity ?? 0;
     entity.isActive = domain.isActive ?? true;
     return entity;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

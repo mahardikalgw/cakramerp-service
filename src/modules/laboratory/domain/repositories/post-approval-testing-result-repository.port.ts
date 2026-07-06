@@ -13,4 +13,5 @@ export interface PostApprovalTestingResultRepositoryPort extends RepositoryPort<
     sampleUnit: number,
   ): Promise<PostApprovalTestingResult | null>;
   findByScheduleId(scheduleId: string): Promise<PostApprovalTestingResult[]>;
+  softDelete(id: string): Promise<void>;
 }

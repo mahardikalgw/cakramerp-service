@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { LabContractSample } from '../../domain/entities/post-approval-lab-contract.entity';
 import { PostApprovalLabContractSampleTypeOrmEntity } from '../entities/post-approval-lab-contract-sample-typeorm.entity';
 import { RepositoryPort } from '../../../../shared/kernel/domain/repositories/repository.port';
@@ -12,11 +12,12 @@ export const LAB_CONTRACT_SAMPLE_REPOSITORY = Symbol(
 export interface LabContractSampleRepositoryPort extends RepositoryPort<LabContractSample> {
   findByContractId(contractId: string): Promise<LabContractSample[]>;
   findBySampleId(sampleId: string): Promise<LabContractSample[]>;
+  softDelete(id: string): Promise<void>;
 }
 
 @Injectable()
 export class LabContractSampleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     LabContractSample,
     PostApprovalLabContractSampleTypeOrmEntity
   >
@@ -72,12 +73,20 @@ export class LabContractSampleTypeOrmRepository
   }
 
   async findByContractId(contractId: string): Promise<LabContractSample[]> {
-    const entities = await this.repository.find({ where: { contractId } });
+    const entities = await this.repository.find({
+      where: { contractId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
   }
 
   async findBySampleId(sampleId: string): Promise<LabContractSample[]> {
-    const entities = await this.repository.find({ where: { sampleId } });
+    const entities = await this.repository.find({
+      where: { sampleId, deletedAt: IsNull() },
+    });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

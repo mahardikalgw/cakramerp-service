@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { LabCertificate } from '../../domain/entities/lab-certificate.entity';
 import { LabCertificateTypeOrmEntity } from '../entities/lab-certificate-typeorm.entity';
 import { LabCertificateRepositoryPort } from '../../domain/repositories/lab-certificate-repository.port';
 
 @Injectable()
 export class LabCertificateTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     LabCertificate,
     LabCertificateTypeOrmEntity
   >
@@ -74,14 +74,14 @@ export class LabCertificateTypeOrmRepository
     certificateNumber: string,
   ): Promise<LabCertificate | null> {
     const entity = await this.repository.findOne({
-      where: { certificateNumber },
+      where: { certificateNumber, deletedAt: IsNull() },
     });
     return entity ? this.toDomain(entity) : null;
   }
 
   async findByQrHash(qrHash: string): Promise<LabCertificate | null> {
     const entity = await this.repository.findOne({
-      where: { qrHash } as any,
+      where: { qrHash, deletedAt: IsNull() } as any,
     });
     return entity ? this.toDomain(entity) : null;
   }
@@ -90,7 +90,7 @@ export class LabCertificateTypeOrmRepository
     testingRequestId: string,
   ): Promise<LabCertificate[]> {
     const entities = await this.repository.find({
-      where: { testingRequestId } as any,
+      where: { testingRequestId, deletedAt: IsNull() } as any,
     });
     return entities.map((e) => this.toDomain(e));
   }
@@ -99,9 +99,14 @@ export class LabCertificateTypeOrmRepository
     const query = this.repository
       .createQueryBuilder('lc')
       .select('lc.certificate_number', 'certificateNumber')
+      .where('lc.deleted_at IS NULL')
       .orderBy('lc.certificate_number', 'DESC')
       .limit(1);
     const row = await query.getRawOne();
     return row?.certificateNumber ?? null;
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

@@ -14,7 +14,13 @@ export class UserTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Index()
   declare email: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true, unique: true, name: 'username' })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    unique: true,
+    name: 'username',
+  })
   @Index()
   declare username: string | null;
 

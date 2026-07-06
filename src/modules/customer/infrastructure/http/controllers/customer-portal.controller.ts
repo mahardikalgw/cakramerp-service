@@ -190,6 +190,18 @@ export class CustomerPortalController {
     return this.portalService.getPaymentProofUrl(req.user.id, id);
   }
 
+  @Delete('lab/testing-requests/:id/signed-document')
+  @UseGuards(JwtAuthGuard)
+  async deleteSignedDocument(@Req() req: any, @Param('id') id: string) {
+    return this.portalService.deleteSignedDocumentFile(req.user.id, id);
+  }
+
+  @Delete('lab/testing-requests/:id/payment-proof')
+  @UseGuards(JwtAuthGuard)
+  async deletePaymentProof(@Req() req: any, @Param('id') id: string) {
+    return this.portalService.deletePaymentProofFile(req.user.id, id);
+  }
+
   @Get('dashboard')
   @UseGuards(JwtAuthGuard)
   async getDashboard(@Req() req: any) {

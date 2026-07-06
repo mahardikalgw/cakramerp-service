@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   TestingRequest,
   TestingRequestLine,
@@ -15,7 +15,7 @@ import {
 
 @Injectable()
 export class TestingRequestTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     TestingRequest,
     TestingRequestTypeOrmEntity
   >
@@ -194,7 +194,7 @@ export class TestingRequestTypeOrmRepository
 
   async findById(id: string): Promise<TestingRequest | null> {
     const entity = await this.repository.findOne({
-      where: { id } as any,
+      where: { id, deletedAt: IsNull() } as any,
       relations: ['lines'],
     });
     if (!entity) return null;
@@ -214,7 +214,7 @@ export class TestingRequestTypeOrmRepository
     requestNumber: string,
   ): Promise<TestingRequest | null> {
     const entity = await this.repository.findOne({
-      where: { requestNumber },
+      where: { requestNumber, deletedAt: IsNull() },
       relations: ['lines'],
     });
     if (!entity) return null;
@@ -234,6 +234,7 @@ export class TestingRequestTypeOrmRepository
     const query = this.repository
       .createQueryBuilder('tr')
       .select('tr.request_number', 'requestNumber')
+      .andWhere('tr.deleted_at IS NULL')
       .orderBy('tr.request_number', 'DESC')
       .limit(1);
 
@@ -251,11 +252,16 @@ export class TestingRequestTypeOrmRepository
     const entities = await this.repository
       .createQueryBuilder('r')
       .where('r.billing_type = :bt', { bt: 'contract' })
+      .andWhere('r.deleted_at IS NULL')
       .andWhere('r.status = :status', { status: 'approved' })
       .andWhere('r.contract_signing_deadline IS NOT NULL')
       .andWhere('r.contract_signing_deadline < :now', { now })
       .andWhere('r.signed_contract_url IS NULL')
       .getMany();
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

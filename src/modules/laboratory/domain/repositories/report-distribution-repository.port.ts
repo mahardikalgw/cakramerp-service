@@ -7,6 +7,7 @@ import { RepositoryPort } from '../../../../shared/kernel/domain/repositories/re
 export interface ReportDistributionRepositoryPort extends RepositoryPort<ReportDistribution> {
   findByDocumentId(documentId: string): Promise<ReportDistribution[]>;
   findByCustomerId(customerId: string): Promise<ReportDistribution[]>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const REPORT_DISTRIBUTION_REPOSITORY = Symbol(
@@ -19,6 +20,7 @@ export interface ArchivedDocumentRepositoryPort extends RepositoryPort<ArchivedD
     entityId: string,
   ): Promise<ArchivedDocument | null>;
   findByCustomerId(customerId: string): Promise<ArchivedDocument[]>;
+  softDelete(id: string): Promise<void>;
 }
 
 export const ARCHIVED_DOCUMENT_REPOSITORY = Symbol(

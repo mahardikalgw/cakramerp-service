@@ -132,4 +132,3 @@ export class StripSampleCodeSuffix20260705000002 implements MigrationInterface {
     `);
   }
 }
-

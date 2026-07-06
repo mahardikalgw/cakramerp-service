@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, Between } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, Repository, Between, IsNull } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import { TestingSchedule } from '../../domain/entities/testing-schedule.entity';
 import { TestingScheduleTypeOrmEntity } from '../entities/testing-schedule-typeorm.entity';
 import { TestingScheduleRepositoryPort } from '../../domain/repositories/testing-schedule-repository.port';
 
 @Injectable()
 export class TestingScheduleTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<
+  extends SoftDeleteTypeOrmRepositoryAdapter<
     TestingSchedule,
     TestingScheduleTypeOrmEntity
   >
@@ -68,6 +68,7 @@ export class TestingScheduleTypeOrmRepository
     const entities = await this.repository.find({
       where: {
         scheduleDate: Between(new Date(startDate), new Date(endDate)),
+        deletedAt: IsNull(),
       } as any,
       order: { scheduleDate: 'ASC', timeSlot: 'ASC' },
     });
@@ -82,9 +83,14 @@ export class TestingScheduleTypeOrmRepository
       where: {
         laboratoryId,
         scheduleDate: new Date(date),
+        deletedAt: IsNull(),
       } as any,
       order: { timeSlot: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

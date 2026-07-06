@@ -28,9 +28,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *     - sales_order_lines (already in migration 1 — ADD IF NOT EXISTS is safe)
  *     - sales_return_lines (already in migration 1 — ADD IF NOT EXISTS is safe)
  */
-export class AddSoftDeleteRemainingTables20260706000003
-  implements MigrationInterface
-{
+export class AddSoftDeleteRemainingTables20260706000003 implements MigrationInterface {
   name = 'AddSoftDeleteRemainingTables20260706000003';
 
   private async addColumn(

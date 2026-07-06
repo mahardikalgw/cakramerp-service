@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
-import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructure/repositories/base.typeorm-repository.adapter';
+import { DataSource, IsNull, Repository } from 'typeorm';
+import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.helper';
 import {
   DailyReport,
   DailyReportLine,
@@ -11,7 +11,10 @@ import { DailyReportRepositoryPort } from '../../domain/repositories/daily-repor
 
 @Injectable()
 export class DailyReportTypeOrmRepository
-  extends BaseTypeOrmRepositoryAdapter<DailyReport, DailyReportTypeOrmEntity>
+  extends SoftDeleteTypeOrmRepositoryAdapter<
+    DailyReport,
+    DailyReportTypeOrmEntity
+  >
   implements DailyReportRepositoryPort
 {
   protected readonly repository: Repository<DailyReportTypeOrmEntity>;
@@ -92,7 +95,7 @@ export class DailyReportTypeOrmRepository
 
   async findByReportNumber(reportNumber: string): Promise<DailyReport | null> {
     const entity = await this.repository.findOne({
-      where: { reportNumber },
+      where: { reportNumber, deletedAt: IsNull() },
       relations: ['lines'],
     });
     return entity ? this.toDomain(entity) : null;
@@ -102,6 +105,7 @@ export class DailyReportTypeOrmRepository
     const row = await this.repository
       .createQueryBuilder('dr')
       .select('dr.report_number', 'reportNumber')
+      .where('dr.deleted_at IS NULL')
       .orderBy('dr.report_number', 'DESC')
       .limit(1)
       .getRawOne();
@@ -112,9 +116,13 @@ export class DailyReportTypeOrmRepository
     testingRequestId: string,
   ): Promise<DailyReport[]> {
     const entities = await this.repository.find({
-      where: { testingRequestId } as any,
+      where: { testingRequestId, deletedAt: IsNull() } as any,
       relations: ['lines'],
     });
     return entities.map((e) => this.toDomain(e));
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.softRemove(id);
   }
 }

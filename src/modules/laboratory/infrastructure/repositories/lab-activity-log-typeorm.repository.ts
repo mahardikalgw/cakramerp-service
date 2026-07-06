@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { LabActivityLogTypeOrmEntity } from '../entities/lab-activity-log-typeorm.entity';
 import { LabActivityLog } from '../../domain/entities/lab-activity-log.entity';
 import { LabActivityLogRepositoryPort } from '../../domain/repositories/lab-activity-log-repository.port';
@@ -30,7 +30,7 @@ export class LabActivityLogTypeOrmRepository implements LabActivityLogRepository
     options?: { limit?: number },
   ): Promise<LabActivityLog[]> {
     const entities = await this.repo.find({
-      where: { testingRequestId },
+      where: { testingRequestId, deletedAt: IsNull() },
       order: { createdAt: 'ASC' },
       take: options?.limit,
     });
@@ -48,5 +48,9 @@ export class LabActivityLogTypeOrmRepository implements LabActivityLogRepository
       details: entity.details ?? undefined,
       createdAt: entity.createdAt,
     });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.repo.update(id, { deletedAt: new Date() });
   }
 }

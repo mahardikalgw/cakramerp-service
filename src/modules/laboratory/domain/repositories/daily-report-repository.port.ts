@@ -7,4 +7,5 @@ export interface DailyReportRepositoryPort extends RepositoryPort<DailyReport> {
   findByReportNumber(reportNumber: string): Promise<DailyReport | null>;
   getLastReportNumber(): Promise<string | null>;
   findByTestingRequestId(testingRequestId: string): Promise<DailyReport[]>;
+  softDelete(id: string): Promise<void>;
 }
