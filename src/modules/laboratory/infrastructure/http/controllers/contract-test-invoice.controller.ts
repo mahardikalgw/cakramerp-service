@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Query,
   Body,
@@ -12,6 +13,7 @@ import {
   Req,
   Res,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
@@ -97,5 +99,11 @@ export class ContractTestInvoiceController {
   @RequirePermissions('contracts:read')
   async getPaymentProofDownloadUrl(@Param('id') id: string) {
     return this.contractTestInvoiceService.getPaymentProofDownloadUrl(id);
+  }
+
+  @Delete('contract-test-invoices/:id')
+  @RequirePermissions('contracts:approve')
+  async deleteContractTestInvoice(@Param('id') id: string) {
+    return this.contractTestInvoiceService.delete(id);
   }
 }

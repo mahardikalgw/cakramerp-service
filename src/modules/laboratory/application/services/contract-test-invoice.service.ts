@@ -428,6 +428,15 @@ export class ContractTestInvoiceService {
 
   // ─── Internal ───────────────────────────────────────────────────────────
 
+  async delete(id: string): Promise<void> {
+    const invoice = await this.repository.findById(id);
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (invoice.status === 'paid') {
+      throw new BadRequestException('Cannot delete a paid invoice');
+    }
+    return this.repository.softDelete(id);
+  }
+
   private async generateInvoiceNumber(): Promise<string> {
     const last = await this.repository.getLastInvoiceNumber();
     let seq = 1;
