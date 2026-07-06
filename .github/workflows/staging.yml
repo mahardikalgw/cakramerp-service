@@ -1,10 +1,10 @@
-name: CI — Production
+name: CI — Staging
 
 on:
   push:
-    branches: [main]
+    branches: [staging]
   pull_request:
-    branches: [main]
+    branches: [staging]
 
 env:
   NODE_VERSION: '22'
@@ -96,16 +96,11 @@ jobs:
       NODE_ENV: test
       CORS_ORIGIN: http://localhost:3000
       DOCUMENT_SERVICE_URL: http://localhost:8080
-      RESEND_API_KEY: re_placeholder_ci
-      RESEND_FROM_EMAIL: noreply@example.com
-      APP_BASE_URL: http://localhost:3000
-      FCM_PROJECT_ID: ""
-      FCM_CLIENT_EMAIL: ""
-      FCM_PRIVATE_KEY: ""
       MINIO_ENDPOINT: http://localhost:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: documents
+      MINIO_USE_SSL: false
     steps:
       - uses: actions/checkout@v4
 
@@ -121,59 +116,47 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:ci
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage
-          path: coverage/
-
   docker:
-    name: Docker Build & Push
+    name: Docker Build & Push (staging)
     runs-on: ubuntu-latest
     needs: [typecheck, lint, test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable=true
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:staging
+            ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
 
   deploy:
-    name: Deploy
+    name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: docker
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+    environment: staging
     steps:
       - name: Short SHA
         id: sha
@@ -189,27 +172,28 @@ jobs:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
+          host: ${{ secrets.STAGING_VM_HOST }}
+          username: ${{ secrets.STAGING_VM_USER }}
+          key: ${{ secrets.STAGING_VM_SSH_KEY }}
+          command_timeout: 30m
           script: |
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
-            docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest
+            docker pull ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }}
+            docker tag ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:staging
 
             echo "▶ Running database migrations..."
             docker run --rm \
               --network host \
-              --env-file /opt/cakramerp/app.env \
-              ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} \
+              --env-file /opt/cakramerp/staging.env \
+              ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }} \
               node dist/database/migrate.js
             echo "✓ Migrations complete"
 
-            docker stop cakramerp-service 2>/dev/null || true
-            docker rm cakramerp-service 2>/dev/null || true
+            docker stop cakramerp-service-staging 2>/dev/null || true
+            docker rm cakramerp-service-staging 2>/dev/null || true
             docker run -d \
-              --name cakramerp-service \
+              --name cakramerp-service-staging \
               --restart unless-stopped \
               --network host \
-              --env-file /opt/cakramerp/app.env \
-              ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
+              --env-file /opt/cakramerp/staging.env \
+              ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }}
