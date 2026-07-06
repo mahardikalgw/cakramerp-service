@@ -57,7 +57,9 @@ export class AuthController {
     @Req() req: any,
   ): Promise<TokenResponseDto> {
     const ipAddress = req.ip ?? req.connection?.remoteAddress;
-    const command = new LoginCommand(dto.identifier, dto.password, ipAddress);
+    // Accept both 'identifier' (new) and 'email' (legacy) fields
+    const identifier = dto.identifier ?? dto.email ?? '';
+    const command = new LoginCommand(identifier, dto.password, ipAddress);
     const result = await this.authService.login(command);
     return TokenResponseDto.fromResult(result);
   }
