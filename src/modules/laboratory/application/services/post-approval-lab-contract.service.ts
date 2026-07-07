@@ -980,6 +980,10 @@ export class PostApprovalLabContractService {
           dueDate: new Date(Date.now() + 7 * 86400000)
             .toISOString()
             .split('T')[0],
+          subtotal: Math.round((dpAmount / 1.11) * 100) / 100,
+          taxPercent: '11',
+          taxAmount:
+            Math.round((dpAmount - dpAmount / 1.11) * 100) / 100,
           totalAmount: dpAmount.toLocaleString('id-ID'),
           status: 'issued',
           authorizedByName: adminUserName || 'Lab Authorized',

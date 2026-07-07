@@ -446,7 +446,15 @@ export class TestingRequestService {
           }
 
           this.logger.log(`[DOC] Generating Invoice document...`);
-          // 2. Generate Invoice document (with prices, Rp prefix added in template)
+          // 2. Generate Invoice document (with prices and PPN tax)
+          const taxPercent = 11;
+          const invoiceSubtotal = po.lines.reduce(
+            (sum, l) => sum + (l.total ?? 0),
+            0,
+          );
+          const invoiceTaxAmount =
+            Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+          const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
           const invDoc = await this.docHelper.generateDocument({
             documentType: DOCUMENT_TYPES.LAB_INVOICE,
             entityId: po.id,
@@ -460,8 +468,10 @@ export class TestingRequestService {
               dueDate: new Date(Date.now() + 30 * 86400000)
                 .toISOString()
                 .split('T')[0],
-              totalAmount:
-                po.totalAmount != null ? String(po.totalAmount) : '0',
+              subtotal: String(invoiceSubtotal),
+              taxPercent: String(taxPercent),
+              taxAmount: String(invoiceTaxAmount),
+              totalAmount: String(invoiceTotal),
               status: 'issued',
               authorizedByName: userName || 'Lab Authorized',
             },
@@ -529,15 +539,16 @@ export class TestingRequestService {
           customerName,
           orderDate: new Date().toISOString().split('T')[0],
           notes: `Down Payment — Contract Testing Request ${existing.requestNumber}`,
-          lines: [
-            {
-              itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
-              quantity: 1,
-              unitPrice: dpAmount,
-              uom: 'package',
-              lineType: 'service',
-            },
-          ],
+            lines: [
+              {
+                itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
+                quantity: 1,
+                unitPrice: dpAmount,
+                taxPercent: 11,
+                uom: 'package',
+                lineType: 'service',
+              },
+            ],
         });
         existing.salesOrderId = so.id;
         this.logger.log(
@@ -594,6 +605,7 @@ export class TestingRequestService {
               itemName: line.serviceName || service?.name || 'Testing Service',
               quantity: line.sampleQuantity || 1,
               unitPrice,
+              taxPercent: 11,
               description: line.sampleCode || undefined,
               uom: 'sample',
               lineType: 'service',
