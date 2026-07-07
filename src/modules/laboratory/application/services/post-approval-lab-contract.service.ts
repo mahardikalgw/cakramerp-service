@@ -311,11 +311,11 @@ export class PostApprovalLabContractService {
       );
     }
 
-    // Tax invoice only for contract billing — cash customers paid in full up front.
+    // Invoice only for contract billing — cash customers paid in full up front.
     if (!isCash) {
       try {
         const taxDoc = await this.docHelper.generateDocument({
-          documentType: 'lab_tax_invoice',
+          documentType: 'lab_invoice',
           entityId: saved.id,
           requestedBy: adminUserId,
           outputFormat: 'pdf',
@@ -323,17 +323,23 @@ export class PostApprovalLabContractService {
             invoiceNumber: `INV-${saved.contractNumber}`,
             customerName: saved.customerName,
             customerAddress: request.projectLocation || '-',
-            customerNpwp: '-',
-            baseAmount: baseAmount.toLocaleString('id-ID'),
-            taxPercent: `${taxPercent}%`,
+            subtotal: baseAmount.toLocaleString('id-ID'),
+            taxPercent: String(taxPercent),
             taxAmount: taxAmount.toLocaleString('id-ID'),
             totalAmount: totalAmount.toLocaleString('id-ID'),
             invoiceDate: new Date().toISOString().split('T')[0],
-            supplierName: 'Cakra ERP Laboratory',
-            supplierNpwp: '-',
-            supplierAddress: '-',
+            dueDate: new Date(Date.now() + 7 * 86400000)
+              .toISOString()
+              .split('T')[0],
+            status: 'issued',
+            authorizedByName: adminUserName || 'Lab Authorized',
           },
-          lines: taxDocLines,
+          lines: taxDocLines.map((l) => ({
+            description: l.description,
+            quantity: l.quantity,
+            unitPrice: l.unitPrice,
+            total: l.totalPrice,
+          })),
         });
 
         saved.taxInvoiceUrl = taxDoc.id;
@@ -492,7 +498,7 @@ export class PostApprovalLabContractService {
 
     try {
       const taxDoc = await this.docHelper.generateDocument({
-        documentType: 'lab_tax_invoice',
+        documentType: 'lab_invoice',
         entityId: saved.id,
         requestedBy: adminUserId,
         outputFormat: 'pdf',
@@ -500,15 +506,16 @@ export class PostApprovalLabContractService {
           invoiceNumber: `INV-${saved.contractNumber}`,
           customerName: saved.customerName,
           customerAddress: request.projectLocation || '-',
-          customerNpwp: '-',
-          baseAmount: baseAmount.toLocaleString('id-ID'),
-          taxPercent: `${taxPercent}%`,
+          subtotal: baseAmount.toLocaleString('id-ID'),
+          taxPercent: String(taxPercent),
           taxAmount: taxAmount.toLocaleString('id-ID'),
           totalAmount: totalAmount.toLocaleString('id-ID'),
           invoiceDate: new Date().toISOString().split('T')[0],
-          supplierName: 'Cakra ERP Laboratory',
-          supplierNpwp: '-',
-          supplierAddress: '-',
+          dueDate: new Date(Date.now() + 7 * 86400000)
+            .toISOString()
+            .split('T')[0],
+          status: 'issued',
+          authorizedByName: adminUserName || 'Lab Authorized',
         },
         lines: [
           {
@@ -659,7 +666,7 @@ export class PostApprovalLabContractService {
 
     try {
       const taxDoc = await this.docHelper.generateDocument({
-        documentType: 'lab_tax_invoice',
+        documentType: 'lab_invoice',
         entityId: contract.id,
         requestedBy: adminUserId,
         outputFormat: 'pdf',
@@ -667,17 +674,23 @@ export class PostApprovalLabContractService {
           invoiceNumber: `INV-${contract.contractNumber}`,
           customerName: contract.customerName,
           customerAddress: request.projectLocation || '-',
-          customerNpwp: '-',
-          baseAmount: contract.baseAmount.toLocaleString('id-ID'),
-          taxPercent: `${contract.taxPercent}%`,
+          subtotal: contract.baseAmount.toLocaleString('id-ID'),
+          taxPercent: String(contract.taxPercent),
           taxAmount: contract.taxAmount.toLocaleString('id-ID'),
           totalAmount: contract.totalAmount.toLocaleString('id-ID'),
           invoiceDate: new Date().toISOString().split('T')[0],
-          supplierName: 'Cakra ERP Laboratory',
-          supplierNpwp: '-',
-          supplierAddress: '-',
+          dueDate: new Date(Date.now() + 7 * 86400000)
+            .toISOString()
+            .split('T')[0],
+          status: 'issued',
+          authorizedByName: adminUserName || 'Lab Authorized',
         },
-        lines: taxDocLines,
+        lines: taxDocLines.map((l) => ({
+          description: l.description,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          total: l.totalPrice,
+        })),
       });
       contract.taxInvoiceUrl = taxDoc.id;
       this.logger.log(`Tax invoice regenerated: ${taxDoc.id}`);
