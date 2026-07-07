@@ -152,7 +152,7 @@ export class PostApprovalLabContractTypeOrmRepository
       lastBillingDate: entity.lastBillingDate ?? null,
       scopeOfTesting: entity.scopeOfTesting ?? null,
       contractEstimation: entity.contractEstimation ?? null,
-      contractTempoMonths: entity.contractTempoMonths ?? null,
+      contractTempoDays: entity.contractTempoDays ?? null,
       signedContractUrl: entity.signedContractUrl ?? null,
       contractSigningDeadline: entity.contractSigningDeadline ?? null,
       contractConfirmedAt: entity.contractConfirmedAt ?? null,
@@ -197,7 +197,7 @@ export class PostApprovalLabContractTypeOrmRepository
     entity.lastBillingDate = domain.lastBillingDate as any;
     entity.scopeOfTesting = domain.scopeOfTesting ?? null;
     entity.contractEstimation = domain.contractEstimation ?? null;
-    entity.contractTempoMonths = domain.contractTempoMonths ?? null;
+    entity.contractTempoDays = domain.contractTempoDays ?? null;
     entity.signedContractUrl = domain.signedContractUrl ?? null;
     entity.contractSigningDeadline = domain.contractSigningDeadline as any;
     entity.contractConfirmedAt = domain.contractConfirmedAt as any;

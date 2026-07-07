@@ -83,8 +83,9 @@ export class TestingRequestTypeOrmRepository
       quotaGrantedAt: entity.quotaGrantedAt ?? undefined,
       quotaGrantedBy: entity.quotaGrantedBy ?? undefined,
       scopeOfTesting: entity.scopeOfTesting ?? undefined,
+      scopeOfTestingServiceIds: entity.scopeOfTestingServiceIds ?? undefined,
       contractEstimation: entity.contractEstimation ?? undefined,
-      contractTempoMonths: entity.contractTempoMonths ?? undefined,
+      contractTempoDays: entity.contractTempoDays ?? undefined,
       signedContractUrl: entity.signedContractUrl ?? undefined,
       signedContractUploadedAt: entity.signedContractUploadedAt ?? undefined,
       contractSigningDeadline: entity.contractSigningDeadline ?? undefined,
@@ -165,8 +166,9 @@ export class TestingRequestTypeOrmRepository
     entity.quotaGrantedAt = domain.quotaGrantedAt ?? null;
     entity.quotaGrantedBy = domain.quotaGrantedBy ?? null;
     entity.scopeOfTesting = domain.scopeOfTesting ?? null;
+    entity.scopeOfTestingServiceIds = domain.scopeOfTestingServiceIds ?? null;
     entity.contractEstimation = domain.contractEstimation ?? null;
-    entity.contractTempoMonths = domain.contractTempoMonths ?? null;
+    entity.contractTempoDays = domain.contractTempoDays ?? null;
     entity.signedContractUrl = domain.signedContractUrl ?? null;
     entity.signedContractUploadedAt = domain.signedContractUploadedAt ?? null;
     entity.contractSigningDeadline = domain.contractSigningDeadline ?? null;

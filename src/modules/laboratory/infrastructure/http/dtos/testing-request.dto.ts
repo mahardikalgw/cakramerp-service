@@ -88,7 +88,12 @@ export class CreateTestingRequestHttpDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  contractTempoMonths?: number;
+  contractTempoDays?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  scopeOfTestingServiceIds?: string[];
 
   @IsOptional()
   @IsUUID()

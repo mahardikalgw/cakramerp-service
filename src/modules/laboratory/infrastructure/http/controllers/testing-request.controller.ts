@@ -57,7 +57,10 @@ export class TestingRequestController {
   @Post('testing-requests')
   @RequirePermissions('testing-requests:create')
   async createTestingRequest(@Body() dto: CreateTestingRequestHttpDto) {
-    return this.testingRequestService.create(dto);
+    return this.testingRequestService.create({
+      ...dto,
+      priority: dto.priority as 'normal' | 'urgent' | undefined,
+    });
   }
 
   @Put('testing-requests/:id')

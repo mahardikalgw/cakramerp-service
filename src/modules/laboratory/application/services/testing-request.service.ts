@@ -145,7 +145,8 @@ export class TestingRequestService {
     priority?: 'normal' | 'urgent';
     scopeOfTesting?: string;
     contractEstimation?: number;
-    contractTempoMonths?: number;
+    contractTempoDays?: number;
+    scopeOfTestingServiceIds?: string[];
     existingContractId?: string;
     // Portal fields
     submittedBy?: 'admin' | 'customer';
@@ -188,8 +189,9 @@ export class TestingRequestService {
       priority: dto.priority ?? 'normal',
       billingType: dto.billingType ?? 'cash',
       scopeOfTesting: dto.scopeOfTesting,
+      scopeOfTestingServiceIds: dto.scopeOfTestingServiceIds,
       contractEstimation: dto.contractEstimation,
-      contractTempoMonths: dto.contractTempoMonths,
+      contractTempoDays: dto.contractTempoDays,
       lines: dto.lines.map((line) => ({
         id: undefined,
         createdAt: undefined,

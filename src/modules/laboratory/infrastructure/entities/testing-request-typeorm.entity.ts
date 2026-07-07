@@ -208,11 +208,14 @@ export class TestingRequestTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'text', nullable: true, name: 'scope_of_testing' })
   declare scopeOfTesting: string | null;
 
+  @Column({ type: 'simple-array', nullable: true, name: 'scope_of_testing_service_ids' })
+  declare scopeOfTestingServiceIds: string[] | null;
+
   @Column({ type: 'int', nullable: true, name: 'contract_estimation' })
   declare contractEstimation: number | null;
 
-  @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
-  declare contractTempoMonths: number | null;
+  @Column({ type: 'int', nullable: true, name: 'contract_tempo_days' })
+  declare contractTempoDays: number | null;
 
   @Column({
     type: 'varchar',

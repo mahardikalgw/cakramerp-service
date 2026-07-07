@@ -393,9 +393,21 @@ export class PostApprovalLabContractService {
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = Math.round((baseAmount + taxAmount) * 100) / 100;
 
-    const tempoMonths = request.contractTempoMonths ?? 6;
+    const tempoDays = request.contractTempoDays ?? 180;
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + tempoMonths);
+    expiresAt.setDate(expiresAt.getDate() + tempoDays);
+
+    const allowedServiceIds = request.scopeOfTestingServiceIds?.length
+      ? request.scopeOfTestingServiceIds
+      : request.billingType === 'contract' && (request.lines ?? []).length > 0
+        ? [
+            ...new Set(
+              (request.lines ?? [])
+                .filter((l) => l.testingServiceId)
+                .map((l) => l.testingServiceId!),
+            ),
+          ]
+        : null;
 
     const contract = new PostApprovalLabContract({
       contractNumber,
@@ -422,7 +434,8 @@ export class PostApprovalLabContractService {
       isUnlimited: true,
       scopeOfTesting: request.scopeOfTesting ?? null,
       contractEstimation: request.contractEstimation ?? null,
-      contractTempoMonths: request.contractTempoMonths ?? null,
+      contractTempoDays: request.contractTempoDays ?? null,
+      allowedServiceIds,
     });
 
     const saved = await this.repository.save(contract);
@@ -456,14 +469,14 @@ export class PostApprovalLabContractService {
           expiresAt: expiresAt.toISOString().split('T')[0],
           scopeOfTesting: request.scopeOfTesting || '-',
           contractEstimation: String(request.contractEstimation ?? '-'),
-          contractTempoMonths: String(tempoMonths),
+          contractTempoDays: String(tempoDays),
           downPaymentAmount: baseAmount.toLocaleString('id-ID'),
           dpDueDate:
             baseAmount > 0
               ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
               : '',
           paymentTerms: 'Down payment required before contract activation',
-          contractTerm: `${tempoMonths} months from activation`,
+          contractTerm: `${tempoDays} days from activation`,
           customerSignatureName: saved.customerName || 'Customer',
           labSignatureName: adminUserName || 'Lab Authorized',
         },
@@ -905,9 +918,9 @@ export class PostApprovalLabContractService {
       downPaymentAmount && downPaymentAmount > 0
         ? downPaymentAmount
         : totalAmount;
-    const tempoMonths = request.contractTempoMonths ?? 6;
+    const tempoDays = request.contractTempoDays ?? 180;
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + tempoMonths);
+    expiresAt.setDate(expiresAt.getDate() + tempoDays);
 
     const customer = await this.customerRepo
       .findById(request.customerId)
@@ -941,7 +954,7 @@ export class PostApprovalLabContractService {
           expiresAt: expiresAt.toISOString().split('T')[0],
           scopeOfTesting: request.scopeOfTesting || '-',
           contractEstimation: String(request.contractEstimation ?? '-'),
-          contractTempoMonths: String(tempoMonths),
+          contractTempoDays: String(tempoDays),
           downPaymentAmount:
             dpAmount > 0 ? dpAmount.toLocaleString('id-ID') : '',
           dpDueDate:
@@ -949,7 +962,7 @@ export class PostApprovalLabContractService {
               ? new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
               : '',
           paymentTerms: 'Down payment required before contract activation',
-          contractTerm: `${tempoMonths} months from contract activation`,
+          contractTerm: `${tempoDays} days from contract activation`,
           customerSignatureName: customerName,
           labSignatureName: adminUserName || 'Lab Authorized',
         },

@@ -85,8 +85,9 @@ export class TestingRequest extends BaseEntity {
 
   // Contract billing fields
   declare scopeOfTesting?: string | null;
+  declare scopeOfTestingServiceIds?: string[] | null;
   declare contractEstimation?: number | null;
-  declare contractTempoMonths?: number | null;
+  declare contractTempoDays?: number | null;
   declare signedContractUrl?: string | null;
   declare signedContractUploadedAt?: Date | null;
   declare contractSigningDeadline?: Date | null;

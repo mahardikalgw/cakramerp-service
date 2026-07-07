@@ -130,7 +130,12 @@ export class CreatePortalTestingRequestDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  contractTempoMonths?: number;
+  contractTempoDays?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  scopeOfTestingServiceIds?: string[];
 
   @IsString()
   projectName: string;

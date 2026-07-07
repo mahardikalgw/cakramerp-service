@@ -116,8 +116,8 @@ export class LabContractTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'int', nullable: true, name: 'contract_estimation' })
   declare contractEstimation: number | null;
 
-  @Column({ type: 'int', nullable: true, name: 'contract_tempo_months' })
-  declare contractTempoMonths: number | null;
+  @Column({ type: 'int', nullable: true, name: 'contract_tempo_days' })
+  declare contractTempoDays: number | null;
 
   @Column({
     type: 'varchar',

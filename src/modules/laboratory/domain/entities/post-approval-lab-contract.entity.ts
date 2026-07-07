@@ -70,7 +70,7 @@ export class PostApprovalLabContract extends BaseEntity {
   declare lastBillingDate: Date | null;
   declare scopeOfTesting: string | null;
   declare contractEstimation: number | null;
-  declare contractTempoMonths: number | null;
+  declare contractTempoDays: number | null;
   declare signedContractUrl: string | null;
   declare contractSigningDeadline: Date | null;
   declare contractConfirmedAt: Date | null;

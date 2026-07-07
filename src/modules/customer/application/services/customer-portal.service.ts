@@ -170,10 +170,10 @@ export class CustomerPortalService {
       if (
         !dto.scopeOfTesting ||
         !dto.contractEstimation ||
-        !dto.contractTempoMonths
+        !dto.contractTempoDays
       ) {
         throw new BadRequestException(
-          'New contract requests require scopeOfTesting, contractEstimation, and contractTempoMonths',
+          'New contract requests require scopeOfTesting, contractEstimation, and contractTempoDays',
         );
       }
     } else if (lines.length < 1) {
@@ -269,7 +269,8 @@ export class CustomerPortalService {
       billingType: dto.billingType ?? 'cash',
       scopeOfTesting: dto.scopeOfTesting ?? null,
       contractEstimation: dto.contractEstimation ?? null,
-      contractTempoMonths: dto.contractTempoMonths ?? null,
+      contractTempoDays: dto.contractTempoDays ?? null,
+      scopeOfTestingServiceIds: dto.scopeOfTestingServiceIds ?? null,
       labContractId,
       labPurchaseOrderId,
       lines: lines.map((line) => ({
