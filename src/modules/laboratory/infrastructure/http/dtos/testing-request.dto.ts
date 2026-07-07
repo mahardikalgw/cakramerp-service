@@ -4,6 +4,7 @@ import {
   IsUUID,
   IsInt,
   IsNumber,
+  IsIn,
   Min,
   IsArray,
   ValidateNested,
@@ -18,9 +19,17 @@ export class TestingRequestLineDto {
   serviceName: string;
 
   @IsOptional()
+  @IsString()
+  sampleCode?: string;
+
+  @IsOptional()
   @IsInt()
   @Min(0)
   sampleQuantity?: number;
+
+  @IsOptional()
+  @IsString()
+  sampleNotes?: string;
 
   @IsOptional()
   @IsString()
@@ -39,6 +48,10 @@ export class CreateTestingRequestHttpDto {
   projectLocation?: string;
 
   @IsOptional()
+  @IsString()
+  projectAddress?: string;
+
+  @IsOptional()
   @IsInt()
   @Min(0)
   sampleQuantity?: number;
@@ -52,7 +65,34 @@ export class CreateTestingRequestHttpDto {
 
   @IsOptional()
   @IsString()
+  additionalNotes?: string;
+
+  @IsOptional()
+  @IsString()
   billingType?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['normal', 'urgent'])
+  priority?: string;
+
+  @IsOptional()
+  @IsString()
+  scopeOfTesting?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  contractEstimation?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  contractTempoMonths?: number;
+
+  @IsOptional()
+  @IsUUID()
+  existingContractId?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

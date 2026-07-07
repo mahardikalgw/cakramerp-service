@@ -136,22 +136,29 @@ export class TestingRequestService {
     customerId: string;
     projectName: string;
     projectLocation?: string;
+    projectAddress?: string;
     sampleQuantity?: number;
     scheduleDate?: string;
     notes?: string;
+    additionalNotes?: string;
     billingType?: string;
+    priority?: 'normal' | 'urgent';
+    scopeOfTesting?: string;
+    contractEstimation?: number;
+    contractTempoMonths?: number;
+    existingContractId?: string;
     // Portal fields
     submittedBy?: 'admin' | 'customer';
     customerUserId?: string;
-    projectAddress?: string;
     preferredScheduleDate?: string;
-    priority?: 'normal' | 'urgent';
     createdByUserId?: string;
     createdByName?: string;
     lines: {
       testingServiceId?: string;
       serviceName?: string;
+      sampleCode?: string;
       sampleQuantity?: number;
+      sampleNotes?: string;
       notes?: string;
     }[];
   }): Promise<TestingRequest> {
@@ -172,6 +179,7 @@ export class TestingRequestService {
       sampleQuantity: dto.sampleQuantity,
       scheduleDate: dto.scheduleDate,
       notes: dto.notes,
+      additionalNotes: dto.additionalNotes,
       status: initialStatus,
       submittedBy,
       customerUserId: dto.customerUserId,
@@ -179,6 +187,9 @@ export class TestingRequestService {
       preferredScheduleDate: dto.preferredScheduleDate,
       priority: dto.priority ?? 'normal',
       billingType: dto.billingType ?? 'cash',
+      scopeOfTesting: dto.scopeOfTesting,
+      contractEstimation: dto.contractEstimation,
+      contractTempoMonths: dto.contractTempoMonths,
       lines: dto.lines.map((line) => ({
         id: undefined,
         createdAt: undefined,
@@ -186,12 +197,26 @@ export class TestingRequestService {
         testingRequestId: undefined,
         testingServiceId: line.testingServiceId ?? null,
         serviceName: line.serviceName ?? null,
+        sampleCode: line.sampleCode ?? null,
         sampleQuantity: line.sampleQuantity,
+        sampleNotes: line.sampleNotes ?? null,
         notes: line.notes,
       })),
     } as any);
 
     const saved = await this.repository.save(entity);
+
+    if (dto.existingContractId) {
+      const contract = await this.contractRepo.findById(dto.existingContractId);
+      if (!contract) {
+        throw new NotFoundException('Contract not found');
+      }
+      if (contract.expiresAt && new Date(contract.expiresAt) < new Date()) {
+        throw new BadRequestException('Contract has expired');
+      }
+      saved.labContractId = contract.id;
+      await this.repository.save(saved);
+    }
 
     if (dto.createdByUserId) {
       void this.activityLog.log({
