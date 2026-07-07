@@ -166,8 +166,8 @@ export class TestingRequestService {
     const requestNumber = await this.repository.generateNextRequestNumber();
 
     const submittedBy = dto.submittedBy ?? 'admin';
-    // Customer-submitted requests are auto-submitted
-    const initialStatus = submittedBy === 'customer' ? 'submitted' : 'draft';
+    // Both admin and customer submissions go directly to 'submitted'
+    const initialStatus = 'submitted';
 
     const entity = new TestingRequest({
       id: undefined,
