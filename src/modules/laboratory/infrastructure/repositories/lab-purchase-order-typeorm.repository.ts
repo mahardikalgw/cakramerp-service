@@ -89,6 +89,14 @@ export class LabPurchaseOrderTypeOrmRepository
     return entity;
   }
 
+  async findById(id: string): Promise<LabPurchaseOrder | null> {
+    const entity = await this.repository.findOne({
+      where: { id, deletedAt: IsNull() },
+      relations: ['lines'],
+    });
+    return entity ? this.toDomain(entity) : null;
+  }
+
   async findByPONumber(poNumber: string): Promise<LabPurchaseOrder | null> {
     const entity = await this.repository.findOne({
       where: { poNumber, deletedAt: IsNull() },
