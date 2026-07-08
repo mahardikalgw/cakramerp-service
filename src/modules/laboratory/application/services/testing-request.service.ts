@@ -288,7 +288,7 @@ export class TestingRequestService {
     existing.approvedAt = new Date();
 
     if (existing.billingType === 'contract' && existing.labContractId) {
-      // Contract billing: deduct quota on approval
+      // Contract billing: deduct quota on approval AND generate invoice
       const contract = await this.contractRepo.findById(existing.labContractId);
       if (contract) {
         // Check if contract is expired
@@ -309,6 +309,82 @@ export class TestingRequestService {
           if (contract.remainingQuota < 0) contract.remainingQuota = 0;
         }
         await this.contractRepo.save(contract);
+      }
+
+      // ── Generate invoice document for this testing request ──────────────
+      // Even though the contract already exists, the admin needs a PDF invoice
+      // for the specific testing services being performed under this contract.
+      try {
+        const customer = contract
+          ? await this.customerRepo.findById(contract.customerId).catch(() => null)
+          : null;
+        const customerName = customer?.name || contract?.customerName || existing.customerName || '-';
+
+        // Look up service prices for each line
+        const invoiceLines = await Promise.all(
+          (existing.lines || []).map(async (line) => {
+            const service = line.testingServiceId
+              ? await this.testingServiceRepo.findById(line.testingServiceId).catch(() => null)
+              : null;
+            const rawPrice = Number(service?.unitPrice ?? 0);
+            const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+            const quantity = line.sampleQuantity ?? 1;
+            return {
+              description: line.serviceName || service?.name || 'Testing Service',
+              quantity: String(quantity),
+              unitPrice: String(unitPrice),
+              total: String(unitPrice * quantity),
+            };
+          }),
+        );
+
+        const invoiceSubtotal = invoiceLines.reduce(
+          (sum, l) => sum + (parseFloat(l.total) || 0),
+          0,
+        );
+        const taxPercent = 11;
+        const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+        const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
+
+        const invDoc = await this.docHelper.generateDocument({
+          documentType: DOCUMENT_TYPES.LAB_INVOICE,
+          entityId: existing.labContractId,
+          requestedBy: userId,
+          outputFormat: 'pdf',
+          parameters: {
+            invoiceNumber: `INV-${existing.requestNumber}`,
+            customerName,
+            customerAddress: customer?.address || existing.projectLocation || '-',
+            invoiceDate: new Date().toISOString().split('T')[0],
+            dueDate: new Date(Date.now() + 30 * 86400000)
+              .toISOString()
+              .split('T')[0],
+            subtotal: String(invoiceSubtotal),
+            taxPercent: String(taxPercent),
+            taxAmount: String(invoiceTaxAmount),
+            totalAmount: String(invoiceTotal),
+            status: 'issued',
+            authorizedByName: userName || 'Lab Authorized',
+          },
+          lines: invoiceLines.length > 0
+            ? invoiceLines
+            : [{ description: `Contract Testing (${existing.projectName || '-'})`, quantity: '1', unitPrice: '0', total: '0' }],
+        });
+        existing.invoiceDocumentUrl = invDoc.id;
+        this.logger.log(`[DOC] Invoice generated for existing-contract request ${existing.id}: ${invDoc.id}`);
+      } catch (docErr: any) {
+        this.logger.error(
+          `[DOC] Invoice generation failed for existing-contract request ${existing.id}: ${docErr?.message}`,
+          docErr?.stack,
+        );
+        void this.activityLog.log({
+          testingRequestId: id,
+          action: 'document_generation_failed',
+          performedBy: userId,
+          performedByName: userName,
+          performedByRole: 'admin',
+          details: { error: docErr?.message, step: 'existing-contract-invoice' },
+        });
       }
     } else if (existing.billingType === 'contract' && !existing.labContractId) {
       this.logger.log(
@@ -366,21 +442,31 @@ export class TestingRequestService {
           customer?.name || existing.customerName || existing.customerId;
 
         let totalAmount = 0;
-        const poLines = (existing.lines || []).map((line) => {
-          const total = (line.sampleQuantity ?? 0) * 0;
-          totalAmount += total;
-          return {
-            id: undefined,
-            createdAt: undefined,
-            updatedAt: undefined,
-            labPurchaseOrderId: undefined,
-            testingServiceId: line.testingServiceId ?? '',
-            serviceName: line.serviceName ?? 'Testing Service',
-            quantity: line.sampleQuantity ?? 1,
-            unitPrice: 0,
-            total: 0,
-          };
-        });
+        // Look up real service prices for each line (same pattern as SO path)
+        const poLines = await Promise.all(
+          (existing.lines || []).map(async (line) => {
+            const service = line.testingServiceId
+              ? await this.testingServiceRepo
+                  .findById(line.testingServiceId)
+                  .catch(() => null)
+              : null;
+            const rawPrice = Number(service?.unitPrice ?? 0);
+            const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+            const total = (line.sampleQuantity ?? 0) * unitPrice;
+            totalAmount += total;
+            return {
+              id: undefined,
+              createdAt: undefined,
+              updatedAt: undefined,
+              labPurchaseOrderId: undefined,
+              testingServiceId: line.testingServiceId ?? '',
+              serviceName: line.serviceName || service?.name || 'Testing Service',
+              quantity: line.sampleQuantity ?? 1,
+              unitPrice,
+              total,
+            };
+          }),
+        );
 
         const po = new LabPurchaseOrder({
           id: undefined,
@@ -511,6 +597,65 @@ export class TestingRequestService {
           });
           existing.invoiceDocumentUrl = invDoc.id;
           this.logger.log(`[DOC] Invoice document saved: ${invDoc.id}`);
+
+          // Bug fix: create an AR Invoice (finance record) from a SO for cash billing.
+          // The PDF above is only a document; the actual receivable must go through SO → AR Invoice.
+          if (!existing.salesOrderId && existing.lines && existing.lines.length > 0) {
+            this.logger.log(`[SO] Cash billing: creating SO for AR invoice after doc generation...`);
+            try {
+              const soCustomer = po
+                ? await this.customerRepo.findById(po.customerId).catch(() => null)
+                : null;
+              const soCustomerName =
+                soCustomer?.name || po?.customerName || existing.customerName || existing.customerId;
+              const cashSoLines = await Promise.all(
+                (existing.lines || []).map(async (line) => {
+                  const service = line.testingServiceId
+                    ? await this.testingServiceRepo
+                        .findById(line.testingServiceId)
+                        .catch(() => null)
+                    : null;
+                  const rawPrice = Number(service?.unitPrice ?? 0);
+                  const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+                  return {
+                    itemName: line.serviceName || service?.name || 'Testing Service',
+                    quantity: line.sampleQuantity || 1,
+                    unitPrice,
+                    taxPercent: 11,
+                    description: line.sampleCode || undefined,
+                    uom: 'sample',
+                    lineType: 'service',
+                  };
+                }),
+              );
+              const cashSo = await this.salesOrderService.create({
+                customerId: existing.customerId,
+                customerName: soCustomerName,
+                orderDate: new Date().toISOString().split('T')[0],
+                notes: `Auto-generated from cash testing request ${existing.requestNumber}`,
+                lines: cashSoLines,
+              });
+              existing.salesOrderId = cashSo.id;
+              this.logger.log(`[SO] Cash SO created: ${cashSo.id} (${cashSo.soNumber})`);
+              try {
+                await this.salesOrderService.approve(cashSo.id);
+              } catch { /* non-blocking */ }
+              try {
+                await this.salesFinanceAdapter.recordSOApprovalGl(cashSo.id);
+              } catch { /* non-blocking */ }
+              try {
+                const arInv = await this.salesFinanceAdapter.createDraftARInvoiceFromSO(
+                  cashSo.id,
+                  userId,
+                );
+                this.logger.log(`[SO] Cash AR Invoice created: ${arInv.invoiceNumber}`);
+              } catch (invErr: any) {
+                this.logger.warn(`[SO] Cash AR Invoice creation failed (non-blocking): ${invErr?.message}`);
+              }
+            } catch (cashSoErr: any) {
+              this.logger.warn(`[SO] Cash SO creation failed (non-blocking): ${cashSoErr?.message}`);
+            }
+          }
         }
       } catch (docErr: any) {
         this.logger.error(
@@ -602,6 +747,11 @@ export class TestingRequestService {
       } else if (!existing.lines || existing.lines.length === 0) {
         this.logger.warn(
           `[SO] Skipping: testing request ${existing.id} has no lines`,
+        );
+      } else if (existing.salesOrderId) {
+        // SO already created (e.g. cash billing doc path created it above) — skip duplicate creation
+        this.logger.log(
+          `[SO] Skipping: SO already exists (${existing.salesOrderId}) for request ${existing.id}`,
         );
       } else {
         this.logger.log(
