@@ -105,17 +105,35 @@ export class LabPurchaseOrderTypeOrmRepository
     return entity ? this.toDomain(entity) : null;
   }
 
+  /**
+   * Returns the last PO number by extracting the numeric suffix and
+   * sorting by integer value, not by string.
+   *
+   * String sort of `LPO-YYYY-NNNNN` misorders `00009 > 00010`, which causes
+   * the sequence generator to produce duplicate PO numbers.
+   *
+   * NOTE: explicitly includes soft-deleted records so the sequence is
+   * not reused, which would violate the unique constraint.
+   */
   async getLastPONumber(): Promise<string | null> {
-    // NOTE: intentionally includes soft-deleted records so the sequence
-    // number is not reused, which would violate the unique constraint.
-    const query = this.repository
-      .createQueryBuilder('lpo')
-      .select('lpo.po_number', 'poNumber')
-      .orderBy('lpo.po_number', 'DESC')
-      .limit(1);
+    const year = new Date().getFullYear();
+    const rows: { max_seq: number | null }[] = await this.dataSource.query(
+      `SELECT MAX(
+          CAST(
+            SUBSTRING(po_number FROM 'LPO-\\d{4}-(\\d+)')
+            AS INTEGER
+          )
+        ) AS max_seq
+        FROM lab_purchase_orders
+        WHERE po_number ~ $1`,
+      [`^LPO-${year}-`],
+    );
 
-    const row = await query.getRawOne();
-    return row?.poNumber ?? null;
+    const maxSeq = rows[0]?.max_seq ?? null;
+    if (maxSeq !== null) {
+      return `LPO-${year}-${String(maxSeq).padStart(5, '0')}`;
+    }
+    return null;
   }
 
   async softDelete(id: string): Promise<void> {
