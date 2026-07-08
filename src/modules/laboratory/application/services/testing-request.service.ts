@@ -124,9 +124,16 @@ export class TestingRequestService {
     const year = new Date().getFullYear();
     let seq = 1;
     if (lastNumber) {
-      const match = lastNumber.match(/LPO-(\d{4})-(\d+)/);
-      if (match && match[1] === year.toString()) {
-        seq = parseInt(match[2], 10) + 1;
+      // Try LPO-YYYY-NNNNN format first
+      const lpoMatch = lastNumber.match(/LPO-(\d{4})-(\d+)/);
+      if (lpoMatch && lpoMatch[1] === year.toString()) {
+        seq = parseInt(lpoMatch[2], 10) + 1;
+      } else {
+        // Fallback: extract numeric suffix from any format (e.g. PO-YY-NNNNN)
+        const numMatch = lastNumber.match(/(\d+)$/);
+        if (numMatch) {
+          seq = parseInt(numMatch[1], 10) + 1;
+        }
       }
     }
     return `LPO-${year}-${seq.toString().padStart(5, '0')}`;

@@ -788,8 +788,17 @@ export class CustomerPortalService {
     const year = new Date().getFullYear().toString().slice(-2);
     let seq = 1;
     if (lastNumber) {
-      const match = lastNumber.match(/PO-\d{2}-(\d+)/);
-      if (match) seq = parseInt(match[1], 10) + 1;
+      // Try PO-YY-NNNNN format first
+      const poMatch = lastNumber.match(/PO-\d{2}-(\d+)/);
+      if (poMatch) {
+        seq = parseInt(poMatch[1], 10) + 1;
+      } else {
+        // Fallback: extract numeric suffix from any format (e.g. LPO-YYYY-NNNNN)
+        const numMatch = lastNumber.match(/(\d+)$/);
+        if (numMatch) {
+          seq = parseInt(numMatch[1], 10) + 1;
+        }
+      }
     }
     return `PO-${year}-${seq.toString().padStart(5, '0')}`;
   }
