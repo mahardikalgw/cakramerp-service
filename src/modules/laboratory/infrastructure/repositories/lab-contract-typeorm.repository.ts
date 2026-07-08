@@ -115,10 +115,11 @@ export class LabContractTypeOrmRepository
   }
 
   async getLastContractNumber(): Promise<string | null> {
+    // NOTE: intentionally includes soft-deleted records so the sequence
+    // number is not reused, which would violate the unique constraint.
     const query = this.repository
       .createQueryBuilder('lc')
       .select('lc.contract_number', 'contractNumber')
-      .where('lc.deleted_at IS NULL')
       .orderBy('lc.contract_number', 'DESC')
       .limit(1);
 

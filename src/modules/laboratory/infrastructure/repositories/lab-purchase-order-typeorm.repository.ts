@@ -98,10 +98,11 @@ export class LabPurchaseOrderTypeOrmRepository
   }
 
   async getLastPONumber(): Promise<string | null> {
+    // NOTE: intentionally includes soft-deleted records so the sequence
+    // number is not reused, which would violate the unique constraint.
     const query = this.repository
       .createQueryBuilder('lpo')
       .select('lpo.po_number', 'poNumber')
-      .where('lpo.deleted_at IS NULL')
       .orderBy('lpo.po_number', 'DESC')
       .limit(1);
 

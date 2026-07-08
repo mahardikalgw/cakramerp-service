@@ -233,10 +233,13 @@ export class TestingRequestTypeOrmRepository
   }
 
   async getLastRequestNumber(): Promise<string | null> {
+    // NOTE: intentionally includes soft-deleted records so the sequence
+    // number is not reused, which would violate the unique constraint.
+    // The newer generateNextRequestNumber() uses raw SQL without soft-delete
+    // filter for the same reason.
     const query = this.repository
       .createQueryBuilder('tr')
       .select('tr.request_number', 'requestNumber')
-      .andWhere('tr.deleted_at IS NULL')
       .orderBy('tr.request_number', 'DESC')
       .limit(1);
 

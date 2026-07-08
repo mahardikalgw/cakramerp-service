@@ -236,8 +236,9 @@ export class PostApprovalLabContractTypeOrmRepository
   }
 
   async getLastContractNumber(): Promise<string | null> {
+    // NOTE: intentionally includes soft-deleted records so the sequence
+    // number is not reused, which would violate the unique constraint.
     const entities = await this.repository.find({
-      where: { deletedAt: IsNull() },
       order: { contractNumber: 'DESC' as any },
       take: 1,
     });
