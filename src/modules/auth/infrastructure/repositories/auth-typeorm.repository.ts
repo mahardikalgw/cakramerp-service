@@ -58,4 +58,11 @@ export class AuthTypeOrmRepository
   async deleteByUserId(userId: string): Promise<void> {
     await this.repository.delete({ userId });
   }
+
+  // RefreshTokenTypeOrmEntity does not have a @DeleteDateColumn,
+  // so we override the base delete() to use hard delete instead of softDelete.
+  override async delete(id: string): Promise<boolean> {
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
+  }
 }
