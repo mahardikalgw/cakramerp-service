@@ -69,6 +69,7 @@ export class SalesOrderService {
 
     qb.orderBy('so.orderDate', 'DESC');
     qb.leftJoinAndSelect('so.lines', 'lines');
+    qb.andWhere('so.deletedAt IS NULL');
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
@@ -368,6 +369,7 @@ export class SalesOrderService {
     const last = await this.soRepo
       .createQueryBuilder('so')
       .where('so.soNumber LIKE :prefix', { prefix: `${prefix}%` })
+      .andWhere('so.deletedAt IS NULL')
       .orderBy('so.soNumber', 'DESC')
       .getOne();
 

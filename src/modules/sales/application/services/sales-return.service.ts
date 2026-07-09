@@ -63,6 +63,7 @@ export class SalesReturnService {
 
     qb.orderBy('sr.returnDate', 'DESC');
     qb.leftJoinAndSelect('sr.lines', 'lines');
+    qb.andWhere('sr.deletedAt IS NULL');
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
@@ -270,6 +271,7 @@ export class SalesReturnService {
     const last = await this.returnRepo
       .createQueryBuilder('sr')
       .where('sr.returnNumber LIKE :prefix', { prefix: `${prefix}%` })
+      .andWhere('sr.deletedAt IS NULL')
       .orderBy('sr.returnNumber', 'DESC')
       .getOne();
 

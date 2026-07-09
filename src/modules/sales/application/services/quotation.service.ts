@@ -61,6 +61,7 @@ export class QuotationService {
 
     qb.orderBy('q.quotationDate', 'DESC');
     qb.leftJoinAndSelect('q.lines', 'lines');
+    qb.andWhere('q.deletedAt IS NULL');
     qb.skip((page - 1) * limit).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
@@ -264,6 +265,7 @@ export class QuotationService {
     const last = await this.quotationRepo
       .createQueryBuilder('q')
       .where('q.quotationNumber LIKE :prefix', { prefix: `${prefix}%` })
+      .andWhere('q.deletedAt IS NULL')
       .orderBy('q.quotationNumber', 'DESC')
       .getOne();
 
