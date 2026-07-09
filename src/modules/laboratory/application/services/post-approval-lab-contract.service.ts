@@ -5,6 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import {
   PostApprovalLabContract,
   LabContractSample,
@@ -61,6 +62,7 @@ export class PostApprovalLabContractService {
     private readonly scheduleRepo: PostApprovalTestingScheduleRepositoryPort,
     @Inject(POST_APPROVAL_TESTING_RESULT_REPOSITORY)
     private readonly testingResultRepo: PostApprovalTestingResultRepositoryPort,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(options?: {
@@ -109,6 +111,33 @@ export class PostApprovalLabContractService {
   }
 
   async generateFromTestingRequest(
+    testingRequestId: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<PostApprovalLabContract> {
+    // Use PostgreSQL advisory lock to prevent race conditions when generating
+    // contract numbers. The lock key is a stable integer derived from the
+    // string "contract_number_generation".
+    const LOCK_KEY = 7_432_918; // arbitrary stable int for this lock
+    await this.dataSource.query(
+      `SELECT pg_advisory_lock($1)`,
+      [LOCK_KEY],
+    );
+    try {
+      return await this._generateFromTestingRequestInner(
+        testingRequestId,
+        adminUserId,
+        adminUserName,
+      );
+    } finally {
+      await this.dataSource.query(
+        `SELECT pg_advisory_unlock($1)`,
+        [LOCK_KEY],
+      );
+    }
+  }
+
+  private async _generateFromTestingRequestInner(
     testingRequestId: string,
     adminUserId: string,
     adminUserName?: string,

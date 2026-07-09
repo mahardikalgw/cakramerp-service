@@ -1250,18 +1250,12 @@ export class TestingRequestService {
 
     const saved = await this.repository.save(existing);
 
-    try {
-      await this.contractService.generateFromTestingRequest(
-        id,
-        adminUserId,
-        adminUserName,
-      );
-      this.logger.log(`[VERIFY] Lab contract generated for request ${id}`);
-    } catch (err: any) {
-      this.logger.warn(
-        `[VERIFY] Lab contract generation failed: ${err?.message}`,
-      );
-    }
+    await this.contractService.generateFromTestingRequest(
+      id,
+      adminUserId,
+      adminUserName,
+    );
+    this.logger.log(`[VERIFY] Lab contract generated for request ${id}`);
 
     void this.activityLog.log({
       testingRequestId: id,
