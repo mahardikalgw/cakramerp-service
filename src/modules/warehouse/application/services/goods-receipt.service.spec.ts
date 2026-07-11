@@ -17,6 +17,7 @@ describe('GoodsReceiptService', () => {
     findAll: jest.Mock;
     findById: jest.Mock;
     getLastGrnNumber: jest.Mock;
+    generateNextGrnNumber: jest.Mock;
   };
   let stockMovementService: {
     recordMovement: jest.Mock;
@@ -57,6 +58,7 @@ describe('GoodsReceiptService', () => {
       findAll: jest.fn(),
       findById: jest.fn(),
       getLastGrnNumber: jest.fn(),
+      generateNextGrnNumber: jest.fn(),
     };
     stockMovementService = {
       recordMovement: jest.fn(),
@@ -113,7 +115,7 @@ describe('GoodsReceiptService', () => {
 
     it('should create receipt, lines, and record stock movements', async () => {
       const year = new Date().getFullYear();
-      goodsReceiptRepo.getLastGrnNumber.mockResolvedValue(null);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(`GRN-${year}-0001`);
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine
         .mockResolvedValueOnce(mockLine)
@@ -126,9 +128,7 @@ describe('GoodsReceiptService', () => {
 
       const result = await service.create(validDto, 'user-1');
 
-      expect(goodsReceiptRepo.getLastGrnNumber).toHaveBeenCalledWith(
-        expect.stringContaining(`GRN-${year}-`),
-      );
+      expect(goodsReceiptRepo.generateNextGrnNumber).toHaveBeenCalledWith();
       expect(goodsReceiptRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           grnNumber: expect.stringContaining(`GRN-${year}-`),
@@ -155,7 +155,7 @@ describe('GoodsReceiptService', () => {
     });
 
     it('should compute discrepancyQty correctly', async () => {
-      goodsReceiptRepo.getLastGrnNumber.mockResolvedValue(null);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue('GRN-2025-0001');
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine.mockResolvedValue(mockLine);
       stockMovementService.recordMovement.mockResolvedValue({});
@@ -172,7 +172,7 @@ describe('GoodsReceiptService', () => {
 
     it('should increment GRN number from last number', async () => {
       const year = new Date().getFullYear();
-      goodsReceiptRepo.getLastGrnNumber.mockResolvedValue(`GRN-${year}-0005`);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(`GRN-${year}-0006`);
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine.mockResolvedValue(mockLine);
       stockMovementService.recordMovement.mockResolvedValue({});
@@ -213,7 +213,7 @@ describe('GoodsReceiptService', () => {
         supplierId: 'sup-1',
         notes: 'Partial delivery',
       };
-      goodsReceiptRepo.getLastGrnNumber.mockResolvedValue(null);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue('GRN-2025-0001');
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine.mockResolvedValue(mockLine);
       stockMovementService.recordMovement.mockResolvedValue({});

@@ -23,6 +23,7 @@ describe('ContractTestInvoiceService.generateForSchedule', () => {
       findByScheduleId: jest.fn().mockResolvedValue([]),
       save: jest.fn(),
       getLastInvoiceNumber: jest.fn().mockResolvedValue(null),
+      generateNextInvoiceNumber: jest.fn().mockResolvedValue('CTI-000001'),
       findById: jest.fn().mockResolvedValue(null),
       sumInitialFeeApplied: jest.fn().mockResolvedValue(0),
       ...overrides.repository,
