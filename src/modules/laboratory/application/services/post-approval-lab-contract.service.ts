@@ -271,6 +271,8 @@ export class PostApprovalLabContractService {
     const saved = await this.repository.save(contract);
 
     for (const sl of sampleLines) {
+      if (!sl.sampleId) continue;
+
       const entity = new LabContractSample({
         ...(sl as any),
         contractId: saved.id,
