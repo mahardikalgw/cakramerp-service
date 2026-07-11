@@ -55,13 +55,7 @@ export class SalesService implements SalesServicePort {
   }
 
   private async generateSalesOrderNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const prefix = `SO-${year}-`;
-    const lastNumber = await this.salesOrderRepo.getLastSoNumber(prefix);
-
-    if (!lastNumber) return `${prefix}0001`;
-    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1;
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    return this.salesOrderRepo.generateNextSoNumber();
   }
 
   async findSalesOrderById(id: string): Promise<SalesOrder | null> {

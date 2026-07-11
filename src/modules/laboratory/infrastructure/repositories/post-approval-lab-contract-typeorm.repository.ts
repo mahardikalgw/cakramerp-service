@@ -12,6 +12,10 @@ import {
   FindOptions,
   FindResult,
 } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class PostApprovalLabContractTypeOrmRepository
@@ -243,6 +247,21 @@ export class PostApprovalLabContractTypeOrmRepository
       take: 1,
     });
     return entities[0]?.contractNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next CTR-YYYY-NNNNN contract_number
+   * (shared sequence with LabContractTypeOrmRepository — same table
+   * `lab_contracts`). Uses a PostgreSQL advisory lock + numeric sort.
+   */
+  async generateNextContractNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `CTR-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.CONTRACT,
+    });
+    return seq.next('contract_number', 'lab_contracts');
   }
 
   async softDelete(id: string): Promise<void> {

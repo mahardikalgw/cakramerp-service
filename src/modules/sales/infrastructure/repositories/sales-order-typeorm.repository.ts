@@ -6,6 +6,10 @@ import { SalesOrderLine } from '../../domain/entities/sales-order-line.entity';
 import { SalesOrderTypeOrmEntity } from '../entities/sales-order-typeorm.entity';
 import { SalesOrderLineTypeOrmEntity } from '../entities/sales-order-line-typeorm.entity';
 import { SalesOrderRepositoryPort } from '../../domain/repositories/sales-order-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SalesOrderTypeOrmRepository
@@ -121,14 +125,31 @@ export class SalesOrderTypeOrmRepository
   }
 
   async getLastSoNumber(prefix: string): Promise<string | null> {
-    const query = this.repository
+    const row = await this.repository
       .createQueryBuilder('so')
       .select('so.soNumber', 'soNumber')
       .where('so.soNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('so.soNumber', 'DESC')
-      .limit(1);
-
-    const row = await query.getRawOne();
+      .orderBy(
+        "CAST(SUBSTRING(so.so_number FROM 'SO-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
     return row?.soNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next SO-NNNN number using a PostgreSQL
+   * advisory lock + numeric sort. Replaces the old string-sort
+   * implementation that misordered `...00009 > ...00010`.
+   */
+  async generateNextSoNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `SO-${year}-`,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.SALES_ORDER,
+    });
+    return seq.next('so_number', 'sales_orders');
   }
 }

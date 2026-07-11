@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, DataSource, In, IsNull } from 'typeorm';
 import { APInvoiceTypeOrmEntity } from '../entities/ap-invoice-typeorm.entity';
 import { APInvoiceRepositoryPort } from '../../domain/repositories/finance-repository.port';
 
@@ -20,6 +20,7 @@ export class APInvoiceTypeOrmRepository implements APInvoiceRepositoryPort {
     limit?: number;
   }): Promise<{ data: APInvoiceTypeOrmEntity[]; total: number }> {
     const qb = this.repo.createQueryBuilder('ap');
+    qb.where('ap.deleted_at IS NULL');
 
     if (filters?.vendorId) {
       qb.andWhere('ap.vendorId = :vendorId', { vendorId: filters.vendorId });
@@ -46,7 +47,9 @@ export class APInvoiceTypeOrmRepository implements APInvoiceRepositoryPort {
   }
 
   async findById(id: string): Promise<APInvoiceTypeOrmEntity | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
   }
 
   async save(entity: any): Promise<APInvoiceTypeOrmEntity> {

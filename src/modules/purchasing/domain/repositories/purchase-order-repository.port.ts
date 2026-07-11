@@ -6,4 +6,5 @@ export const PURCHASE_ORDER_REPOSITORY = Symbol('PURCHASE_ORDER_REPOSITORY');
 export interface PurchaseOrderRepositoryPort extends RepositoryPort<PurchaseOrder> {
   findByOrderNumber(orderNumber: string): Promise<PurchaseOrder | null>;
   getLastOrderNumber(prefix: string): Promise<string | null>;
+  generateNextOrderNumber(): Promise<string>;
 }

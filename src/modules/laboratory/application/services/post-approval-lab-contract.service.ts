@@ -35,6 +35,7 @@ import type { PostApprovalTestingResultRepositoryPort } from '../../domain/repos
 import { POST_APPROVAL_TESTING_RESULT_REPOSITORY } from '../../domain/repositories/post-approval-testing-result-repository.port';
 import type { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 
+
 @Injectable()
 export class PostApprovalLabContractService {
   private readonly logger = new Logger(PostApprovalLabContractService.name);
@@ -226,8 +227,7 @@ export class PostApprovalLabContractService {
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = baseAmount + taxAmount;
 
-    const lastNumber = await this.repository.getLastContractNumber();
-    const contractNumber = this.generateContractNumber(lastNumber);
+    const contractNumber = await this.repository.generateNextContractNumber();
 
     // Cash billing: contract valid for 3 months (customer already paid in full).
     // Contract billing: 6 months default.
@@ -1205,16 +1205,7 @@ export class PostApprovalLabContractService {
   }
 
   private async generateNextSampleCode(): Promise<string> {
-    const lastCode = await this.sampleRepo.getLastSampleCode();
-    const year = new Date().getFullYear();
-    let seq = 1;
-    if (lastCode) {
-      const match = lastCode.match(/SPL-(\d{4})-(\d+)/);
-      if (match && match[1] === year.toString()) {
-        seq = parseInt(match[2], 10) + 1;
-      }
-    }
-    return `SPL-${year}-${seq.toString().padStart(5, '0')}`;
+    return this.sampleRepo.generateNextSampleCode();
   }
 
   async delete(id: string): Promise<boolean> {

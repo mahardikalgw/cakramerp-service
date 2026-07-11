@@ -64,8 +64,11 @@ export class TestResultService {
     testedByName?: string;
     attachments?: { fileName: string; fileUrl: string; fileType?: string }[];
   }): Promise<TestResult> {
-    const lastNumber = await this.repository.getLastResultNumber();
-    const resultNumber = this.generateResultNumber(lastNumber);
+    // generateNextResultNumber() atomically picks the next free
+    // result_number under a PostgreSQL advisory lock and includes
+    // soft-deleted rows in the MAX query, so the sequence never
+    // collides with a soft-deleted record's UNIQUE constraint.
+    const resultNumber = await this.repository.generateNextResultNumber();
 
     const entity = new TestResult({
       id: undefined,

@@ -4,6 +4,10 @@ import { BaseTypeOrmRepositoryAdapter } from '../../../../database/infrastructur
 import { Spending } from '../../domain/entities/spending.entity';
 import { SpendingTypeOrmEntity } from '../entities/spending-typeorm.entity';
 import { SpendingRepositoryPort } from '../../domain/repositories/spending-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SpendingTypeOrmRepository
@@ -61,14 +65,30 @@ export class SpendingTypeOrmRepository
   }
 
   async getLastSpendingNumber(prefix: string): Promise<string | null> {
-    const query = this.repository
+    const row = await this.repository
       .createQueryBuilder('s')
       .select('s.spendingNumber', 'spendingNumber')
       .where('s.spendingNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('s.spendingNumber', 'DESC')
-      .limit(1);
-
-    const row = await query.getRawOne();
+      .orderBy(
+        "CAST(SUBSTRING(s.spending_number FROM 'EXP-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
     return row?.spendingNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next spending number using a PostgreSQL
+   * advisory lock + numeric sort.
+   */
+  async generateNextSpendingNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `EXP-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.SPENDING,
+    });
+    return seq.next('spending_number', 'spendings');
   }
 }

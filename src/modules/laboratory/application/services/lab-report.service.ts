@@ -78,8 +78,11 @@ export class LabReportService {
       resultValue: result.resultValue ?? '',
     }));
 
-    const lastNumber = await this.dailyReportRepo.getLastReportNumber();
-    const reportNumber = this.generateReportNumber(lastNumber);
+    // generateNextReportNumber() atomically picks the next free
+    // report_number under a PostgreSQL advisory lock and includes
+    // soft-deleted rows in the MAX query, so the sequence never
+    // collides with a soft-deleted record's UNIQUE constraint.
+    const reportNumber = await this.dailyReportRepo.generateNextReportNumber();
 
     const dailyReport = new DailyReport({
       reportNumber,

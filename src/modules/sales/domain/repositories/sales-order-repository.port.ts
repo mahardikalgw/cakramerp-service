@@ -6,4 +6,5 @@ export const SALES_ORDER_REPOSITORY = Symbol('SALES_ORDER_REPOSITORY');
 export interface SalesOrderRepositoryPort extends RepositoryPort<SalesOrder> {
   findBySoNumber(soNumber: string): Promise<SalesOrder | null>;
   getLastSoNumber(prefix: string): Promise<string | null>;
+  generateNextSoNumber(): Promise<string>;
 }

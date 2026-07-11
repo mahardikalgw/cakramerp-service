@@ -4,6 +4,10 @@ import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.hel
 import { LabCertificate } from '../../domain/entities/lab-certificate.entity';
 import { LabCertificateTypeOrmEntity } from '../entities/lab-certificate-typeorm.entity';
 import { LabCertificateRepositoryPort } from '../../domain/repositories/lab-certificate-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class LabCertificateTypeOrmRepository
@@ -96,14 +100,36 @@ export class LabCertificateTypeOrmRepository
   }
 
   async getLastCertificateNumber(): Promise<string | null> {
-    const query = this.repository
+    // Kept for backward compatibility. The new
+    // generateNextCertificateNumber() should be used for create flow.
+    const row = await this.repository
       .createQueryBuilder('lc')
       .select('lc.certificate_number', 'certificateNumber')
-      .where('lc.deleted_at IS NULL')
-      .orderBy('lc.certificate_number', 'DESC')
-      .limit(1);
-    const row = await query.getRawOne();
+      .orderBy(
+        "CAST(SUBSTRING(lc.certificate_number FROM 'CERT-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
     return row?.certificateNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next certificate_number using a
+   * PostgreSQL advisory lock + numeric sort. Replaces the old buggy
+   * implementation that sorted strings lexicographically and
+   * filtered `deleted_at IS NULL` — both caused duplicate-key
+   * violations on certificate generation. See sequence-generator.ts
+   * for the full rationale.
+   */
+  async generateNextCertificateNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `CERT-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.CERTIFICATE,
+    });
+    return seq.next('certificate_number', 'lab_certificates');
   }
 
   async softDelete(id: string): Promise<void> {

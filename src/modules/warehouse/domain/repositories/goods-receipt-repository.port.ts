@@ -15,4 +15,5 @@ export interface GoodsReceiptRepositoryPort {
     id: string,
   ): Promise<{ receipt: GoodsReceipt; lines: GoodsReceiptLine[] } | null>;
   getLastGrnNumber(prefix: string): Promise<string | null>;
+  generateNextGrnNumber(): Promise<string>;
 }

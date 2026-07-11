@@ -6,6 +6,7 @@ export const DAILY_REPORT_REPOSITORY = Symbol('DAILY_REPORT_REPOSITORY');
 export interface DailyReportRepositoryPort extends RepositoryPort<DailyReport> {
   findByReportNumber(reportNumber: string): Promise<DailyReport | null>;
   getLastReportNumber(): Promise<string | null>;
+  generateNextReportNumber(): Promise<string>;
   findByTestingRequestId(testingRequestId: string): Promise<DailyReport[]>;
   softDelete(id: string): Promise<void>;
 }

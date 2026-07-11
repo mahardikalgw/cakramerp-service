@@ -6,6 +6,10 @@ import { SalesReturnLine } from '../../domain/entities/sales-return-line.entity'
 import { SalesReturnTypeOrmEntity } from '../entities/sales-return-typeorm.entity';
 import { SalesReturnLineTypeOrmEntity } from '../entities/sales-return-line-typeorm.entity';
 import { SalesReturnRepositoryPort } from '../../domain/repositories/sales-return-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SalesReturnTypeOrmRepository
@@ -97,14 +101,30 @@ export class SalesReturnTypeOrmRepository
   }
 
   async getLastReturnNumber(prefix: string): Promise<string | null> {
-    const query = this.repository
+    const row = await this.repository
       .createQueryBuilder('sr')
       .select('sr.returnNumber', 'returnNumber')
       .where('sr.returnNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('sr.returnNumber', 'DESC')
-      .limit(1);
-
-    const row = await query.getRawOne();
+      .orderBy(
+        "CAST(SUBSTRING(sr.return_number FROM 'SR-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
     return row?.returnNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next return number using a PostgreSQL
+   * advisory lock + numeric sort.
+   */
+  async generateNextReturnNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `SR-${year}-`,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.SALES_RETURN,
+    });
+    return seq.next('return_number', 'sales_returns');
   }
 }

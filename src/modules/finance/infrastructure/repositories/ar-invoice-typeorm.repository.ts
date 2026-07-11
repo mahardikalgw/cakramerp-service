@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource, LessThan, Not } from 'typeorm';
+import { Repository, DataSource, LessThan, Not, IsNull } from 'typeorm';
 import { ARInvoiceTypeOrmEntity } from '../entities/ar-invoice-typeorm.entity';
 import { ARInvoice } from '../../domain/entities/ar-invoice.entity';
 import { ARInvoiceRepositoryPort } from '../../domain/repositories/finance-repository.port';
@@ -15,7 +15,9 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
   }
 
   async findById(id: string): Promise<ARInvoice | null> {
-    const entity = await this.repo.findOne({ where: { id } });
+    const entity = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -24,6 +26,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
     limit?: number;
   }): Promise<FindResult<ARInvoice>> {
     const [entities, total] = await this.repo.findAndCount({
+      where: { deletedAt: IsNull() } as any,
       skip: ((options?.page ?? 1) - 1) * (options?.limit ?? 20),
       take: options?.limit ?? 20,
       order: { issueDate: 'DESC' },
@@ -43,7 +46,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
 
   async findOutstanding(): Promise<ARInvoice[]> {
     const entities = await this.repo.find({
-      where: { status: Not('paid') },
+      where: { status: Not('paid'), deletedAt: IsNull() } as any,
       order: { dueDate: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -51,7 +54,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
 
   async findByClientId(clientId: string): Promise<ARInvoice[]> {
     const entities = await this.repo.find({
-      where: { clientId },
+      where: { clientId, deletedAt: IsNull() } as any,
       order: { issueDate: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -59,7 +62,7 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
 
   async findByDateRange(start: Date, end: Date): Promise<ARInvoice[]> {
     const entities = await this.repo.find({
-      where: { issueDate: start, dueDate: LessThan(end) },
+      where: { issueDate: start, dueDate: LessThan(end), deletedAt: IsNull() } as any,
       order: { issueDate: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));

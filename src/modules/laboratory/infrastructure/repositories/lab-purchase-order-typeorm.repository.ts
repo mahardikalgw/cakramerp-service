@@ -8,6 +8,10 @@ import {
 import { LabPurchaseOrderTypeOrmEntity } from '../entities/lab-purchase-order-typeorm.entity';
 import { LabPurchaseOrderLineTypeOrmEntity } from '../entities/lab-purchase-order-line-typeorm.entity';
 import { LabPurchaseOrderRepositoryPort } from '../../domain/repositories/lab-purchase-order-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class LabPurchaseOrderTypeOrmRepository
@@ -134,6 +138,22 @@ export class LabPurchaseOrderTypeOrmRepository
       return `LPO-${year}-${String(maxSeq).padStart(5, '0')}`;
     }
     return null;
+  }
+
+  /**
+   * Atomically generates the next LPO-YYYY-NNNNN PO number using a
+   * PostgreSQL advisory lock + numeric sort. Already had correct
+   * numeric sort from the earlier fix; this adds advisory-lock
+   * serialisation to prevent race conditions.
+   */
+  async generateNextPONumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `LPO-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.LAB_PO,
+    });
+    return seq.next('po_number', 'lab_purchase_orders');
   }
 
   async softDelete(id: string): Promise<void> {

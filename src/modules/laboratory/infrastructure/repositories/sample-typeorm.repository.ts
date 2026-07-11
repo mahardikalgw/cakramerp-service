@@ -4,6 +4,10 @@ import { SoftDeleteTypeOrmRepositoryAdapter } from '../../shared/soft-delete.hel
 import { Sample } from '../../domain/entities/sample.entity';
 import { SampleTypeOrmEntity } from '../entities/sample-typeorm.entity';
 import { SampleRepositoryPort } from '../../domain/repositories/sample-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SampleTypeOrmRepository
@@ -69,16 +73,39 @@ export class SampleTypeOrmRepository
   }
 
   async getLastSampleCode(): Promise<string | null> {
-    const year = new Date().getFullYear();
+    // Kept for backward compatibility. Returns the highest existing
+    // sample_code (or null) so callers that need it for inspection
+    // (not for sequence generation) can still read it. The new
+    // generateNextSampleCode() should be used for create flow.
     const row = await this.repository
       .createQueryBuilder('s')
       .select('s.sample_code', 'sampleCode')
-      .where('s.sample_code LIKE :prefix', { prefix: `SPL-${year}-%` })
-      .andWhere('s.deleted_at IS NULL')
-      .orderBy('s.created_at', 'DESC')
+      .where('s.sample_code LIKE :prefix', { prefix: `SPL-${new Date().getFullYear()}-%` })
+      .orderBy(
+        "CAST(SUBSTRING(s.sample_code FROM 'SPL-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
       .limit(1)
       .getRawOne();
     return row?.sampleCode ?? null;
+  }
+
+  /**
+   * Atomically generates the next sample_code using a PostgreSQL
+   * advisory lock + numeric sort. Replaces the old buggy
+   * implementation that sorted strings lexicographically and
+   * filtered `deleted_at IS NULL` — both caused duplicate-key
+   * violations on create. See sequence-generator.ts for the full
+   * rationale.
+   */
+  async generateNextSampleCode(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `SPL-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.SAMPLE,
+    });
+    return seq.next('sample_code', 'samples');
   }
 
   async findByTestingRequestId(testingRequestId: string): Promise<Sample[]> {

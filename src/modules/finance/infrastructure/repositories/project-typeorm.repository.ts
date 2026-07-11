@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { ProjectTypeOrmEntity } from '../entities/project-typeorm.entity';
 import { Project } from '../../domain/entities/project.entity';
 import { ProjectRepositoryPort } from '../../domain/repositories/finance-repository.port';
@@ -15,7 +15,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
   }
 
   async findById(id: string): Promise<Project | null> {
-    const entity = await this.repo.findOne({ where: { id } });
+    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -24,6 +24,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
     limit?: number;
   }): Promise<FindResult<Project>> {
     const [entities, total] = await this.repo.findAndCount({
+      where: { deletedAt: IsNull() } as any,
       skip: ((options?.page ?? 1) - 1) * (options?.limit ?? 20),
       take: options?.limit ?? 20,
       order: { code: 'ASC' },
@@ -43,7 +44,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
 
   async findActive(): Promise<Project[]> {
     const entities = await this.repo.find({
-      where: { status: 'active' },
+      where: { status: 'active', deletedAt: IsNull() } as any,
       order: { code: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -51,7 +52,7 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
 
   async findBySegment(segment: string): Promise<Project[]> {
     const entities = await this.repo.find({
-      where: { segment },
+      where: { segment, deletedAt: IsNull() } as any,
       order: { code: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));

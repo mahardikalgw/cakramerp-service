@@ -80,7 +80,19 @@ export abstract class BaseTypeOrmRepositoryAdapter<
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repository.softDelete(id);
+    // Check whether the target entity has a @DeleteDateColumn so we
+    // can safely call softDelete.  If not, fall back to hard delete
+    // because softDelete on an entity without the column is a no-op.
+    const metadata = this.repository.metadata;
+    const hasDeleteDateColumn = metadata.columns.some(
+      (col) => col.isDeleteDate,
+    );
+    let result: import('typeorm').DeleteResult;
+    if (hasDeleteDateColumn) {
+      result = await this.repository.softDelete(id);
+    } else {
+      result = await this.repository.delete(id);
+    }
     return (result.affected ?? 0) > 0;
   }
 

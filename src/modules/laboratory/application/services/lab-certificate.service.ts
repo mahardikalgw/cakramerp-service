@@ -83,8 +83,11 @@ export class LabCertificateService {
         'Only completed testing requests can have certificates generated',
       );
 
-    const lastNumber = await this.certificateRepo.getLastCertificateNumber();
-    const certificateNumber = this.generateCertificateNumber(lastNumber);
+    // generateNextCertificateNumber() atomically picks the next free
+    // certificate_number under a PostgreSQL advisory lock and includes
+    // soft-deleted rows in the MAX query, so the sequence never
+    // collides with a soft-deleted record's UNIQUE constraint.
+    const certificateNumber = await this.certificateRepo.generateNextCertificateNumber();
 
     const qrHash = crypto
       .createHash('sha256')

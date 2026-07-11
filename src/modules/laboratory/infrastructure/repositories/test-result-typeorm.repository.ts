@@ -8,6 +8,10 @@ import {
 import { TestResultTypeOrmEntity } from '../entities/test-result-typeorm.entity';
 import { TestResultAttachmentTypeOrmEntity } from '../entities/test-result-attachment-typeorm.entity';
 import { TestResultRepositoryPort } from '../../domain/repositories/test-result-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class TestResultTypeOrmRepository
@@ -106,14 +110,36 @@ export class TestResultTypeOrmRepository
   }
 
   async getLastResultNumber(): Promise<string | null> {
+    // Kept for backward compatibility. The new
+    // generateNextResultNumber() should be used for create flow.
     const row = await this.repository
       .createQueryBuilder('tr')
       .select('tr.result_number', 'resultNumber')
-      .andWhere('tr.deleted_at IS NULL')
-      .orderBy('tr.result_number', 'DESC')
+      .orderBy(
+        "CAST(SUBSTRING(tr.result_number FROM 'RES-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
       .limit(1)
       .getRawOne();
     return row?.resultNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next result_number using a PostgreSQL
+   * advisory lock + numeric sort. Replaces the old buggy
+   * implementation that sorted strings lexicographically and
+   * filtered `deleted_at IS NULL` — both caused duplicate-key
+   * violations on test-result creation. See sequence-generator.ts
+   * for the full rationale.
+   */
+  async generateNextResultNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `RES-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.TEST_RESULT,
+    });
+    return seq.next('result_number', 'test_results');
   }
 
   async findBySampleId(sampleId: string): Promise<TestResult[]> {

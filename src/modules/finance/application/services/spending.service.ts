@@ -6,6 +6,10 @@ import {
 import { DataSource, Repository } from 'typeorm';
 import { SpendingTypeOrmEntity } from '../../infrastructure/entities/spending-typeorm.entity';
 import { GlPostingQueueTypeOrmEntity } from '../../infrastructure/entities/gl-posting-queue-typeorm.entity';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 const CATEGORY_ACCOUNT_MAP: Record<string, { code: string; name: string }> = {
   office: { code: '6100', name: 'Biaya Operasional Kantor' },
@@ -205,15 +209,11 @@ export class SpendingService {
 
   private async generateSpendingNumber(): Promise<string> {
     const year = new Date().getFullYear();
-    const prefix = `SPD-${year}-`;
-    const last = await this.spendingRepo
-      .createQueryBuilder('sp')
-      .where('sp.spendingNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('sp.spendingNumber', 'DESC')
-      .getOne();
-
-    if (!last) return `${prefix}0001`;
-    const seq = parseInt(last.spendingNumber.replace(prefix, ''), 10) + 1;
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `SPD-${year}-`,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.SPENDING + 1, // Different lock key from EXP prefix
+    });
+    return seq.next('spending_number', 'spendings');
   }
 }

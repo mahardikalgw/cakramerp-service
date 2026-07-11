@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { APPaymentTypeOrmEntity } from '../entities/ap-payment-typeorm.entity';
 import { APPayment } from '../../domain/entities/ap-payment.entity';
 import { APPaymentRepositoryPort } from '../../domain/repositories/finance-repository.port';
@@ -15,7 +15,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
   }
 
   async findById(id: string): Promise<APPayment | null> {
-    const entity = await this.repo.findOne({ where: { id } });
+    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -24,6 +24,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
     limit?: number;
   }): Promise<FindResult<APPayment>> {
     const [entities, total] = await this.repo.findAndCount({
+      where: { deletedAt: IsNull() } as any,
       skip: ((options?.page ?? 1) - 1) * (options?.limit ?? 20),
       take: options?.limit ?? 20,
       order: { scheduledDate: 'ASC' },
@@ -43,7 +44,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
 
   async findOutstanding(): Promise<APPayment[]> {
     const entities = await this.repo.find({
-      where: [{ status: 'scheduled' }, { status: 'overdue' }],
+      where: [{ status: 'scheduled', deletedAt: IsNull() }, { status: 'overdue', deletedAt: IsNull() }],
       order: { scheduledDate: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -51,7 +52,7 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
 
   async findByDateRange(start: Date): Promise<APPayment[]> {
     const entities = await this.repo.find({
-      where: { scheduledDate: start },
+      where: { scheduledDate: start, deletedAt: IsNull() } as any,
       order: { scheduledDate: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));

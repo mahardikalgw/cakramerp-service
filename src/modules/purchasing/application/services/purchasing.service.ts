@@ -55,13 +55,7 @@ export class PurchasingService implements PurchasingServicePort {
   }
 
   private async generatePurchaseOrderNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const prefix = `PO-${year}-`;
-    const lastNumber = await this.purchaseOrderRepo.getLastOrderNumber(prefix);
-
-    if (!lastNumber) return `${prefix}0001`;
-    const seq = parseInt(lastNumber.replace(prefix, ''), 10) + 1;
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    return this.purchaseOrderRepo.generateNextOrderNumber();
   }
 
   async findPurchaseOrderById(id: string): Promise<PurchaseOrder | null> {

@@ -84,7 +84,7 @@ export class EmployeeTypeOrmRepository implements EmployeeRepositoryPort {
       .leftJoin(PositionTypeOrmEntity, 'pos', 'pos.id = emp.positionId')
       .addSelect('dept.name', 'departmentName')
       .addSelect('pos.name', 'positionName')
-      .where('emp.id = :id', { id })
+      .where('emp.id = :id AND emp.deleted_at IS NULL', { id })
       .getRawOne();
 
     if (!emp) return null;

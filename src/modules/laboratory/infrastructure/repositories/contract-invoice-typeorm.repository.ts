@@ -8,6 +8,10 @@ import {
   FindOptions,
   FindResult,
 } from '../../../../shared/kernel/domain/repositories/repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class ContractInvoiceTypeOrmRepository
@@ -95,12 +99,35 @@ export class ContractInvoiceTypeOrmRepository
   }
 
   async getLastInvoiceNumber(): Promise<string | null> {
-    const entity = await this.repository.findOne({
-      where: { deletedAt: IsNull() } as any,
-      order: { invoiceNumber: 'DESC' as any },
-      select: ['invoiceNumber'] as any,
+    // Kept for backward compatibility. The new
+    // generateNextInvoiceNumber() should be used for create flow.
+    const row = await this.repository
+      .createQueryBuilder('i')
+      .select('i.invoice_number', 'invoiceNumber')
+      .orderBy(
+        "CAST(SUBSTRING(i.invoice_number FROM 'CI-\\d+') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
+    return row?.invoiceNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next invoice_number using a PostgreSQL
+   * advisory lock + numeric sort. Replaces the old buggy
+   * implementation that sorted strings lexicographically and
+   * filtered `deleted_at IS NULL` — both caused duplicate-key
+   * violations on invoice creation. See sequence-generator.ts for
+   * the full rationale.
+   */
+  async generateNextInvoiceNumber(): Promise<string> {
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: 'CI-',
+      padLength: 6,
+      lockKey: ADVISORY_LOCK_KEYS.CONTRACT_INVOICE,
     });
-    return entity?.invoiceNumber ?? null;
+    return seq.next('invoice_number', 'contract_invoices');
   }
 
   async findAll(options?: FindOptions): Promise<FindResult<ContractInvoice>> {

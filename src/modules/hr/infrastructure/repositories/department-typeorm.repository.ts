@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { DepartmentRepositoryPort } from '../../domain/repositories/department-repository.port';
 import { DepartmentTypeOrmEntity } from '../entities/department-typeorm.entity';
 
@@ -37,11 +37,11 @@ export class DepartmentTypeOrmRepository implements DepartmentRepositoryPort {
   }
 
   async findById(id: string): Promise<any | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
   }
 
   async findByName(name: string): Promise<any | null> {
-    return this.repo.findOne({ where: { name } });
+    return this.repo.findOne({ where: { name, deletedAt: IsNull() } });
   }
 
   async create(data: any): Promise<any> {

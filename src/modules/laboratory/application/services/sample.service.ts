@@ -63,8 +63,11 @@ export class SampleService {
     description?: string;
     notes?: string;
   }): Promise<Sample> {
-    const lastCode = await this.repository.getLastSampleCode();
-    const sampleCode = this.generateSampleCode(lastCode);
+    // generateNextSampleCode() atomically picks the next free
+    // sample_code under a PostgreSQL advisory lock and includes
+    // soft-deleted rows in the MAX query, so the sequence never
+    // collides with a soft-deleted record's UNIQUE constraint.
+    const sampleCode = await this.repository.generateNextSampleCode();
 
     const entity = new Sample({
       id: undefined,

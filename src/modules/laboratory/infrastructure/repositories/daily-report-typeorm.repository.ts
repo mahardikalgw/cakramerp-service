@@ -8,6 +8,10 @@ import {
 import { DailyReportTypeOrmEntity } from '../entities/daily-report-typeorm.entity';
 import { DailyReportLineTypeOrmEntity } from '../entities/daily-report-line-typeorm.entity';
 import { DailyReportRepositoryPort } from '../../domain/repositories/daily-report-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class DailyReportTypeOrmRepository
@@ -102,14 +106,36 @@ export class DailyReportTypeOrmRepository
   }
 
   async getLastReportNumber(): Promise<string | null> {
+    // Kept for backward compatibility. The new
+    // generateNextReportNumber() should be used for create flow.
     const row = await this.repository
       .createQueryBuilder('dr')
       .select('dr.report_number', 'reportNumber')
-      .where('dr.deleted_at IS NULL')
-      .orderBy('dr.report_number', 'DESC')
+      .orderBy(
+        "CAST(SUBSTRING(dr.report_number FROM 'RPT-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
       .limit(1)
       .getRawOne();
     return row?.reportNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next report_number using a PostgreSQL
+   * advisory lock + numeric sort. Replaces the old buggy
+   * implementation that sorted strings lexicographically and
+   * filtered `deleted_at IS NULL` — both caused duplicate-key
+   * violations on report creation. See sequence-generator.ts for the
+   * full rationale.
+   */
+  async generateNextReportNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `RPT-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.REPORT,
+    });
+    return seq.next('report_number', 'daily_reports');
   }
 
   async findByTestingRequestId(

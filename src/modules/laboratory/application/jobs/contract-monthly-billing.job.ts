@@ -86,13 +86,11 @@ export class ContractMonthlyBillingJob {
             Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
           const totalAmount = baseAmount + taxAmount;
 
-          const lastNumber = await this.invoiceRepo.getLastInvoiceNumber();
-          let seq = 1;
-          if (lastNumber) {
-            const match = lastNumber.match(/CI-(\d+)/);
-            if (match) seq = parseInt(match[1], 10) + 1;
-          }
-          const invoiceNumber = `CI-${String(seq).padStart(6, '0')}`;
+          // generateNextInvoiceNumber() atomically picks the next free
+          // CI-NNNNNN value under a PostgreSQL advisory lock and includes
+          // soft-deleted rows in the MAX query, so the sequence never
+          // collides with a soft-deleted record's UNIQUE constraint.
+          const invoiceNumber = await this.invoiceRepo.generateNextInvoiceNumber();
 
           const invoice = new ContractInvoice({
             invoiceNumber,

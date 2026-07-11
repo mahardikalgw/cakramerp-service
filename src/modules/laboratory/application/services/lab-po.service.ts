@@ -61,8 +61,9 @@ export class LabPOService {
     sampleQuantity?: number;
     lines?: any[];
   }): Promise<LabPurchaseOrder> {
-    const lastNumber = await this.getLastPONumber();
-    const poNumber = this.generatePONumber(lastNumber);
+    // generateNextPONumber() atomically picks the next free PO number
+    // under a PostgreSQL advisory lock.
+    const poNumber = await this.repository.generateNextPONumber();
 
     const entity = new LabPurchaseOrder({
       id: undefined,

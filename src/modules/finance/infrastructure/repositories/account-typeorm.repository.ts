@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, IsNull } from 'typeorm';
 import { AccountTypeOrmEntity } from '../entities/account-typeorm.entity';
 import { Account } from '../../domain/entities/account.entity';
 import { AccountRepositoryPort } from '../../domain/repositories/finance-repository.port';
@@ -14,7 +14,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
   }
 
   async findById(id: string): Promise<Account | null> {
-    const entity = await this.repo.findOne({ where: { id } });
+    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -23,6 +23,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
     limit?: number;
   }): Promise<FindResult<Account>> {
     const [entities, total] = await this.repo.findAndCount({
+      where: { deletedAt: IsNull() } as any,
       skip: ((options?.page ?? 1) - 1) * (options?.limit ?? 20),
       take: options?.limit ?? 20,
       order: { code: 'ASC' },
@@ -41,13 +42,16 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
   }
 
   async findAllFlat(): Promise<Account[]> {
-    const entities = await this.repo.find({ order: { code: 'ASC' } });
+    const entities = await this.repo.find({
+      where: { deletedAt: IsNull() } as any,
+      order: { code: 'ASC' },
+    });
     return entities.map((e) => this.toDomain(e));
   }
 
   async findByType(type: string): Promise<Account[]> {
     const entities = await this.repo.find({
-      where: { type },
+      where: { type, deletedAt: IsNull() } as any,
       order: { code: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -55,7 +59,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
 
   async findBySegment(segment: string): Promise<Account[]> {
     const entities = await this.repo.find({
-      where: { segment },
+      where: { segment, deletedAt: IsNull() } as any,
       order: { code: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));
@@ -63,7 +67,7 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
 
   async findActive(): Promise<Account[]> {
     const entities = await this.repo.find({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: IsNull() } as any,
       order: { code: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));

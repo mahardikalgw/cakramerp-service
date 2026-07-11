@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { SupplierTypeOrmEntity } from '../entities/supplier-typeorm.entity';
 import type { SupplierRepositoryPort } from '../../domain/repositories/supplier-repository.port';
 
@@ -43,11 +43,11 @@ export class SupplierTypeOrmRepository implements SupplierRepositoryPort {
   }
 
   async findById(id: string): Promise<SupplierTypeOrmEntity | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
   }
 
   async findByName(name: string): Promise<SupplierTypeOrmEntity | null> {
-    return this.repo.findOne({ where: { name } });
+    return this.repo.findOne({ where: { name, deletedAt: IsNull() } });
   }
 
   async save(entity: SupplierTypeOrmEntity): Promise<SupplierTypeOrmEntity> {

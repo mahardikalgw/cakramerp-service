@@ -5,6 +5,10 @@ import { GoodsReceipt } from '../../domain/entities/goods-receipt.entity';
 import { GoodsReceiptLine } from '../../domain/entities/goods-receipt-line.entity';
 import { GoodsReceiptTypeOrmEntity } from '../entities/goods-receipt-typeorm.entity';
 import { GoodsReceiptLineTypeOrmEntity } from '../entities/goods-receipt-line-typeorm.entity';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort {
@@ -73,13 +77,15 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
        FROM goods_receipts gr
        LEFT JOIN warehouses w ON w.id = gr.warehouse_id
        ${whereClause}
+       ${whereClause ? 'AND gr.deleted_at IS NULL' : 'WHERE gr.deleted_at IS NULL'}
        ORDER BY gr.created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
 
     const countResult = await this.dataSource.query(
-      `SELECT COUNT(*)::int AS cnt FROM goods_receipts gr ${whereClause}`,
+      `SELECT COUNT(*)::int AS cnt FROM goods_receipts gr ${whereClause}
+       ${whereClause ? 'AND gr.deleted_at IS NULL' : 'WHERE gr.deleted_at IS NULL'}`,
       countParams,
     );
     const total = countResult[0]?.cnt ?? 0;
@@ -131,10 +137,27 @@ export class GoodsReceiptTypeOrmRepository implements GoodsReceiptRepositoryPort
     const last = await this.receiptRepo
       .createQueryBuilder('gr')
       .where('gr.grnNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .orderBy('gr.grnNumber', 'DESC')
+      .orderBy(
+        "CAST(SUBSTRING(gr.grn_number FROM 'GRN-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
       .getOne();
 
     return last?.grnNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next GRN number using a PostgreSQL
+   * advisory lock + numeric sort.
+   */
+  async generateNextGrnNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `GRN-${year}-`,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.GRN,
+    });
+    return seq.next('grn_number', 'goods_receipts');
   }
 
   private mapToGoodsReceipt(entity: GoodsReceiptTypeOrmEntity): GoodsReceipt {

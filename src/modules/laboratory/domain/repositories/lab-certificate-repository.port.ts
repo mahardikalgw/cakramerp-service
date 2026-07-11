@@ -8,6 +8,7 @@ export interface LabCertificateRepositoryPort extends RepositoryPort<LabCertific
   findByQrHash(qrHash: string): Promise<LabCertificate | null>;
   findByTestingRequestId(testingRequestId: string): Promise<LabCertificate[]>;
   getLastCertificateNumber(): Promise<string | null>;
+  generateNextCertificateNumber(): Promise<string>;
   softDelete(id: string): Promise<void>;
 }
 

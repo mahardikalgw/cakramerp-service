@@ -202,8 +202,7 @@ export class CustomerPortalService {
     } else if (dto.billingType === 'cash') {
       const firstLineServiceId = lines[0]?.testingServiceId ?? '';
       const firstLineServiceName = lines[0]?.serviceName ?? '';
-      const lastPONumber = await this.poRepo.getLastPONumber();
-      const poNumber = this.generatePONumber(lastPONumber);
+      const poNumber = await this.poRepo.generateNextPONumber();
 
       let totalAmount = 0;
       const poLines = await Promise.all(

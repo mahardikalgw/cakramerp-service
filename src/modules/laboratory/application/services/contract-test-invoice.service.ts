@@ -439,12 +439,11 @@ export class ContractTestInvoiceService {
   }
 
   private async generateInvoiceNumber(): Promise<string> {
-    const last = await this.repository.getLastInvoiceNumber();
-    let seq = 1;
-    if (last) {
-      const match = last.match(/CTI-(\d+)/);
-      if (match) seq = parseInt(match[1], 10) + 1;
-    }
-    return `CTI-${String(seq).padStart(6, '0')}`;
+    // generateNextInvoiceNumber() atomically picks the next free
+    // CTI-NNNNNN value under a PostgreSQL advisory lock and includes
+    // soft-deleted rows in the MAX query, so the sequence never
+    // collides with a soft-deleted record's UNIQUE constraint.
+    // Format: CTI-NNNNNN (6-digit, no year, monotonic across years).
+    return this.repository.generateNextInvoiceNumber();
   }
 }

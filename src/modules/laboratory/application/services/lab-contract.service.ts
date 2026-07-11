@@ -66,8 +66,7 @@ export class LabContractService {
     totalQuota?: number;
     lines?: any[];
   }): Promise<LabContract> {
-    const lastNumber = await this.getLastContractNumber();
-    const contractNumber = this.generateContractNumber(lastNumber);
+    const contractNumber = await this.repository.generateNextContractNumber();
 
     const entity = new LabContract({
       updatedAt: undefined,

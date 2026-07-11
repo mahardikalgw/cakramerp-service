@@ -8,6 +8,10 @@ import {
 import { LabContractTypeOrmEntity } from '../entities/lab-contract-typeorm.entity';
 import { LabContractAttachmentTypeOrmEntity } from '../entities/lab-contract-attachment-typeorm.entity';
 import { LabContractRepositoryPort } from '../../domain/repositories/lab-contract-repository.port';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class LabContractTypeOrmRepository
@@ -117,14 +121,31 @@ export class LabContractTypeOrmRepository
   async getLastContractNumber(): Promise<string | null> {
     // NOTE: intentionally includes soft-deleted records so the sequence
     // number is not reused, which would violate the unique constraint.
-    const query = this.repository
+    const row = await this.repository
       .createQueryBuilder('lc')
       .select('lc.contract_number', 'contractNumber')
-      .orderBy('lc.contract_number', 'DESC')
-      .limit(1);
-
-    const row = await query.getRawOne();
+      .orderBy(
+        "CAST(SUBSTRING(lc.contract_number FROM 'CTR-\\d{4}-(\\d+)') AS INTEGER)",
+        'DESC',
+      )
+      .limit(1)
+      .getRawOne();
     return row?.contractNumber ?? null;
+  }
+
+  /**
+   * Atomically generates the next CTR-YYYY-NNNNN contract_number using
+   * a PostgreSQL advisory lock + numeric sort. Replaces the old
+   * string-sort implementation.
+   */
+  async generateNextContractNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `CTR-${year}-`,
+      padLength: 5,
+      lockKey: ADVISORY_LOCK_KEYS.CONTRACT,
+    });
+    return seq.next('contract_number', 'lab_contracts');
   }
 
   async softDelete(id: string): Promise<void> {

@@ -8,6 +8,10 @@ import { SalesReturnTypeOrmEntity } from '../../infrastructure/entities/sales-re
 import { SalesReturnLineTypeOrmEntity } from '../../infrastructure/entities/sales-return-line-typeorm.entity';
 import { GlPostingQueueTypeOrmEntity } from '../../../finance/infrastructure/entities/gl-posting-queue-typeorm.entity';
 import { CreateSalesReturnHttpDto } from '../../infrastructure/http/dtos/sales-return.dto';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SalesReturnService {
@@ -267,16 +271,11 @@ export class SalesReturnService {
 
   private async generateReturnNumber(): Promise<string> {
     const year = new Date().getFullYear();
-    const prefix = `SRTN-${year}-`;
-    const last = await this.returnRepo
-      .createQueryBuilder('sr')
-      .where('sr.returnNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .andWhere('sr.deletedAt IS NULL')
-      .orderBy('sr.returnNumber', 'DESC')
-      .getOne();
-
-    if (!last) return `${prefix}0001`;
-    const seq = parseInt(last.returnNumber.replace(prefix, ''), 10) + 1;
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix: `SRTN-${year}-`,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.SALES_RETURN,
+    });
+    return seq.next('return_number', 'sales_returns');
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { CustomerTypeOrmEntity } from '../entities/customer-typeorm.entity';
 import type { CustomerRepositoryPort } from '../../domain/repositories/customer-repository.port';
 
@@ -43,11 +43,11 @@ export class CustomerTypeOrmRepository implements CustomerRepositoryPort {
   }
 
   async findById(id: string): Promise<CustomerTypeOrmEntity | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
   }
 
   async findByName(name: string): Promise<CustomerTypeOrmEntity | null> {
-    return this.repo.findOne({ where: { name } });
+    return this.repo.findOne({ where: { name, deletedAt: IsNull() } });
   }
 
   async save(entity: CustomerTypeOrmEntity): Promise<CustomerTypeOrmEntity> {
