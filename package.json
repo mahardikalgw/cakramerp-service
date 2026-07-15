@@ -17,7 +17,6 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts src/database/infrastructure/migrations/migration",
     "migration:create": "typeorm-ts-node-commonjs migration:create src/database/infrastructure/migrations/migration",
-    "migration:reset": "ts-node -r tsconfig-paths/register src/database/reset-migrations.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:ci": "jest --ci --forceExit --passWithNoTests",
