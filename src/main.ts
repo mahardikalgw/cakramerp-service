@@ -18,6 +18,10 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
 
   // ── API versioning ──────────────────────────────────
+  // Health endpoints are excluded from the /api/v prefix so
+  // that Docker HEALTHCHECK (and any external liveness probe)
+  // can hit them at the unversioned path /health, /health/live
+  // and /health/ready.
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
