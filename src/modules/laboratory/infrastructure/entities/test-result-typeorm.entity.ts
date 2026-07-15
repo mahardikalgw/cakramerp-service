@@ -97,6 +97,18 @@ export class TestResultTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'uuid', nullable: true })
   declare certificateDocumentId: string | null;
 
+  @Column({ type: 'timestamp', nullable: true })
+  declare testingDate: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  declare createdDate: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare mutu: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  declare produk: string | null;
+
   @OneToMany(
     () => TestResultAttachmentTypeOrmEntity,
     (attachment) => attachment.testResult,

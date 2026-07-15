@@ -46,6 +46,10 @@ export class PostApprovalTestingResultTypeOrmRepository
       confirmedAt: entity.confirmedAt,
       rejectionReason: entity.rejectionReason,
       certificateDocumentId: entity.certificateDocumentId,
+      testingDate: entity.testingDate,
+      createdDate: entity.createdDate,
+      mutu: entity.mutu,
+      produk: entity.produk,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
@@ -79,6 +83,10 @@ export class PostApprovalTestingResultTypeOrmRepository
     entity.rejectionReason = (domain.rejectionReason ?? null) as any;
     entity.certificateDocumentId = (domain.certificateDocumentId ??
       null) as any;
+    entity.testingDate = (domain.testingDate ?? null) as any;
+    entity.createdDate = (domain.createdDate ?? null) as any;
+    entity.mutu = (domain.mutu ?? null) as any;
+    entity.produk = (domain.produk ?? null) as any;
     return entity;
   }
 

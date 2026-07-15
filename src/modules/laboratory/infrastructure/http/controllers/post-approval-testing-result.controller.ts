@@ -70,6 +70,10 @@ export class PostApprovalTestingResultController {
     @Req() req: any,
     @Body('resultData') resultData?: Record<string, unknown>,
     @Body('resultNotes') resultNotes?: string,
+    @Body('testingDate') testingDate?: string,
+    @Body('createdDate') createdDate?: string,
+    @Body('mutu') mutu?: string,
+    @Body('produk') produk?: string,
   ) {
     const user = req.user ?? {};
     const userName =
@@ -83,6 +87,10 @@ export class PostApprovalTestingResultController {
       userName,
       resultData: resultData ?? {},
       resultNotes,
+      testingDate: testingDate ? new Date(testingDate) : null,
+      createdDate: createdDate ? new Date(createdDate) : null,
+      mutu: mutu ?? null,
+      produk: produk ?? null,
     });
   }
 
@@ -93,6 +101,10 @@ export class PostApprovalTestingResultController {
     @Req() req: any,
     @Body('resultData') resultData?: Record<string, unknown>,
     @Body('resultNotes') resultNotes?: string,
+    @Body('testingDate') testingDate?: string,
+    @Body('createdDate') createdDate?: string,
+    @Body('mutu') mutu?: string,
+    @Body('produk') produk?: string,
   ) {
     const user = req.user ?? {};
     const userName =
@@ -106,6 +118,10 @@ export class PostApprovalTestingResultController {
       userName,
       resultData: resultData ?? {},
       resultNotes,
+      testingDate: testingDate ? new Date(testingDate) : null,
+      createdDate: createdDate ? new Date(createdDate) : null,
+      mutu: mutu ?? null,
+      produk: produk ?? null,
     });
   }
 

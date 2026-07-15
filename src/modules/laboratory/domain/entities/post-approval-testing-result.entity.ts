@@ -28,6 +28,10 @@ export class PostApprovalTestingResult extends BaseEntity {
   declare confirmedAt: Date | null;
   declare rejectionReason: string | null;
   declare certificateDocumentId: string | null;
+  declare testingDate: Date | null;
+  declare createdDate: Date | null;
+  declare mutu: string | null;
+  declare produk: string | null;
   declare createdAt: Date;
   declare updatedAt: Date;
 

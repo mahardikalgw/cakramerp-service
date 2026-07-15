@@ -167,6 +167,16 @@ export class PostApprovalTestingResultService {
     };
   }
 
+  private toDateStr(val: any): string {
+    if (!val) return '';
+    if (typeof val === 'string') return val.split('T')[0];
+    try {
+      return new Date(val).toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  }
+
   async generateCertificate(
     id: string,
     userId: string,
@@ -217,6 +227,10 @@ export class PostApprovalTestingResultService {
         berat,
         luas,
         retakan,
+        testingDate: this.toDateStr((enriched as any).testingDate),
+        createdDate: this.toDateStr((enriched as any).createdDate),
+        mutu: (enriched as any).mutu ?? '',
+        produk: (enriched as any).produk ?? '',
       },
       lines,
     });
@@ -316,6 +330,10 @@ export class PostApprovalTestingResultService {
     userName: string;
     resultData: Record<string, unknown>;
     resultNotes?: string;
+    testingDate?: Date | null;
+    createdDate?: Date | null;
+    mutu?: string | null;
+    produk?: string | null;
   }): Promise<PostApprovalTestingResult> {
     const ss = await this.scheduleSampleRepo.findById(data.scheduleSampleId);
     if (!ss) throw new NotFoundException('Schedule sample not found');
@@ -335,6 +353,12 @@ export class PostApprovalTestingResultService {
         throw new BadRequestException('Only draft results can be updated');
       existing.resultData = data.resultData;
       existing.resultNotes = data.resultNotes || null;
+      if (data.testingDate !== undefined)
+        existing.testingDate = data.testingDate;
+      if (data.createdDate !== undefined)
+        existing.createdDate = data.createdDate;
+      if (data.mutu !== undefined) existing.mutu = data.mutu || null;
+      if (data.produk !== undefined) existing.produk = data.produk || null;
       return this.repository.save(existing);
     }
 
@@ -371,6 +395,10 @@ export class PostApprovalTestingResultService {
       resultData: data.resultData,
       resultNotes: data.resultNotes || null,
       status: 'draft',
+      testingDate: data.testingDate ?? null,
+      createdDate: data.createdDate ?? null,
+      mutu: data.mutu || null,
+      produk: data.produk || null,
     });
 
     return this.repository.save(result);
@@ -591,6 +619,9 @@ export class PostApprovalTestingResultService {
     try {
       const enriched = await this.findByIdEnriched(saved.id);
       const parameters = (enriched.resultData as any)?.parameters ?? [];
+      const berat = (enriched.resultData as any)?.berat ?? '';
+      const luas = (enriched.resultData as any)?.luas ?? '';
+      const retakan = (enriched.resultData as any)?.retakan ?? '';
       const certLines = parameters.map((p: any) => ({
         name: p.parameter ?? '',
         value: p.value ?? '',
@@ -623,6 +654,13 @@ export class PostApprovalTestingResultService {
           resultNotes: enriched.resultNotes || '',
           resultNumber: enriched.resultNumber || '',
           contractNumber: enriched.contractNumber || '',
+          berat,
+          luas,
+          retakan,
+          testingDate: this.toDateStr((enriched as any).testingDate),
+          createdDate: this.toDateStr((enriched as any).createdDate),
+          mutu: (enriched as any).mutu ?? '',
+          produk: (enriched as any).produk ?? '',
         },
         lines: certLines,
       });
