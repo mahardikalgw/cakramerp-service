@@ -314,8 +314,10 @@ export class SalesOrderService {
   async delete(id: string): Promise<void> {
     const entity = await this.soRepo.findOne({ where: { id } });
     if (!entity) throw new NotFoundException('Sales order not found');
-    if (entity.status !== 'draft') {
-      throw new BadRequestException('Only draft sales orders can be deleted');
+    if (entity.status !== 'draft' && entity.status !== 'rejected') {
+      throw new BadRequestException(
+        `Only draft or rejected sales orders can be deleted (current status: '${entity.status}'). Use 'Cancel' instead.`,
+      );
     }
     await this.soRepo.softDelete(id);
   }
