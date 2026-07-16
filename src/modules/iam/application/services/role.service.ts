@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '../../domain/entities/role.entity';
 import type { RoleRepositoryPort } from '../../domain/repositories/role-repository.port';
 import { ROLE_REPOSITORY } from '../../domain/repositories/role-repository.port';
@@ -11,6 +11,7 @@ import type { AuditLogServicePort } from '../../../audit/application/ports/audit
 import { FindResult } from '../../../../shared/kernel/domain/repositories/repository.port';
 import { CreateRoleCommand } from '../commands/create-role.command';
 import { AssignRoleCommand } from '../commands/assign-role.command';
+import { UpdateRoleCommand } from '../commands/update-role.command';
 import { UpdateRolePermissionsCommand } from '../commands/update-role-permissions.command';
 import { RoleServicePort } from '../ports/role-service.port';
 
@@ -42,6 +43,34 @@ export class RoleService implements RoleServicePort {
     });
 
     return this.roleRepository.save(role);
+  }
+
+  async update(command: UpdateRoleCommand): Promise<Role> {
+    const existing = await this.roleRepository.findById(command.id);
+    if (!existing) throw new NotFoundException('Role not found');
+
+    // Reject renaming the built-in admin role to keep the system
+    // permission model stable.
+    if (existing.name === 'admin' && command.name !== 'admin') {
+      throw new BadRequestException(
+        "The built-in 'admin' role cannot be renamed",
+      );
+    }
+
+    // Check for name collision if the name is being changed.
+    if (existing.name !== command.name) {
+      const collision = await this.roleRepository.findByName(command.name);
+      if (collision && collision.id !== command.id) {
+        throw new BadRequestException(
+          `A role named '${command.name}' already exists`,
+        );
+      }
+    }
+
+    existing.name = command.name;
+    existing.description = command.description ?? '';
+    const updated = await this.roleRepository.save(existing);
+    return updated;
   }
 
   async findAll(page = 1, limit = 20): Promise<FindResult<Role>> {

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Put,
   Body,
@@ -19,10 +20,12 @@ import { ROLE_SERVICE } from '../../../application/ports/role-service.port';
 import type { PermissionServicePort } from '../../../application/ports/permission-service.port';
 import { PERMISSION_SERVICE } from '../../../application/ports/permission-service.port';
 import { CreateRoleCommand } from '../../../application/commands/create-role.command';
+import { UpdateRoleCommand } from '../../../application/commands/update-role.command';
 import { CreatePermissionCommand } from '../../../application/commands/create-permission.command';
 import { AssignRoleCommand } from '../../../application/commands/assign-role.command';
 import { UpdateRolePermissionsCommand } from '../../../application/commands/update-role-permissions.command';
 import { CreateRoleHttpDto } from '../dtos/create-role.dto';
+import { UpdateRoleHttpDto } from '../dtos/update-role.dto';
 import { CreatePermissionHttpDto } from '../dtos/create-permission.dto';
 import { AssignRoleHttpDto } from '../dtos/assign-role.dto';
 import { UpdateRolePermissionsHttpDto } from '../dtos/update-role-permissions.dto';
@@ -68,6 +71,17 @@ export class IAMController {
   @RequirePermissions('roles:read')
   async findRoleById(@Param('id') id: string): Promise<RoleResponseDto> {
     const role = await this.roleService.findById(id);
+    return RoleResponseDto.fromDomain(role);
+  }
+
+  @Patch('roles/:id')
+  @RequirePermissions('roles:update')
+  async updateRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateRoleHttpDto,
+  ): Promise<RoleResponseDto> {
+    const command = new UpdateRoleCommand(id, dto.name, dto.description ?? '');
+    const role = await this.roleService.update(command);
     return RoleResponseDto.fromDomain(role);
   }
 
