@@ -314,11 +314,9 @@ export class SalesOrderService {
   async delete(id: string): Promise<void> {
     const entity = await this.soRepo.findOne({ where: { id } });
     if (!entity) throw new NotFoundException('Sales order not found');
-    if (entity.status !== 'draft' && entity.status !== 'rejected') {
-      throw new BadRequestException(
-        `Only draft or rejected sales orders can be deleted (current status: '${entity.status}'). Use 'Cancel' instead.`,
-      );
-    }
+    // Allow deletion in any status. Use 'Cancel' if you want to
+    // preserve the audit trail but mark the SO as no longer active;
+    // use this endpoint to hard-soft-delete the row.
     await this.soRepo.softDelete(id);
   }
 
