@@ -299,4 +299,17 @@ export class TestingRequestController {
       userName,
     );
   }
+
+  @Post('testing-requests/:id/regenerate-so')
+  @RequirePermissions('testing-requests:approve')
+  async regenerateSalesOrder(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.regenerateSalesOrder(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
 }

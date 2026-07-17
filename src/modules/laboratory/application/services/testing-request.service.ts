@@ -323,21 +323,30 @@ export class TestingRequestService {
       // for the specific testing services being performed under this contract.
       try {
         const customer = contract
-          ? await this.customerRepo.findById(contract.customerId).catch(() => null)
+          ? await this.customerRepo
+              .findById(contract.customerId)
+              .catch(() => null)
           : null;
-        const customerName = customer?.name || contract?.customerName || existing.customerName || '-';
+        const customerName =
+          customer?.name ||
+          contract?.customerName ||
+          existing.customerName ||
+          '-';
 
         // Look up service prices for each line
         const invoiceLines = await Promise.all(
           (existing.lines || []).map(async (line) => {
             const service = line.testingServiceId
-              ? await this.testingServiceRepo.findById(line.testingServiceId).catch(() => null)
+              ? await this.testingServiceRepo
+                  .findById(line.testingServiceId)
+                  .catch(() => null)
               : null;
             const rawPrice = Number(service?.unitPrice ?? 0);
             const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
             const quantity = line.sampleQuantity ?? 1;
             return {
-              description: line.serviceName || service?.name || 'Testing Service',
+              description:
+                line.serviceName || service?.name || 'Testing Service',
               quantity: String(quantity),
               unitPrice: String(unitPrice),
               total: String(unitPrice * quantity),
@@ -350,7 +359,8 @@ export class TestingRequestService {
           0,
         );
         const taxPercent = 11;
-        const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+        const invoiceTaxAmount =
+          Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
         const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
 
         const invDoc = await this.docHelper.generateDocument({
@@ -361,7 +371,8 @@ export class TestingRequestService {
           parameters: {
             invoiceNumber: `INV-${existing.requestNumber}`,
             customerName,
-            customerAddress: customer?.address || existing.projectLocation || '-',
+            customerAddress:
+              customer?.address || existing.projectLocation || '-',
             invoiceDate: new Date().toISOString().split('T')[0],
             dueDate: new Date(Date.now() + 30 * 86400000)
               .toISOString()
@@ -373,12 +384,22 @@ export class TestingRequestService {
             status: 'issued',
             authorizedByName: userName || 'Lab Authorized',
           },
-          lines: invoiceLines.length > 0
-            ? invoiceLines
-            : [{ description: `Contract Testing (${existing.projectName || '-'})`, quantity: '1', unitPrice: '0', total: '0' }],
+          lines:
+            invoiceLines.length > 0
+              ? invoiceLines
+              : [
+                  {
+                    description: `Contract Testing (${existing.projectName || '-'})`,
+                    quantity: '1',
+                    unitPrice: '0',
+                    total: '0',
+                  },
+                ],
         });
         existing.invoiceDocumentUrl = invDoc.id;
-        this.logger.log(`[DOC] Invoice generated for existing-contract request ${existing.id}: ${invDoc.id}`);
+        this.logger.log(
+          `[DOC] Invoice generated for existing-contract request ${existing.id}: ${invDoc.id}`,
+        );
       } catch (docErr: any) {
         this.logger.error(
           `[DOC] Invoice generation failed for existing-contract request ${existing.id}: ${docErr?.message}`,
@@ -390,7 +411,10 @@ export class TestingRequestService {
           performedBy: userId,
           performedByName: userName,
           performedByRole: 'admin',
-          details: { error: docErr?.message, step: 'existing-contract-invoice' },
+          details: {
+            error: docErr?.message,
+            step: 'existing-contract-invoice',
+          },
         });
       }
     } else if (existing.billingType === 'contract' && !existing.labContractId) {
@@ -467,7 +491,8 @@ export class TestingRequestService {
               updatedAt: undefined,
               labPurchaseOrderId: undefined,
               testingServiceId: line.testingServiceId ?? '',
-              serviceName: line.serviceName || service?.name || 'Testing Service',
+              serviceName:
+                line.serviceName || service?.name || 'Testing Service',
               quantity: line.sampleQuantity ?? 1,
               unitPrice,
               total,
@@ -607,14 +632,25 @@ export class TestingRequestService {
 
           // Bug fix: create an AR Invoice (finance record) from a SO for cash billing.
           // The PDF above is only a document; the actual receivable must go through SO → AR Invoice.
-          if (!existing.salesOrderId && existing.lines && existing.lines.length > 0) {
-            this.logger.log(`[SO] Cash billing: creating SO for AR invoice after doc generation...`);
+          if (
+            !existing.salesOrderId &&
+            existing.lines &&
+            existing.lines.length > 0
+          ) {
+            this.logger.log(
+              `[SO] Cash billing: creating SO for AR invoice after doc generation...`,
+            );
             try {
               const soCustomer = po
-                ? await this.customerRepo.findById(po.customerId).catch(() => null)
+                ? await this.customerRepo
+                    .findById(po.customerId)
+                    .catch(() => null)
                 : null;
               const soCustomerName =
-                soCustomer?.name || po?.customerName || existing.customerName || existing.customerId;
+                soCustomer?.name ||
+                po?.customerName ||
+                existing.customerName ||
+                existing.customerId;
               const cashSoLines = await Promise.all(
                 (existing.lines || []).map(async (line) => {
                   const service = line.testingServiceId
@@ -625,7 +661,8 @@ export class TestingRequestService {
                   const rawPrice = Number(service?.unitPrice ?? 0);
                   const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
                   return {
-                    itemName: line.serviceName || service?.name || 'Testing Service',
+                    itemName:
+                      line.serviceName || service?.name || 'Testing Service',
                     quantity: line.sampleQuantity || 1,
                     unitPrice,
                     taxPercent: 11,
@@ -643,24 +680,37 @@ export class TestingRequestService {
                 lines: cashSoLines,
               });
               existing.salesOrderId = cashSo.id;
-              this.logger.log(`[SO] Cash SO created: ${cashSo.id} (${cashSo.soNumber})`);
+              this.logger.log(
+                `[SO] Cash SO created: ${cashSo.id} (${cashSo.soNumber})`,
+              );
               try {
                 await this.salesOrderService.approve(cashSo.id);
-              } catch { /* non-blocking */ }
+              } catch {
+                /* non-blocking */
+              }
               try {
                 await this.salesFinanceAdapter.recordSOApprovalGl(cashSo.id);
-              } catch { /* non-blocking */ }
+              } catch {
+                /* non-blocking */
+              }
               try {
-                const arInv = await this.salesFinanceAdapter.createDraftARInvoiceFromSO(
-                  cashSo.id,
-                  userId,
+                const arInv =
+                  await this.salesFinanceAdapter.createDraftARInvoiceFromSO(
+                    cashSo.id,
+                    userId,
+                  );
+                this.logger.log(
+                  `[SO] Cash AR Invoice created: ${arInv.invoiceNumber}`,
                 );
-                this.logger.log(`[SO] Cash AR Invoice created: ${arInv.invoiceNumber}`);
               } catch (invErr: any) {
-                this.logger.warn(`[SO] Cash AR Invoice creation failed (non-blocking): ${invErr?.message}`);
+                this.logger.warn(
+                  `[SO] Cash AR Invoice creation failed (non-blocking): ${invErr?.message}`,
+                );
               }
             } catch (cashSoErr: any) {
-              this.logger.warn(`[SO] Cash SO creation failed (non-blocking): ${cashSoErr?.message}`);
+              this.logger.warn(
+                `[SO] Cash SO creation failed (non-blocking): ${cashSoErr?.message}`,
+              );
             }
           }
         }
@@ -718,16 +768,16 @@ export class TestingRequestService {
           customerName,
           orderDate: new Date().toISOString().split('T')[0],
           notes: `Down Payment — Contract Testing Request ${existing.requestNumber}`,
-            lines: [
-              {
-                itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
-                quantity: 1,
-                unitPrice: dpAmount,
-                taxPercent: 11,
-                uom: 'package',
-                lineType: 'service',
-              },
-            ],
+          lines: [
+            {
+              itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
+              quantity: 1,
+              unitPrice: dpAmount,
+              taxPercent: 11,
+              uom: 'package',
+              lineType: 'service',
+            },
+          ],
         });
         existing.salesOrderId = so.id;
         this.logger.log(
@@ -1557,5 +1607,94 @@ export class TestingRequestService {
 
   async delete(id: string): Promise<boolean> {
     return this.repository.delete(id);
+  }
+
+  async regenerateSalesOrder(
+    id: string,
+    userId: string,
+    userName?: string,
+  ): Promise<TestingRequest> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new NotFoundException('Testing request not found');
+    if (existing.status !== 'approved') {
+      throw new BadRequestException('Only approved requests can regenerate sales order');
+    }
+    if (!existing.lines || existing.lines.length === 0) {
+      throw new BadRequestException('Testing request has no lines');
+    }
+
+    if (existing.notes) {
+      const cleanedNotes = existing.notes.replace(/SO Creation Error:.*$/gm, '').trim();
+      existing.notes = cleanedNotes || null;
+    }
+
+    const customer = await this.customerRepo
+      .findById(existing.customerId)
+      .catch(() => null);
+    const customerName =
+      customer?.name || existing.customerName || existing.customerId;
+
+    const soLines = await Promise.all(
+      existing.lines.map(async (line) => {
+        const service = line.testingServiceId
+          ? await this.testingServiceRepo
+              .findById(line.testingServiceId)
+              .catch(() => null)
+          : null;
+        const rawPrice = Number(service?.unitPrice ?? 0);
+        const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+        return {
+          itemName: line.serviceName || service?.name || 'Testing Service',
+          quantity: line.sampleQuantity || 1,
+          unitPrice,
+          taxPercent: 11,
+          description: line.sampleCode || undefined,
+          uom: 'sample',
+          lineType: 'service',
+        };
+      }),
+    );
+
+    const so = await this.salesOrderService.create({
+      customerId: existing.customerId,
+      customerName,
+      orderDate: new Date().toISOString().split('T')[0],
+      notes: `Auto-generated from testing request ${existing.requestNumber}`,
+      lines: soLines,
+    });
+    existing.salesOrderId = so.id;
+
+    const allServiceLines = soLines.every(
+      (l) => (l as any).lineType === 'service',
+    );
+    if (allServiceLines) {
+      await this.salesOrderService.approve(so.id);
+      try {
+        await this.salesFinanceAdapter.recordSOApprovalGl(so.id);
+      } catch {
+        /* ignore */
+      }
+      try {
+        await this.salesFinanceAdapter.createDraftARInvoiceFromSO(
+          so.id,
+          userId,
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+
+    await this.repository.save(existing);
+
+    void this.activityLog.log({
+      testingRequestId: id,
+      action: 'sales_order_regenerated',
+      performedBy: userId,
+      performedByName: userName,
+      performedByRole: 'admin',
+      details: { salesOrderId: so.id, soNumber: so.soNumber },
+    });
+
+    return existing;
   }
 }
