@@ -169,8 +169,8 @@ export class CustomerPortalService {
     if (isNewContract) {
       if (
         !dto.scopeOfTesting ||
-        !dto.contractEstimation ||
-        !dto.contractTempoDays
+        dto.contractEstimation === undefined ||
+        dto.contractTempoDays === undefined
       ) {
         throw new BadRequestException(
           'New contract requests require scopeOfTesting, contractEstimation, and contractTempoDays',
