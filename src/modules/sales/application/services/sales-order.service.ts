@@ -15,6 +15,10 @@ import {
 } from '../../infrastructure/http/dtos/sales-order.dto';
 import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
+import {
+  SequenceGenerator,
+  ADVISORY_LOCK_KEYS,
+} from '../../../../shared/kernel/infrastructure/database/sequence-generator';
 
 @Injectable()
 export class SalesOrderService {
@@ -366,15 +370,11 @@ export class SalesOrderService {
   private async generateSalesOrderNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const prefix = `SO-${year}-`;
-    const last = await this.soRepo
-      .createQueryBuilder('so')
-      .where('so.soNumber LIKE :prefix', { prefix: `${prefix}%` })
-      .andWhere('so.deletedAt IS NULL')
-      .orderBy('so.soNumber', 'DESC')
-      .getOne();
-
-    if (!last) return `${prefix}0001`;
-    const seq = parseInt(last.soNumber.replace(prefix, ''), 10) + 1;
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    const seq = new SequenceGenerator(this.dataSource, {
+      prefix,
+      padLength: 4,
+      lockKey: ADVISORY_LOCK_KEYS.SALES_ORDER,
+    });
+    return seq.next('so_number', 'sales_orders');
   }
 }
