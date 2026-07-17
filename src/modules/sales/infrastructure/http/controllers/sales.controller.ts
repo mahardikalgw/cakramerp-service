@@ -21,6 +21,7 @@ import { SalesOrderService } from '../../../application/services/sales-order.ser
 import { SalesReturnService } from '../../../application/services/sales-return.service';
 import { SalesOrchestratorService } from '../../../application/services/sales-orchestrator.service';
 import { SalesTraceabilityService } from '../../../application/services/sales-traceability.service';
+import { SalesFinanceAdapter } from '../../../application/adapters/sales-finance.adapter';
 import {
   CreateQuotationHttpDto,
   UpdateQuotationHttpDto,
@@ -48,6 +49,7 @@ export class SalesController {
     private readonly salesReturnService: SalesReturnService,
     private readonly orchestrator: SalesOrchestratorService,
     private readonly traceability: SalesTraceabilityService,
+    private readonly salesFinanceAdapter: SalesFinanceAdapter,
   ) {}
 
   // ==================== Quotations ====================
@@ -241,6 +243,17 @@ export class SalesController {
     @Body() body?: { reason?: string },
   ) {
     return this.salesOrderService.cancel(id, body?.reason);
+  }
+
+  @Post('sales-orders/:id/confirm-paid')
+  @Throttle(WRITE_THROTTLE)
+  @RequirePermissions('sales-orders:update')
+  async confirmSalesOrderPaid(@Param('id') id: string) {
+    const so = await this.salesOrderService.findById(id);
+    if (!so) throw new BadRequestException('Sales order not found');
+
+    const result = await this.salesFinanceAdapter.recordSOPaidGl(id);
+    return { success: true, glPostingQueueId: result.glPostingQueueId };
   }
 
   // ==================== Sales Returns ====================

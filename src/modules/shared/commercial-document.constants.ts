@@ -90,6 +90,7 @@ export const GL_EVENTS = {
   PR_RETURNED: 'purchase_return_approved',
   SO_APPROVED: 'so_approved',
   SO_DELIVERED: 'so_delivered',
+  SO_PAID: 'so_paid',
   SALES_RETURN_APPROVED: 'sales_return_approved',
   PAYROLL_RUN: 'payroll_run',
 } as const;

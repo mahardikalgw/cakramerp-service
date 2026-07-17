@@ -199,6 +199,51 @@ export class SalesFinanceAdapter {
     return { glPostingQueueId: entry.id };
   }
 
+  async recordSOPaidGl(
+    soId: string,
+  ): Promise<{ glPostingQueueId: string }> {
+    const so: any[] = await this.dataSource.query(
+      `SELECT id, so_number, customer_id, customer_name, grand_total
+       FROM sales_orders WHERE id = $1 LIMIT 1`,
+      [soId],
+    );
+    if (so.length === 0) throw new BadRequestException('Sales order not found');
+    const header = so[0];
+    const amount = Number(header.grand_total);
+    if (amount <= 0) {
+      return { glPostingQueueId: '' };
+    }
+
+    const entry = await this.glPostingQueue.createEntry({
+      sourceType: SOURCE_TYPES.SALES_ORDER,
+      sourceId: header.id,
+      sourceNumber: header.so_number,
+      eventType: GL_EVENTS.SO_PAID,
+      amount,
+      description: `SO Payment Confirmed ${header.so_number} - ${header.customer_name}`,
+      suggestedLines: [
+        {
+          accountId: '',
+          accountCode: '1300',
+          accountName: 'Bank/Cash',
+          debit: 0,
+          credit: amount,
+          description: `Cash/Bank receipt for ${header.so_number}`,
+        },
+        {
+          accountId: '',
+          accountCode: '1200',
+          accountName: 'Accounts Receivable',
+          debit: amount,
+          credit: 0,
+          description: `Clear AR for ${header.so_number}`,
+        },
+      ],
+    });
+
+    return { glPostingQueueId: entry.id };
+  }
+
   private async recordLink(
     sourceType: string,
     sourceId: string,
