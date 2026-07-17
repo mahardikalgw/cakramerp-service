@@ -230,10 +230,11 @@ export class PostApprovalLabContractService {
     const contractNumber = await this.repository.generateNextContractNumber();
 
     // Cash billing: contract valid for 3 months (customer already paid in full).
-    // Contract billing: 6 months default.
+    // Contract billing: use tempo days from request, default to 6 months.
     const isCash = (request.billingType ?? 'cash') === 'cash';
+    const effectiveTempoDays = request.contractTempoDays ?? (isCash ? 90 : 180);
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + (isCash ? 3 : 6));
+    expiresAt.setDate(expiresAt.getDate() + effectiveTempoDays);
 
     const contract = new PostApprovalLabContract({
       contractNumber,
