@@ -201,18 +201,36 @@ export class TestingRequestService {
       contractEstimation: dto.contractEstimation,
       contractTempoDays: dto.contractTempoDays,
       taxPercent: dto.taxPercent ?? 0,
-      lines: dto.lines.map((line) => ({
-        id: undefined,
-        createdAt: undefined,
-        updatedAt: undefined,
-        testingRequestId: undefined,
-        testingServiceId: line.testingServiceId ?? null,
-        serviceName: line.serviceName ?? null,
-        sampleCode: line.sampleCode ?? null,
-        sampleQuantity: line.sampleQuantity,
-        sampleNotes: line.sampleNotes ?? null,
-        notes: line.notes,
-      })),
+      lines: await Promise.all(
+        dto.lines.map(async (line) => {
+          let unitPrice = 0;
+          if (line.testingServiceId) {
+            try {
+              const service = await this.testingServiceRepo.findById(
+                line.testingServiceId,
+              );
+              if (service) {
+                unitPrice = Number(service.unitPrice ?? 0);
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+          return {
+            id: undefined,
+            createdAt: undefined,
+            updatedAt: undefined,
+            testingRequestId: undefined,
+            testingServiceId: line.testingServiceId ?? null,
+            serviceName: line.serviceName ?? null,
+            sampleCode: line.sampleCode ?? null,
+            sampleQuantity: line.sampleQuantity,
+            unitPrice,
+            sampleNotes: line.sampleNotes ?? null,
+            notes: line.notes,
+          };
+        }),
+      ),
     } as any);
 
     const saved = await this.repository.save(entity);
@@ -346,18 +364,11 @@ export class TestingRequestService {
 
         // Look up service prices for each line
         const invoiceLines = await Promise.all(
-          (existing.lines || []).map(async (line) => {
-            const service = line.testingServiceId
-              ? await this.testingServiceRepo
-                  .findById(line.testingServiceId)
-                  .catch(() => null)
-              : null;
-            const rawPrice = Number(service?.unitPrice ?? 0);
-            const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+          (existing.lines || []).map((line) => {
+            const unitPrice = Number(line.unitPrice ?? 0);
             const quantity = line.sampleQuantity ?? 1;
             return {
-              description:
-                line.serviceName || service?.name || 'Testing Service',
+              description: line.serviceName || 'Testing Service',
               quantity: String(quantity),
               unitPrice: String(unitPrice),
               total: String(unitPrice * quantity),
@@ -485,14 +496,8 @@ export class TestingRequestService {
         let totalAmount = 0;
         // Look up real service prices for each line (same pattern as SO path)
         const poLines = await Promise.all(
-          (existing.lines || []).map(async (line) => {
-            const service = line.testingServiceId
-              ? await this.testingServiceRepo
-                  .findById(line.testingServiceId)
-                  .catch(() => null)
-              : null;
-            const rawPrice = Number(service?.unitPrice ?? 0);
-            const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+          (existing.lines || []).map((line) => {
+            const unitPrice = Number(line.unitPrice ?? 0);
             const total = (line.sampleQuantity ?? 0) * unitPrice;
             totalAmount += total;
             return {
@@ -501,8 +506,7 @@ export class TestingRequestService {
               updatedAt: undefined,
               labPurchaseOrderId: undefined,
               testingServiceId: line.testingServiceId ?? '',
-              serviceName:
-                line.serviceName || service?.name || 'Testing Service',
+              serviceName: line.serviceName || 'Testing Service',
               quantity: line.sampleQuantity ?? 1,
               unitPrice,
               total,
@@ -660,27 +664,18 @@ export class TestingRequestService {
                 po?.customerName ||
                 existing.customerName ||
                 existing.customerId;
-              const cashSoLines = await Promise.all(
-                (existing.lines || []).map(async (line) => {
-                  const service = line.testingServiceId
-                    ? await this.testingServiceRepo
-                        .findById(line.testingServiceId)
-                        .catch(() => null)
-                    : null;
-                  const rawPrice = Number(service?.unitPrice ?? 0);
-                  const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
-                  return {
-                    itemName:
-                      line.serviceName || service?.name || 'Testing Service',
-                    quantity: line.sampleQuantity || 1,
-                    unitPrice,
-                    taxPercent,
-                    description: line.sampleCode || undefined,
-                    uom: 'sample',
-                    lineType: 'service',
-                  };
-                }),
-              );
+              const cashSoLines = existing.lines.map((line) => {
+                const unitPrice = Number(line.unitPrice ?? 0);
+                return {
+                  itemName: line.serviceName || 'Testing Service',
+                  quantity: line.sampleQuantity || 1,
+                  unitPrice,
+                  taxPercent,
+                  description: line.sampleCode || undefined,
+                  uom: 'sample',
+                  lineType: 'service',
+                };
+              });
               const cashSo = await this.salesOrderService.create({
                 customerId: existing.customerId,
                 customerName: soCustomerName,
@@ -834,27 +829,19 @@ export class TestingRequestService {
         this.logger.log(
           `[SO] Step 3: Building ${existing.lines.length} SO lines...`,
         );
-        // Look up service prices for SO line unitPrice
-        const soLines = await Promise.all(
-          existing.lines.map(async (line) => {
-            const service = line.testingServiceId
-              ? await this.testingServiceRepo
-                  .findById(line.testingServiceId)
-                  .catch(() => null)
-              : null;
-            const rawPrice = Number(service?.unitPrice ?? 0);
-            const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
-            return {
-              itemName: line.serviceName || service?.name || 'Testing Service',
-              quantity: line.sampleQuantity || 1,
-              unitPrice,
-              taxPercent,
-              description: line.sampleCode || undefined,
-              uom: 'sample',
-              lineType: 'service',
-            };
-          }),
-        );
+        // Use stored unitPrice from the testing request line
+        const soLines = existing.lines.map((line) => {
+          const unitPrice = Number(line.unitPrice ?? 0);
+          return {
+            itemName: line.serviceName || 'Testing Service',
+            quantity: line.sampleQuantity || 1,
+            unitPrice,
+            taxPercent,
+            description: line.sampleCode || undefined,
+            uom: 'sample',
+            lineType: 'service',
+          };
+        });
         this.logger.log(
           `[SO] Step 3 result: ${soLines.length} lines, firstLineUnitPrice=${soLines[0]?.unitPrice}`,
         );
@@ -1626,14 +1613,18 @@ export class TestingRequestService {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException('Testing request not found');
     if (existing.status !== 'approved') {
-      throw new BadRequestException('Only approved requests can regenerate sales order');
+      throw new BadRequestException(
+        'Only approved requests can regenerate sales order',
+      );
     }
     if (!existing.lines || existing.lines.length === 0) {
       throw new BadRequestException('Testing request has no lines');
     }
 
     if (existing.notes) {
-      const cleanedNotes = existing.notes.replace(/SO Creation Error:.*$/gm, '').trim();
+      const cleanedNotes = existing.notes
+        .replace(/SO Creation Error:.*$/gm, '')
+        .trim();
       existing.notes = cleanedNotes || null;
     }
 
@@ -1643,26 +1634,18 @@ export class TestingRequestService {
     const customerName =
       customer?.name || existing.customerName || existing.customerId;
 
-    const soLines = await Promise.all(
-      existing.lines.map(async (line) => {
-        const service = line.testingServiceId
-          ? await this.testingServiceRepo
-              .findById(line.testingServiceId)
-              .catch(() => null)
-          : null;
-        const rawPrice = Number(service?.unitPrice ?? 0);
-        const unitPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
-        return {
-          itemName: line.serviceName || service?.name || 'Testing Service',
-          quantity: line.sampleQuantity || 1,
-          unitPrice,
-          taxPercent: existing.taxPercent ?? 0,
-          description: line.sampleCode || undefined,
-          uom: 'sample',
-          lineType: 'service',
-        };
-      }),
-    );
+    const soLines = existing.lines.map((line) => {
+      const unitPrice = Number(line.unitPrice ?? 0);
+      return {
+        itemName: line.serviceName || 'Testing Service',
+        quantity: line.sampleQuantity || 1,
+        unitPrice,
+        taxPercent: existing.taxPercent ?? 0,
+        description: line.sampleCode || undefined,
+        uom: 'sample',
+        lineType: 'service',
+      };
+    });
 
     const so = await this.salesOrderService.create({
       customerId: existing.customerId,

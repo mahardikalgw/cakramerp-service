@@ -174,18 +174,8 @@ export class PostApprovalLabContractService {
         samplesOrdered[i] ??
         null;
 
-      let unitPrice = 0;
-      if (line.testingServiceId) {
-        try {
-          const service = await this.testingServiceRepo.findById(
-            line.testingServiceId,
-          );
-          if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {
-          /* ignore */
-        }
-      }
       const quantity = line.sampleQuantity ?? 0;
+      const unitPrice = Number(line.unitPrice ?? 0);
       const totalPrice = unitPrice * quantity;
       baseAmount += totalPrice;
 
@@ -620,18 +610,8 @@ export class PostApprovalLabContractService {
         samplesOrdered[i] ??
         null;
 
-      let unitPrice = 0;
-      if (line.testingServiceId) {
-        try {
-          const service = await this.testingServiceRepo.findById(
-            line.testingServiceId,
-          );
-          if (service) unitPrice = service.unitPrice ?? 0;
-        } catch {
-          /* ignore */
-        }
-      }
       const quantity = line.sampleQuantity ?? 0;
+      const unitPrice = Number(line.unitPrice ?? 0);
       const totalPrice = unitPrice * quantity;
 
       docLines.push({

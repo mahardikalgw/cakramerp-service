@@ -19,6 +19,7 @@ export class TestingRequestLine extends BaseEntity {
   declare serviceName: string | null;
   declare sampleCode: string | null;
   declare sampleQuantity: number;
+  declare unitPrice: number;
   declare notes: string | null;
   declare createdAt: Date;
   declare updatedAt: Date;

@@ -19,6 +19,15 @@ export class TestingRequestLineTypeOrmEntity extends SoftDeletableTypeOrmEntity 
   @Column({ type: 'int', nullable: true })
   declare sampleQuantity: number;
 
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    default: 0,
+    name: 'unit_price',
+  })
+  declare unitPrice: number;
+
   @Column({ type: 'text', nullable: true })
   declare notes: string;
 
