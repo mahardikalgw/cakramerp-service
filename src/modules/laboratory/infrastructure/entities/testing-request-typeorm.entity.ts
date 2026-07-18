@@ -208,7 +208,12 @@ export class TestingRequestTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'text', nullable: true, name: 'scope_of_testing' })
   declare scopeOfTesting: string | null;
 
-  @Column({ type: 'uuid', array: true, nullable: true, name: 'scope_of_testing_service_ids' })
+  @Column({
+    type: 'uuid',
+    array: true,
+    nullable: true,
+    name: 'scope_of_testing_service_ids',
+  })
   declare scopeOfTestingServiceIds: string[] | null;
 
   @Column({ type: 'int', nullable: true, name: 'contract_estimation' })
@@ -256,6 +261,15 @@ export class TestingRequestTypeOrmEntity extends SoftDeletableTypeOrmEntity {
 
   @Column({ type: 'boolean', default: false, name: 'is_unlimited' })
   declare isUnlimited: boolean;
+
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+    name: 'tax_percent',
+  })
+  declare taxPercent: number;
 
   @OneToMany(
     () => TestingRequestLineTypeOrmEntity,

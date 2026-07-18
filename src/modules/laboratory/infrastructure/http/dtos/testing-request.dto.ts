@@ -99,6 +99,11 @@ export class CreateTestingRequestHttpDto {
   @IsUUID()
   existingContractId?: string;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  taxPercent?: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TestingRequestLineDto)
@@ -146,6 +151,11 @@ export class ApproveRejectDto {
   @IsNumber()
   @Min(0)
   downPaymentAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  taxPercent?: number;
 }
 
 export class AssignLaboranDto {

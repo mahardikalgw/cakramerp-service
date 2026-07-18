@@ -5,4 +5,9 @@ export class ApproveTestingRequestDto {
   @IsNumber()
   @Min(0)
   downPaymentAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  taxPercent?: number;
 }

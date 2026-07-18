@@ -94,6 +94,7 @@ export class TestingRequest extends BaseEntity {
   declare contractConfirmedAt?: Date | null;
   declare contractConfirmedBy?: string | null;
   declare isUnlimited?: boolean;
+  declare taxPercent?: number;
 
   declare lines: TestingRequestLine[];
   declare createdAt: Date;

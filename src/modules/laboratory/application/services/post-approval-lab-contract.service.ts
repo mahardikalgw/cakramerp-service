@@ -35,7 +35,6 @@ import type { PostApprovalTestingResultRepositoryPort } from '../../domain/repos
 import { POST_APPROVAL_TESTING_RESULT_REPOSITORY } from '../../domain/repositories/post-approval-testing-result-repository.port';
 import type { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 
-
 @Injectable()
 export class PostApprovalLabContractService {
   private readonly logger = new Logger(PostApprovalLabContractService.name);
@@ -120,10 +119,7 @@ export class PostApprovalLabContractService {
     // contract numbers. The lock key is a stable integer derived from the
     // string "contract_number_generation".
     const LOCK_KEY = 7_432_918; // arbitrary stable int for this lock
-    await this.dataSource.query(
-      `SELECT pg_advisory_lock($1)`,
-      [LOCK_KEY],
-    );
+    await this.dataSource.query(`SELECT pg_advisory_lock($1)`, [LOCK_KEY]);
     try {
       return await this._generateFromTestingRequestInner(
         testingRequestId,
@@ -131,10 +127,7 @@ export class PostApprovalLabContractService {
         adminUserName,
       );
     } finally {
-      await this.dataSource.query(
-        `SELECT pg_advisory_unlock($1)`,
-        [LOCK_KEY],
-      );
+      await this.dataSource.query(`SELECT pg_advisory_unlock($1)`, [LOCK_KEY]);
     }
   }
 
@@ -223,7 +216,7 @@ export class PostApprovalLabContractService {
       });
     }
 
-    const taxPercent = 11;
+    const taxPercent = request.taxPercent ?? 0;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = baseAmount + taxAmount;
 
@@ -427,7 +420,7 @@ export class PostApprovalLabContractService {
 
     const baseAmount =
       downPaymentAmount && downPaymentAmount > 0 ? downPaymentAmount : 0;
-    const taxPercent = 11;
+    const taxPercent = request.taxPercent ?? 0;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = Math.round((baseAmount + taxAmount) * 100) / 100;
 
@@ -956,7 +949,7 @@ export class PostApprovalLabContractService {
     const draftContractNumber = this.generateContractNumber(lastNumber);
 
     const baseAmount = request.contractEstimation ?? 0;
-    const taxPercent = 11;
+    const taxPercent = request.taxPercent ?? 0;
     const taxAmount = Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
     const totalAmount = baseAmount + taxAmount;
     const dpAmount =
@@ -1025,6 +1018,12 @@ export class PostApprovalLabContractService {
 
     // Generate DP invoice
     try {
+      const taxMultiplier = 1 + taxPercent / 100;
+      const dpSubtotal =
+        taxMultiplier > 0
+          ? Math.round((dpAmount / taxMultiplier) * 100) / 100
+          : dpAmount;
+      const dpTaxAmount = Math.round((dpAmount - dpSubtotal) * 100) / 100;
       const dpInvoiceDoc = await this.docHelper.generateDocument({
         documentType: 'lab_invoice',
         entityId: testingRequestId,
@@ -1038,10 +1037,9 @@ export class PostApprovalLabContractService {
           dueDate: new Date(Date.now() + 7 * 86400000)
             .toISOString()
             .split('T')[0],
-          subtotal: Math.round((dpAmount / 1.11) * 100) / 100,
-          taxPercent: '11',
-          taxAmount:
-            Math.round((dpAmount - dpAmount / 1.11) * 100) / 100,
+          subtotal: dpSubtotal,
+          taxPercent: String(taxPercent),
+          taxAmount: dpTaxAmount,
           totalAmount: dpAmount.toLocaleString('id-ID'),
           status: 'issued',
           authorizedByName: adminUserName || 'Lab Authorized',

@@ -155,6 +155,7 @@ export class TestingRequestService {
     contractTempoDays?: number;
     scopeOfTestingServiceIds?: string[];
     existingContractId?: string;
+    taxPercent?: number;
     // Portal fields
     submittedBy?: 'admin' | 'customer';
     customerUserId?: string;
@@ -199,6 +200,7 @@ export class TestingRequestService {
       scopeOfTestingServiceIds: dto.scopeOfTestingServiceIds,
       contractEstimation: dto.contractEstimation,
       contractTempoDays: dto.contractTempoDays,
+      taxPercent: dto.taxPercent ?? 0,
       lines: dto.lines.map((line) => ({
         id: undefined,
         createdAt: undefined,
@@ -284,6 +286,7 @@ export class TestingRequestService {
     userId: string,
     userName?: string,
     downPaymentAmount?: number,
+    taxPercentOverride?: number,
   ): Promise<TestingRequest> {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException('Testing request not found');
@@ -293,6 +296,14 @@ export class TestingRequestService {
     existing.status = 'approved';
     existing.approvedBy = userId;
     existing.approvedAt = new Date();
+
+    // Use override from approve DTO, fallback to request's stored value, default 0
+    const taxPercent = taxPercentOverride ?? existing.taxPercent ?? 0;
+    existing.taxPercent = taxPercent;
+
+    // Persist taxPercent early so downstream services (contract generation)
+    // can read the correct value from the database.
+    await this.repository.save(existing);
 
     if (existing.billingType === 'contract' && existing.labContractId) {
       // Contract billing: deduct quota on approval AND generate invoice
@@ -358,7 +369,6 @@ export class TestingRequestService {
           (sum, l) => sum + (parseFloat(l.total) || 0),
           0,
         );
-        const taxPercent = 11;
         const invoiceTaxAmount =
           Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
         const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
@@ -592,7 +602,6 @@ export class TestingRequestService {
 
           this.logger.log(`[DOC] Generating Invoice document...`);
           // 2. Generate Invoice document (with prices and PPN tax)
-          const taxPercent = 11;
           const invoiceSubtotal = po.lines.reduce(
             (sum, l) => sum + (l.total ?? 0),
             0,
@@ -665,7 +674,7 @@ export class TestingRequestService {
                       line.serviceName || service?.name || 'Testing Service',
                     quantity: line.sampleQuantity || 1,
                     unitPrice,
-                    taxPercent: 11,
+                    taxPercent,
                     description: line.sampleCode || undefined,
                     uom: 'sample',
                     lineType: 'service',
@@ -773,7 +782,7 @@ export class TestingRequestService {
               itemName: `Down Payment — Contract Testing (${existing.projectName || '-'})`,
               quantity: 1,
               unitPrice: dpAmount,
-              taxPercent: 11,
+              taxPercent,
               uom: 'package',
               lineType: 'service',
             },
@@ -839,7 +848,7 @@ export class TestingRequestService {
               itemName: line.serviceName || service?.name || 'Testing Service',
               quantity: line.sampleQuantity || 1,
               unitPrice,
-              taxPercent: 11,
+              taxPercent,
               description: line.sampleCode || undefined,
               uom: 'sample',
               lineType: 'service',
@@ -1647,7 +1656,7 @@ export class TestingRequestService {
           itemName: line.serviceName || service?.name || 'Testing Service',
           quantity: line.sampleQuantity || 1,
           unitPrice,
-          taxPercent: 11,
+          taxPercent: existing.taxPercent ?? 0,
           description: line.sampleCode || undefined,
           uom: 'sample',
           lineType: 'service',

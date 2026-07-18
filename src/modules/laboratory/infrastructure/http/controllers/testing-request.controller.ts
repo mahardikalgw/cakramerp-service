@@ -60,6 +60,7 @@ export class TestingRequestController {
     return this.testingRequestService.create({
       ...dto,
       priority: dto.priority as 'normal' | 'urgent' | undefined,
+      taxPercent: dto.taxPercent,
     });
   }
 
@@ -91,6 +92,7 @@ export class TestingRequestController {
       user.id ?? 'unknown',
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
       dto.downPaymentAmount,
+      dto.taxPercent,
     );
   }
 
