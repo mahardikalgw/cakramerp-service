@@ -124,7 +124,7 @@ export class CreatePortalTestingRequestDto {
 
   @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(0)
   contractEstimation?: number;
 
   @IsOptional()
