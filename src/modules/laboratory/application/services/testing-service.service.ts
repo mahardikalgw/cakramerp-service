@@ -14,6 +14,7 @@ export class TestingServiceService {
     isActive?: boolean;
     page?: number;
     limit?: number;
+    search?: string;
   }) {
     const filters: Record<string, any> = {};
     if (options?.isActive !== undefined) filters.isActive = options.isActive;
@@ -22,6 +23,7 @@ export class TestingServiceService {
       filters,
       page: options?.page,
       limit: options?.limit,
+      search: options?.search,
     });
   }
 
@@ -35,6 +37,7 @@ export class TestingServiceService {
     unitPrice: number;
     measurementUnit?: string;
     description?: string;
+    sni?: string;
     isActive?: boolean;
   }): Promise<TestingService> {
     const existing = await this.repository.findByCode(dto.code);

@@ -28,6 +28,7 @@ export class TestingServiceTypeOrmRepository
       unitPrice: Number(entity.unitPrice),
       measurementUnit: entity.measurementUnit,
       description: entity.description,
+      sni: entity.sni,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -42,8 +43,16 @@ export class TestingServiceTypeOrmRepository
     entity.unitPrice = domain.unitPrice;
     entity.measurementUnit = domain.measurementUnit ?? '';
     entity.description = domain.description ?? '';
+    entity.sni = domain.sni ?? '';
     entity.isActive = domain.isActive ?? true;
     return entity;
+  }
+
+  /**
+   * Define which columns are searched when `options.search` is used.
+   */
+  protected searchableColumns(): string[] {
+    return ['code', 'name'];
   }
 
   async findByCode(code: string): Promise<TestingService | null> {

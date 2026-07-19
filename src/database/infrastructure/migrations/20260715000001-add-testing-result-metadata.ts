@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTestingResultMetadata20260715000001
-  implements MigrationInterface
-{
+export class AddTestingResultMetadata20260715000001 implements MigrationInterface {
   name = 'AddTestingResultMetadata20260715000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

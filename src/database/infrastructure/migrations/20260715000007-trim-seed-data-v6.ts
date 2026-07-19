@@ -31,9 +31,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * down() is a no-op.
  */
-export class TrimSeedDataV6DropFkAndWipe20260715000007
-  implements MigrationInterface
-{
+export class TrimSeedDataV6DropFkAndWipe20260715000007 implements MigrationInterface {
   name = 'TrimSeedDataV6DropFkAndWipe20260715000007';
 
   private async safeExec(
@@ -218,10 +216,7 @@ export class TrimSeedDataV6DropFkAndWipe20260715000007
     }
 
     // ─── 6. Roles other than admin
-    await this.safeExec(
-      queryRunner,
-      `DELETE FROM roles WHERE name <> 'admin'`,
-    );
+    await this.safeExec(queryRunner, `DELETE FROM roles WHERE name <> 'admin'`);
 
     // ─── 7. Permissions not in use by the admin role
     await this.safeExec(

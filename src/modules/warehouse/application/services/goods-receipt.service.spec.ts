@@ -115,7 +115,9 @@ describe('GoodsReceiptService', () => {
 
     it('should create receipt, lines, and record stock movements', async () => {
       const year = new Date().getFullYear();
-      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(`GRN-${year}-0001`);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(
+        `GRN-${year}-0001`,
+      );
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine
         .mockResolvedValueOnce(mockLine)
@@ -172,7 +174,9 @@ describe('GoodsReceiptService', () => {
 
     it('should increment GRN number from last number', async () => {
       const year = new Date().getFullYear();
-      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(`GRN-${year}-0006`);
+      goodsReceiptRepo.generateNextGrnNumber.mockResolvedValue(
+        `GRN-${year}-0006`,
+      );
       goodsReceiptRepo.create.mockResolvedValue(mockReceipt);
       goodsReceiptRepo.createLine.mockResolvedValue(mockLine);
       stockMovementService.recordMovement.mockResolvedValue({});

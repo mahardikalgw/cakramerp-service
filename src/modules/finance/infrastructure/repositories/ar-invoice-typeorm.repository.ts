@@ -62,7 +62,11 @@ export class ARInvoiceTypeOrmRepository implements ARInvoiceRepositoryPort {
 
   async findByDateRange(start: Date, end: Date): Promise<ARInvoice[]> {
     const entities = await this.repo.find({
-      where: { issueDate: start, dueDate: LessThan(end), deletedAt: IsNull() } as any,
+      where: {
+        issueDate: start,
+        dueDate: LessThan(end),
+        deletedAt: IsNull(),
+      } as any,
       order: { issueDate: 'DESC' },
     });
     return entities.map((e) => this.toDomain(e));

@@ -26,6 +26,10 @@ export class CreateTestingServiceHttpDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  sni?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }
@@ -51,6 +55,10 @@ export class UpdateTestingServiceHttpDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  sni?: string;
 
   @IsOptional()
   isActive?: boolean;

@@ -199,6 +199,17 @@ export class PostApprovalTestingResultService {
 
     const certificateNumber = `SR-${enriched.resultNumber ?? id.substring(0, 8)}`;
 
+    const createdDate = this.toDateStr((enriched as any).createdDate);
+    const testingDateVal = this.toDateStr((enriched as any).testingDate);
+    let sampleAge = '';
+    if (createdDate && testingDateVal && createdDate !== '-' && testingDateVal !== '-') {
+      const created = new Date(createdDate);
+      const testing = new Date(testingDateVal);
+      const diffMs = testing.getTime() - created.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0) sampleAge = String(diffDays);
+    }
+
     const doc = await this.docHelper.generateDocument({
       documentType: 'test_result_certificate',
       entityId: id,
@@ -227,10 +238,11 @@ export class PostApprovalTestingResultService {
         berat,
         luas,
         retakan,
-        testingDate: this.toDateStr((enriched as any).testingDate),
-        createdDate: this.toDateStr((enriched as any).createdDate),
+        testingDate: testingDateVal,
+        createdDate,
         mutu: (enriched as any).mutu ?? '',
         produk: (enriched as any).produk ?? '',
+        sampleAge,
       },
       lines,
     });
@@ -629,6 +641,17 @@ export class PostApprovalTestingResultService {
         method: p.standard ?? '',
         sop: p.standard ?? '',
       }));
+      const certCreatedDate = this.toDateStr((enriched as any).createdDate);
+      const certTestingDate = this.toDateStr((enriched as any).testingDate);
+      let certSampleAge = '';
+      if (certCreatedDate && certTestingDate && certCreatedDate !== '-' && certTestingDate !== '-') {
+        const created = new Date(certCreatedDate);
+        const testing = new Date(certTestingDate);
+        const diffMs = testing.getTime() - created.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0) certSampleAge = String(diffDays);
+      }
+
       const certificateDoc = await this.docHelper.generateDocument({
         documentType: 'test_result_certificate',
         entityId: saved.id,
@@ -657,10 +680,11 @@ export class PostApprovalTestingResultService {
           berat,
           luas,
           retakan,
-          testingDate: this.toDateStr((enriched as any).testingDate),
-          createdDate: this.toDateStr((enriched as any).createdDate),
+          testingDate: certTestingDate,
+          createdDate: certCreatedDate,
           mutu: (enriched as any).mutu ?? '',
           produk: (enriched as any).produk ?? '',
+          sampleAge: certSampleAge,
         },
         lines: certLines,
       });

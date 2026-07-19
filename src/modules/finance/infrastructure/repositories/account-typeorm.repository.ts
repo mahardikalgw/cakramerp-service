@@ -14,7 +14,9 @@ export class AccountTypeOrmRepository implements AccountRepositoryPort {
   }
 
   async findById(id: string): Promise<Account | null> {
-    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
+    const entity = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
   }
 

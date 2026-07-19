@@ -63,10 +63,20 @@ export class AddMissingUpdatedAtColumns20260707000001 implements MigrationInterf
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "email_delivery_log" DROP COLUMN IF EXISTS deleted_at`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "idx_email_delivery_log_deleted_at"`);
-    await queryRunner.query(`ALTER TABLE "email_delivery_log" DROP COLUMN IF EXISTS updated_at`);
-    await queryRunner.query(`ALTER TABLE "contract_test_invoice_results" DROP COLUMN IF EXISTS updated_at`);
-    await queryRunner.query(`ALTER TABLE "lab_activity_logs" DROP COLUMN IF EXISTS updated_at`);
+    await queryRunner.query(
+      `ALTER TABLE "email_delivery_log" DROP COLUMN IF EXISTS deleted_at`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "idx_email_delivery_log_deleted_at"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "email_delivery_log" DROP COLUMN IF EXISTS updated_at`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "contract_test_invoice_results" DROP COLUMN IF EXISTS updated_at`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "lab_activity_logs" DROP COLUMN IF EXISTS updated_at`,
+    );
   }
 }

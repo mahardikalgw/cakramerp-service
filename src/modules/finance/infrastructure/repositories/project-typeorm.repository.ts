@@ -15,7 +15,9 @@ export class ProjectTypeOrmRepository implements ProjectRepositoryPort {
   }
 
   async findById(id: string): Promise<Project | null> {
-    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
+    const entity = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
   }
 

@@ -80,7 +80,9 @@ export class SampleTypeOrmRepository
     const row = await this.repository
       .createQueryBuilder('s')
       .select('s.sample_code', 'sampleCode')
-      .where('s.sample_code LIKE :prefix', { prefix: `SPL-${new Date().getFullYear()}-%` })
+      .where('s.sample_code LIKE :prefix', {
+        prefix: `SPL-${new Date().getFullYear()}-%`,
+      })
       .orderBy(
         "CAST(SUBSTRING(s.sample_code FROM 'SPL-\\d{4}-(\\d+)') AS INTEGER)",
         'DESC',

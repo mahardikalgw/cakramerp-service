@@ -170,6 +170,7 @@ import { PostApprovalLabContractController } from './infrastructure/http/control
 import { PostApprovalTestingScheduleController } from './infrastructure/http/controllers/post-approval-testing-schedule.controller';
 import { PostApprovalTestingResultController } from './infrastructure/http/controllers/post-approval-testing-result.controller';
 import { PostApprovalDocumentArchiveController } from './infrastructure/http/controllers/post-approval-document-archive.controller';
+import { LabReportController } from './infrastructure/http/controllers/lab-report.controller';
 import { PostApprovalLabContractService } from './application/services/post-approval-lab-contract.service';
 import { PostApprovalTestingScheduleService } from './application/services/post-approval-testing-schedule.service';
 import { PostApprovalTestingResultService } from './application/services/post-approval-testing-result.service';
@@ -264,6 +265,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     PostApprovalTestingScheduleController,
     PostApprovalTestingResultController,
     PostApprovalDocumentArchiveController,
+    LabReportController,
     SyncController,
     ContractInvoiceController,
     ContractTestInvoiceController,

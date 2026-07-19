@@ -15,7 +15,9 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
   }
 
   async findById(id: string): Promise<APPayment | null> {
-    const entity = await this.repo.findOne({ where: { id, deletedAt: IsNull() } as any });
+    const entity = await this.repo.findOne({
+      where: { id, deletedAt: IsNull() } as any,
+    });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -44,7 +46,10 @@ export class APPaymentTypeOrmRepository implements APPaymentRepositoryPort {
 
   async findOutstanding(): Promise<APPayment[]> {
     const entities = await this.repo.find({
-      where: [{ status: 'scheduled', deletedAt: IsNull() }, { status: 'overdue', deletedAt: IsNull() }],
+      where: [
+        { status: 'scheduled', deletedAt: IsNull() },
+        { status: 'overdue', deletedAt: IsNull() },
+      ],
       order: { scheduledDate: 'ASC' },
     });
     return entities.map((e) => this.toDomain(e));

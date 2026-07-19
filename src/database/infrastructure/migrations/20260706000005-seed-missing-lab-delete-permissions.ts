@@ -9,9 +9,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  *
  * Also grants all three to the admin role.
  */
-export class SeedMissingLabDeletePermissions20260706000005
-  implements MigrationInterface
-{
+export class SeedMissingLabDeletePermissions20260706000005 implements MigrationInterface {
   name = 'SeedMissingLabDeletePermissions20260706000005';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

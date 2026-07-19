@@ -18,6 +18,9 @@ export class TestingServiceTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   @Column({ type: 'text', nullable: true })
   declare description: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  declare sni: string;
+
   @Column({ type: 'boolean', default: true })
   declare isActive: boolean;
 }

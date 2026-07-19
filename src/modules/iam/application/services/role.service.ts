@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Role } from '../../domain/entities/role.entity';
 import type { RoleRepositoryPort } from '../../domain/repositories/role-repository.port';
 import { ROLE_REPOSITORY } from '../../domain/repositories/role-repository.port';

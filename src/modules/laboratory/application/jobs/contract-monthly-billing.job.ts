@@ -90,7 +90,8 @@ export class ContractMonthlyBillingJob {
           // CI-NNNNNN value under a PostgreSQL advisory lock and includes
           // soft-deleted rows in the MAX query, so the sequence never
           // collides with a soft-deleted record's UNIQUE constraint.
-          const invoiceNumber = await this.invoiceRepo.generateNextInvoiceNumber();
+          const invoiceNumber =
+            await this.invoiceRepo.generateNextInvoiceNumber();
 
           const invoice = new ContractInvoice({
             invoiceNumber,

@@ -92,10 +92,17 @@ export class PurchaseOrderTypeOrmRepository
     return entity ? this.toDomain(entity) : null;
   }
 
-  async findAll(options?: {
-    page?: number;
-    limit?: number;
-  }): Promise<{ data: PurchaseOrder[]; meta: { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean } }> {
+  async findAll(options?: { page?: number; limit?: number }): Promise<{
+    data: PurchaseOrder[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> {
     const limit = options?.limit ?? 20;
     const page = options?.page ?? 1;
     const skip = (page - 1) * limit;
@@ -110,7 +117,14 @@ export class PurchaseOrderTypeOrmRepository
     const totalPages = Math.ceil(total / limit);
     return {
       data: entities.map((e) => this.toDomain(e)),
-      meta: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     };
   }
 

@@ -24,9 +24,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * does not break on environments where the column has not been added
  * yet (the original failure: "column supplier_id does not exist").
  */
-export class TrimSeedDataToAdminAndTestingServices20260715000003
-  implements MigrationInterface
-{
+export class TrimSeedDataToAdminAndTestingServices20260715000003 implements MigrationInterface {
   name = 'TrimSeedDataToAdminAndTestingServices20260715000003';
 
   private async columnExists(

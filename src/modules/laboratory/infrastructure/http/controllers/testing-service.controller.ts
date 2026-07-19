@@ -28,10 +28,14 @@ export class TestingServiceController {
   async listTestingServices(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
+    const actualLimit = limit || pageSize;
     return this.testingServiceService.findAll({
       page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      limit: actualLimit ? parseInt(actualLimit, 10) : undefined,
+      search: search || undefined,
     });
   }
 

@@ -87,7 +87,8 @@ export class LabCertificateService {
     // certificate_number under a PostgreSQL advisory lock and includes
     // soft-deleted rows in the MAX query, so the sequence never
     // collides with a soft-deleted record's UNIQUE constraint.
-    const certificateNumber = await this.certificateRepo.generateNextCertificateNumber();
+    const certificateNumber =
+      await this.certificateRepo.generateNextCertificateNumber();
 
     const qrHash = crypto
       .createHash('sha256')

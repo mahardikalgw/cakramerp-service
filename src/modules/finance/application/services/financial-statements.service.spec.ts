@@ -83,15 +83,17 @@ describe('FinancialStatementsService', () => {
         { accountId: 'l1', totalDebit: 0, totalCredit: 4000 },
         { accountId: 'e1', totalDebit: 0, totalCredit: 5000 },
       ]);
-      mockJournalLineRepo.sumByAccountIdsAndDateRange.mockResolvedValueOnce([
-        { accountId: 'a1', totalDebit: 10000, totalCredit: 3000 },
-        { accountId: 'a2', totalDebit: 5000, totalCredit: 0 },
-        { accountId: 'l1', totalDebit: 0, totalCredit: 4000 },
-        { accountId: 'e1', totalDebit: 0, totalCredit: 5000 },
-      ]).mockResolvedValueOnce([
-        { accountId: 'r1', totalDebit: 0, totalCredit: 8000 },
-        { accountId: 'x1', totalDebit: 3000, totalCredit: 0 },
-      ]);
+      mockJournalLineRepo.sumByAccountIdsAndDateRange
+        .mockResolvedValueOnce([
+          { accountId: 'a1', totalDebit: 10000, totalCredit: 3000 },
+          { accountId: 'a2', totalDebit: 5000, totalCredit: 0 },
+          { accountId: 'l1', totalDebit: 0, totalCredit: 4000 },
+          { accountId: 'e1', totalDebit: 0, totalCredit: 5000 },
+        ])
+        .mockResolvedValueOnce([
+          { accountId: 'r1', totalDebit: 0, totalCredit: 8000 },
+          { accountId: 'x1', totalDebit: 3000, totalCredit: 0 },
+        ]);
 
       const result = await service.getBalanceSheet('2024-12-31');
 

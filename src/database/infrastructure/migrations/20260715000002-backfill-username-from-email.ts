@@ -14,9 +14,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * unlikely since it was NULL for all old rows), the row is left alone
  * — the user can set a username later via the user-edit UI.
  */
-export class BackfillUsernameFromEmail20260715000002
-  implements MigrationInterface
-{
+export class BackfillUsernameFromEmail20260715000002 implements MigrationInterface {
   name = 'BackfillUsernameFromEmail20260715000002';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

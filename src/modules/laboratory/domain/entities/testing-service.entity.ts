@@ -7,6 +7,7 @@ export class TestingService extends BaseEntity {
   declare unitPrice: number;
   declare measurementUnit: string | null;
   declare description: string | null;
+  declare sni: string | null;
   declare isActive: boolean;
   declare createdAt: Date;
   declare updatedAt: Date;
