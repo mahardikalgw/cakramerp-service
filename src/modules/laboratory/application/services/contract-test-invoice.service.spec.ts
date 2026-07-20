@@ -55,11 +55,16 @@ describe('ContractTestInvoiceService.generateForSchedule', () => {
       log: jest.fn().mockResolvedValue(undefined),
       ...overrides.activityLog,
     };
+    const testingServiceRepo = {
+      findById: jest.fn().mockResolvedValue(null),
+      ...overrides.testingServiceRepo,
+    };
     const service = new ContractTestInvoiceService(
       repository as any,
       contractRepo as any,
       testResultRepo as any,
       contractSampleRepo as any,
+      testingServiceRepo as any,
       docHelper as any,
       minioService as any,
       activityLog as any,
