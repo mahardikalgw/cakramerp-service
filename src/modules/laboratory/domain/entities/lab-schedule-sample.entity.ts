@@ -4,6 +4,7 @@ export class LabScheduleSample extends BaseEntity {
   declare id: string;
   declare scheduleId: string;
   declare contractSampleId: string;
+  declare testingServiceId: string | null;
   declare serviceName: string;
   declare sampleCode: string | null;
   declare allocatedQuantity: number;

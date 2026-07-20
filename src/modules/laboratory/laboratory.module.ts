@@ -199,6 +199,13 @@ import { LAB_SCHEDULE_SAMPLE_REPOSITORY } from './domain/repositories/lab-schedu
 import { ContractSigningDeadlineJob } from './application/jobs/contract-signing-deadline.job';
 import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-billing.job';
 
+// Testing Parameters
+import { TestingParameterController } from './infrastructure/http/controllers/testing-parameter.controller';
+import { TestingParameterService } from './application/services/testing-parameter.service';
+import { TestingParameterTypeOrmEntity } from './infrastructure/entities/testing-parameter-typeorm.entity';
+import { TestingParameterTypeOrmRepository } from './infrastructure/repositories/testing-parameter-typeorm.repository';
+import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-parameter-repository.port';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -237,6 +244,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
       ContractInvoiceTypeOrmEntity,
       ContractTestInvoiceTypeOrmEntity,
       ContractTestInvoiceResultTypeOrmEntity,
+      TestingParameterTypeOrmEntity,
     ]),
     DocumentGenerationModule,
     SalesModule,
@@ -269,6 +277,7 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     SyncController,
     ContractInvoiceController,
     ContractTestInvoiceController,
+    TestingParameterController,
   ],
   providers: [
     {
@@ -409,6 +418,11 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     SyncService,
     ContractSigningDeadlineJob,
     ContractMonthlyBillingJob,
+    {
+      provide: TESTING_PARAMETER_REPOSITORY,
+      useClass: TestingParameterTypeOrmRepository,
+    },
+    TestingParameterService,
   ],
   exports: [
     TESTING_REQUEST_REPOSITORY,
@@ -468,6 +482,8 @@ import { ContractMonthlyBillingJob } from './application/jobs/contract-monthly-b
     CONTRACT_INVOICE_REPOSITORY,
     ContractInvoiceService,
     ContractTestInvoiceService,
+    TESTING_PARAMETER_REPOSITORY,
+    TestingParameterService,
   ],
 })
 export class LaboratoryModule {}

@@ -25,6 +25,7 @@ export class LabScheduleSampleTypeOrmRepository
       id: entity.id,
       scheduleId: entity.scheduleId,
       contractSampleId: entity.contractSampleId,
+      testingServiceId: entity.testingServiceId,
       serviceName: entity.serviceName,
       sampleCode: entity.sampleCode,
       allocatedQuantity: entity.allocatedQuantity ?? 1,
@@ -40,6 +41,7 @@ export class LabScheduleSampleTypeOrmRepository
     if (domain.id) entity.id = domain.id;
     entity.scheduleId = domain.scheduleId;
     entity.contractSampleId = domain.contractSampleId;
+    entity.testingServiceId = domain.testingServiceId;
     entity.serviceName = domain.serviceName;
     entity.sampleCode = domain.sampleCode ?? '';
     entity.allocatedQuantity = domain.allocatedQuantity ?? 1;
