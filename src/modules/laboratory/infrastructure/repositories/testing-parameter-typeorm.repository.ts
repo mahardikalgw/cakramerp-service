@@ -44,6 +44,10 @@ export class TestingParameterTypeOrmRepository
     return entity;
   }
 
+  protected searchableColumns(): string[] {
+    return ['name', 'standard', 'unit'];
+  }
+
   async findByTestingServiceId(serviceId: string): Promise<TestingParameter[]> {
     const entities = await this.repository.find({
       where: { testingServiceId: serviceId, isActive: true } as any,
