@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Body,
   Param,
@@ -26,6 +27,38 @@ export class PostApprovalTestingScheduleController {
     @Inject(POST_APPROVAL_LAB_CONTRACT_REPOSITORY)
     private readonly contractRepo: PostApprovalLabContractRepositoryPort,
   ) {}
+
+  @Post('post-approval/contracts/:contractId/schedules')
+  @RequirePermissions('schedules:create')
+  async createForContract(
+    @Param('contractId') contractId: string,
+    @Body()
+    body: {
+      scheduledDate: string;
+      scheduledTime?: string;
+      scheduledLocation?: string;
+      notes?: string;
+      sampleAllocations: Array<{
+        contractSampleId: string;
+        allocatedQuantity: number;
+      }>;
+    },
+    @Req() req: any,
+  ) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'System';
+    return this.service.createByCustomer({
+      contractId,
+      userId: user.id ?? 'unknown',
+      userName,
+      scheduledDate: body.scheduledDate,
+      scheduledTime: body.scheduledTime,
+      scheduledLocation: body.scheduledLocation,
+      notes: body.notes,
+      sampleAllocations: body.sampleAllocations,
+    });
+  }
 
   @Get('post-approval/schedules')
   @RequirePermissions('schedules:read')
