@@ -10,7 +10,7 @@ export class LabScheduleSampleTypeOrmEntity extends SoftDeletableTypeOrmEntity {
   declare contractSampleId: string;
 
   @Column({ type: 'uuid', nullable: true })
-  declare testingServiceId: string;
+  declare testingServiceId: string | null;
 
   @Column({ type: 'varchar', length: 255 })
   declare serviceName: string;
