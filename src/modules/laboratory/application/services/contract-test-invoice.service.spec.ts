@@ -4,9 +4,9 @@ import { ContractTestInvoice } from '../../domain/entities/contract-test-invoice
 /**
  * Unit tests for ContractTestInvoiceService.generateForSchedule idempotency
  * guard and actorRole threading. The service is constructed with plain-object
- * mocks for its 7 constructor dependencies (in declaration order):
+ * mocks for its 8 constructor dependencies (in declaration order):
  *   repository, contractRepo, testResultRepo, contractSampleRepo,
- *   docHelper, minioService, activityLog
+ *   testingServiceRepo, docHelper, minioService, activityLog
  */
 describe('ContractTestInvoiceService.generateForSchedule', () => {
   /** Build a service instance with no-op mocks; per-test overrides applied below. */
@@ -15,6 +15,7 @@ describe('ContractTestInvoiceService.generateForSchedule', () => {
     contractRepo?: Record<string, jest.Mock>;
     testResultRepo?: Record<string, jest.Mock>;
     contractSampleRepo?: Record<string, jest.Mock>;
+    testingServiceRepo?: Record<string, jest.Mock>;
     docHelper?: Record<string, jest.Mock>;
     minioService?: Record<string, jest.Mock>;
     activityLog?: Record<string, jest.Mock>;
