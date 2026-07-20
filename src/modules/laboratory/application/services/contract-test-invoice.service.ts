@@ -24,6 +24,8 @@ import {
   OUTPUT_FORMATS,
 } from '../../../shared/infrastructure/document-generation/document-generation.constants';
 import { LabActivityLogService } from './lab-activity-log.service';
+import { TESTING_SERVICE_REPOSITORY } from '../../domain/repositories/testing-service-repository.port';
+import type { TestingServiceRepositoryPort } from '../../domain/repositories/testing-service-repository.port';
 import { v4 as uuidv4 } from 'uuid';
 
 const TAX_PERCENT = 11;
@@ -42,6 +44,8 @@ export class ContractTestInvoiceService {
     private readonly testResultRepo: TestResultRepositoryPort,
     @Inject(LAB_CONTRACT_SAMPLE_REPOSITORY)
     private readonly contractSampleRepo: LabContractSampleRepositoryPort,
+    @Inject(TESTING_SERVICE_REPOSITORY)
+    private readonly testingServiceRepo: TestingServiceRepositoryPort,
     private readonly docHelper: DocumentGenerationHelper,
     private readonly minioService: MinioClientService,
     private readonly activityLog: LabActivityLogService,
@@ -124,21 +128,53 @@ export class ContractTestInvoiceService {
     const contractSamples =
       await this.contractSampleRepo.findByContractId(contractId);
     const priceBySampleId = new Map<string, number>();
+    const serviceIdBySampleId = new Map<string, string>();
     for (const cs of contractSamples as any[]) {
       priceBySampleId.set(cs.id, Number(cs.unitPrice ?? 0));
+      if (cs.testingServiceId) {
+        serviceIdBySampleId.set(cs.id, cs.testingServiceId);
+      }
+    }
+
+    // Fallback: build a lookup from testingServiceId → unitPrice from the
+    // testing_services master data. Used when contractSample.unitPrice is 0.
+    const priceByServiceId = new Map<string, number>();
+    const uniqueServiceIds = [...new Set(serviceIdBySampleId.values())];
+    for (const sid of uniqueServiceIds) {
+      if (!priceByServiceId.has(sid)) {
+        try {
+          const svc = await this.testingServiceRepo.findById(sid);
+          if (svc) priceByServiceId.set(sid, Number(svc.unitPrice ?? 0));
+        } catch {
+          /* ignore */
+        }
+      }
     }
 
     // Unit price comes from the contract sample (the negotiated price).
-    // Fall back to 0 if missing so we never bill an unknown amount silently.
+    // Falls back to testing service master price when contract sample price is 0.
     let baseAmount = 0;
     const lines: ContractTestInvoiceLine[] = eligibleResults.map((r: any) => {
+      const contractSamplePrice =
+        r.contractSampleId ? priceBySampleId.get(r.contractSampleId) : undefined;
       const unitPrice = Number(
-        (r.contractSampleId && priceBySampleId.get(r.contractSampleId)) ??
+        (contractSamplePrice != null && contractSamplePrice > 0
+          ? contractSamplePrice
+          : r.contractSampleId
+            ? priceByServiceId.get(
+                serviceIdBySampleId.get(r.contractSampleId) ?? '',
+              )
+            : undefined) ??
           r.unitPrice ??
           0,
       );
       const quantity = 1;
       const totalPrice = Math.round(unitPrice * quantity * 100) / 100;
+      if (unitPrice === 0) {
+        this.logger.warn(
+          `[INVOICE] Unit price is 0 for result ${r.id}, contractSampleId=${r.contractSampleId}, serviceName=${r.serviceName}`,
+        );
+      }
       baseAmount += totalPrice;
       return new ContractTestInvoiceLine({
         invoiceId: '', // backfilled by repo on save

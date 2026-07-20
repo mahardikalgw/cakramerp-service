@@ -1098,6 +1098,11 @@ export class PostApprovalLabContractService {
           /* ignore */
         }
       }
+      if (unitPrice === 0) {
+        this.logger.warn(
+          `[CONTRACT] unitPrice is 0 for sample ${s.serviceName} (service=${s.testingServiceId}). Invoice will be 0 until testing service price is set.`,
+        );
+      }
 
       const sampleCode = s.sampleCode || (await this.generateNextSampleCode());
       const sample = await this.sampleRepo.save(
