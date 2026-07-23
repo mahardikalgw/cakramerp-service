@@ -197,21 +197,15 @@ jobs:
             docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
             docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest
 
-            echo "▶ Finding PostgreSQL container..."
-            PG_CONTAINER=$(docker ps --format '{{.Names}}' | grep -i postgres | head -1)
-            if [ -z "$PG_CONTAINER" ]; then
-              echo "✗ No postgres container found!"
-              docker ps --format '{{.Names}}'
-              exit 1
-            fi
-            echo "  Found: $PG_CONTAINER"
-
             echo "▶ Dropping and recreating database..."
-            docker exec -i "$PG_CONTAINER" psql -U postgres <<'SQL'
-            SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'cakramerp' AND pid <> pg_backend_pid();
-            DROP DATABASE IF EXISTS cakramerp;
-            CREATE DATABASE cakramerp;
-            SQL
+            export $(grep -v '^#' /opt/cakramerp/app.env | xargs)
+            docker run --rm --network host \
+              -e PGPASSWORD="$DB_PASSWORD" \
+              postgres:16-alpine \
+              psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres \
+              -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();" \
+              -c "DROP DATABASE IF EXISTS ${DB_NAME};" \
+              -c "CREATE DATABASE ${DB_NAME};"
             echo "✓ Database recreated"
 
             echo "▶ Running database migrations..."
