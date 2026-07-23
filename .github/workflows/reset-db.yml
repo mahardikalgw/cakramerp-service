@@ -1,0 +1,142 @@
+name: Reset Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: 'Type "RESET" to confirm'
+        required: true
+        type: string
+
+jobs:
+  reset-db:
+    name: Reset Database
+    runs-on: ubuntu-latest
+    if: inputs.confirm == 'RESET'
+    environment: ${{ inputs.target }}
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
+          tags: "tag:ci-deployer"
+
+      - name: Reset database
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ inputs.target == 'production' && secrets.VM_HOST || secrets.STAGING_VM_HOST }}
+          username: ${{ inputs.target == 'production' && secrets.VM_USER || secrets.STAGING_VM_USER }}
+          key: ${{ inputs.target == 'production' && secrets.VM_SSH_KEY || secrets.STAGING_VM_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            # Load environment variables
+            if [ "${{ inputs.target }}" = "production" ]; then
+              export $(grep -v '^#' /opt/cakramerp/app.env | xargs)
+            else
+              export $(grep -v '^#' /opt/cakramerp/staging.env | xargs)
+            fi
+
+            echo "▶ Running DB reset..."
+            docker exec -i cakramerp-postgres-${{ inputs.target }} psql -U postgres -d cakramerp <<'SQL'
+            BEGIN;
+
+            DO $$
+            DECLARE
+              child_tables TEXT[] := ARRAY[
+                'payslips', 'payroll_lines', 'payroll_runs',
+                'attendance_records', 'attendance_corrections',
+                'leave_requests', 'leave_balances', 'overtime_requests',
+                'employee_documents', 'employee_contracts',
+                'employee_salary_components', 'employee_bank_accounts',
+                'employee_dependents', 'employee_emergency_contacts',
+                'employee_educations', 'employee_work_experiences',
+                'employee_certifications', 'employee_trainings',
+                'performance_reviews', 'performance_goals', 'performance_kpis',
+                'self_service_requests',
+                'approval_requests', 'approval_request_steps',
+                'employee_assets'
+              ];
+              t TEXT;
+            BEGIN
+              FOREACH t IN ARRAY child_tables LOOP
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS fk_%I_employee_id', t, t);
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS FK_%I_employee_id', t, t);
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I_employee_id_fkey', t, t);
+              END LOOP;
+            END $$;
+
+            TRUNCATE TABLE
+              payslips, payroll_lines, payroll_runs,
+              attendance_records, attendance_corrections,
+              leave_requests, leave_balances, overtime_requests,
+              employee_documents, employee_contracts,
+              employee_salary_components, employee_bank_accounts,
+              employee_dependents, employee_emergency_contacts,
+              employee_educations, employee_work_experiences,
+              employee_certifications, employee_trainings,
+              performance_reviews, performance_goals, performance_kpis,
+              self_service_requests,
+              approval_requests, approval_request_steps,
+              employee_assets,
+              employees,
+              customers, suppliers, assets, positions, departments,
+              kpi_thresholds, bank_accounts, warehouses,
+              user_roles, role_permissions,
+              (SELECT id FROM roles WHERE name <> 'admin'),
+              (SELECT id FROM permissions
+               WHERE id NOT IN (SELECT permission_id FROM role_permissions)),
+              (SELECT id FROM accounts
+               WHERE code IN (
+                 '5101','5102','5103','5104','5105','5106',
+                 '2101','2102','2103',
+                 '1101','1102',
+                 '4101','4102','4103','4104','4105','4106','4107','4108','4109','4110','4111',
+                 '5200','5201',
+                 'OVT-BASIC','OVT-WEEKEND','OVT-HOLIDAY'
+               )),
+              (SELECT id FROM users WHERE email <> 'admin@example.com'),
+              RESTART IDENTITY CASCADE;
+
+            COMMIT;
+            SQL
+
+            echo "✓ Database reset complete"
+
+      - name: Run migrations
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ inputs.target == 'production' && secrets.VM_HOST || secrets.STAGING_VM_HOST }}
+          username: ${{ inputs.target == 'production' && secrets.VM_USER || secrets.STAGING_VM_USER }}
+          key: ${{ inputs.target == 'production' && secrets.VM_SSH_KEY || secrets.STAGING_VM_SSH_KEY }}
+          command_timeout: 10m
+          script: |
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull latest image
+            docker pull ${{ github.repository_owner }}/cakramerp-service:${{ inputs.target }}
+
+            echo "▶ Running database migrations..."
+            docker run --rm \
+              --network host \
+              --env-file /opt/cakramerp/${{ inputs.target == 'production' && 'app' || 'staging' }}.env \
+              ${{ github.repository_owner }}/cakramerp-service:${{ inputs.target }} \
+              node dist/database/migrate.js
+            echo "✓ Migrations complete"
+
+            # Restart the service
+            docker stop cakramerp-service-${{ inputs.target }} 2>/dev/null || true
+            docker rm cakramerp-service-${{ inputs.target }} 2>/dev/null || true
+            docker run -d \
+              --name cakramerp-service-${{ inputs.target }} \
+              --restart unless-stopped \
+              --network host \
+              --env-file /opt/cakramerp/${{ inputs.target == 'production' && 'app' || 'staging' }}.env \
+              ${{ github.repository_owner }}/cakramerp-service:${{ inputs.target }}
