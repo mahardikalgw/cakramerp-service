@@ -195,10 +195,11 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             set -e
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            # Fallback: if GHCR_PAT login fails, try GITHUB_TOKEN (push uses GITHUB_TOKEN)
+            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+            fi
             if ! docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}; then
-              echo "Retrying with GITHUB_TOKEN..."
+              echo "GHCR_PAT pull failed, retrying with GITHUB_TOKEN..."
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
               docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
             fi

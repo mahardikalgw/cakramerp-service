@@ -179,9 +179,11 @@ jobs:
           command_timeout: 30m
           script: |
             set -e
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+            fi
             if ! docker pull ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }}; then
-              echo "Retrying with GITHUB_TOKEN..."
+              echo "GHCR_PAT pull failed, retrying with GITHUB_TOKEN..."
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
               docker pull ${{ env.IMAGE_NAME }}:staging-sha-${{ steps.sha.outputs.short }}
             fi
