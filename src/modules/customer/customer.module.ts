@@ -20,7 +20,7 @@ import { FinanceModule } from '../finance/finance.module';
     TypeOrmModule.forFeature([CustomerTypeOrmEntity]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'default-secret',
-      signOptions: { expiresIn: '7d' },
+      signOptions: { expiresIn: '3d' },
     }),
     UserModule,
     forwardRef(() => LaboratoryModule),

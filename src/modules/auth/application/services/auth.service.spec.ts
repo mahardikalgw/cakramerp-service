@@ -141,7 +141,7 @@ describe('AuthService', () => {
       expect(mockUserRepository.findById).toHaveBeenCalledWith('user-1');
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
-      expect(result.expiresIn).toBe(900);
+      expect(result.expiresIn).toBe(259200);
     });
 
     it('should throw ConflictException if email already exists', async () => {

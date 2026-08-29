@@ -173,7 +173,7 @@ export class AuthService implements AuthServicePort {
     const payload = { sub: userId, email };
     const accessToken = this.jwtService.sign(payload, {
       secret: envConfig.jwt.secret,
-      expiresIn: '15m',
+      expiresIn: '3d',
     });
     const refreshToken = this.jwtService.sign(payload, {
       secret: envConfig.jwt.refreshSecret,
@@ -192,7 +192,7 @@ export class AuthService implements AuthServicePort {
     });
     await this.authRepository.save(refresh);
 
-    return new AuthTokensResult(accessToken, refreshToken, 900, user);
+    return new AuthTokensResult(accessToken, refreshToken, 259200, user);
   }
 
   private async assignDefaultRole(userId: string): Promise<void> {
