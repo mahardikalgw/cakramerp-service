@@ -43,8 +43,11 @@ export class TestingParameterController {
 
   @Get('testing-parameters/by-service/:serviceId')
   @RequirePermissions('testing-parameters:read')
-  async listByService(@Param('serviceId') serviceId: string) {
-    return this.service.findByTestingServiceId(serviceId);
+  async listByService(
+    @Param('serviceId') serviceId: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findByTestingServiceId(serviceId, search || undefined);
   }
 
   @Get('testing-parameters/:id')

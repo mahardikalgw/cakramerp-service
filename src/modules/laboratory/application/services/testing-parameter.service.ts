@@ -30,8 +30,11 @@ export class TestingParameterService {
     });
   }
 
-  async findByTestingServiceId(serviceId: string): Promise<TestingParameter[]> {
-    return this.repository.findByTestingServiceId(serviceId);
+  async findByTestingServiceId(
+    serviceId: string,
+    search?: string,
+  ): Promise<TestingParameter[]> {
+    return this.repository.findByTestingServiceId(serviceId, search);
   }
 
   async findById(id: string): Promise<TestingParameter | null> {

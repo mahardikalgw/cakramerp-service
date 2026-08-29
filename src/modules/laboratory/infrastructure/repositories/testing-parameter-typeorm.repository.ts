@@ -48,11 +48,23 @@ export class TestingParameterTypeOrmRepository
     return ['name', 'standard', 'unit'];
   }
 
-  async findByTestingServiceId(serviceId: string): Promise<TestingParameter[]> {
-    const entities = await this.repository.find({
-      where: { testingServiceId: serviceId, isActive: true } as any,
-      order: { name: 'ASC' },
-    });
+  async findByTestingServiceId(
+    serviceId: string,
+    search?: string,
+  ): Promise<TestingParameter[]> {
+    const qb = this.repository
+      .createQueryBuilder('p')
+      .where('p.testing_service_id = :serviceId', { serviceId })
+      .andWhere('p.is_active = true')
+      .andWhere('p.deleted_at IS NULL');
+    if (search) {
+      qb.andWhere(
+        '(p.name ILIKE :search OR p.standard ILIKE :search OR p.unit ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+    qb.orderBy('p.name', 'ASC');
+    const entities = await qb.getMany();
     return entities.map((e) => this.toDomain(e));
   }
 

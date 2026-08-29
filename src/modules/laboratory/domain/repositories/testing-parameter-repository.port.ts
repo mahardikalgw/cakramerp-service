@@ -5,6 +5,9 @@ export const TESTING_PARAMETER_REPOSITORY = Symbol('TESTING_PARAMETER_REPOSITORY
 
 export interface TestingParameterRepositoryPort
   extends RepositoryPort<TestingParameter> {
-  findByTestingServiceId(serviceId: string): Promise<TestingParameter[]>;
+  findByTestingServiceId(
+    serviceId: string,
+    search?: string,
+  ): Promise<TestingParameter[]>;
   softDelete(id: string): Promise<void>;
 }
