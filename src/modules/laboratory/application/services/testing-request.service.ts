@@ -1685,4 +1685,157 @@ export class TestingRequestService {
 
     return existing;
   }
+
+  async regenerateDocuments(
+    id: string,
+    userId: string,
+    userName?: string,
+  ): Promise<TestingRequest> {
+    const existing = await this.repository.findById(id);
+    if (!existing) throw new NotFoundException('Testing request not found');
+    if (existing.status !== 'approved') {
+      throw new BadRequestException('Only approved requests can regenerate documents');
+    }
+    const taxPercent = existing.taxPercent ?? 0;
+
+    if (existing.billingType === 'cash') {
+      // Reuse cash document generation (PO + Invoice)
+      if (!existing.labPurchaseOrderId) {
+        throw new BadRequestException('No Lab PO linked to this request');
+      }
+      const po = await this.poRepo.findById(existing.labPurchaseOrderId);
+      if (!po) throw new NotFoundException('Lab PO not found');
+      const customer = po
+        ? await this.customerRepo.findById(po.customerId).catch(() => null)
+        : null;
+      const totalSamples = po.lines.reduce((s, l) => s + (l.quantity ?? 0), 0);
+      // PO doc
+      const poDoc = await this.docHelper.generateDocument({
+        documentType: DOCUMENT_TYPES.LAB_PURCHASE_ORDER,
+        entityId: po.id,
+        requestedBy: userId,
+        outputFormat: 'pdf',
+        parameters: {
+          poNumber: po.poNumber || '',
+          customerName: customer?.name || po.customerName || '',
+          customerAddress: customer?.address || '',
+          status: po.status || 'draft',
+          orderDate: po.createdAt
+            ? po.createdAt.toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0],
+          requestNumber: existing.requestNumber || '',
+          totalSamples: String(totalSamples),
+          authorizedByName: userName || 'Lab Authorized',
+        },
+        lines: po.lines.map((l, idx) => {
+          const trLine = existing.lines?.[idx];
+          return {
+            serviceName: l.serviceName || 'Testing Service',
+            sampleCode: trLine?.sampleCode || `SAMPLE-${idx + 1}`,
+            quantity: String(l.quantity ?? 1),
+          };
+        }),
+      });
+      existing.poDocumentUrl = poDoc.id;
+      po.documentUrl = poDoc.id;
+      await this.poRepo.save(po);
+
+      // Invoice doc
+      const invoiceSubtotal = po.lines.reduce((s, l) => s + (l.total ?? 0), 0);
+      const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+      const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
+      const invDoc = await this.docHelper.generateDocument({
+        documentType: DOCUMENT_TYPES.LAB_INVOICE,
+        entityId: po.id,
+        requestedBy: userId,
+        outputFormat: 'pdf',
+        parameters: {
+          invoiceNumber: `INV-${po.poNumber || existing.requestNumber}`,
+          customerName: customer?.name || po.customerName || '',
+          customerAddress: customer?.address || '',
+          invoiceDate: new Date().toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          subtotal: String(invoiceSubtotal),
+          taxPercent: String(taxPercent),
+          taxAmount: String(invoiceTaxAmount),
+          totalAmount: String(invoiceTotal),
+          status: 'issued',
+          authorizedByName: userName || 'Lab Authorized',
+        },
+        lines: po.lines.map((l) => ({
+          description: l.serviceName || 'Testing Service',
+          quantity: String(l.quantity ?? 1),
+          unitPrice: l.unitPrice != null ? String(l.unitPrice) : '0',
+          total: l.total != null ? String(l.total) : '0',
+        })),
+      });
+      existing.invoiceDocumentUrl = invDoc.id;
+      await this.repository.save(existing);
+      void this.activityLog.log({
+        testingRequestId: id,
+        action: 'documents_regenerated',
+        performedBy: userId,
+        performedByName: userName,
+        performedByRole: 'admin',
+        details: { poDoc: poDoc.id, invoiceDoc: invDoc.id },
+      });
+      return existing;
+    } else {
+      // Contract billing: regenerate invoice doc for existing contract
+      if (!existing.labContractId) {
+        throw new BadRequestException('No contract linked to this request');
+      }
+      const contract = await this.contractRepo.findById(existing.labContractId);
+      const customer = contract
+        ? await this.customerRepo.findById(contract.customerId).catch(() => null)
+        : null;
+      const customerName = customer?.name || contract?.customerName || existing.customerName || '-';
+      const invoiceLines = await Promise.all(
+        (existing.lines || []).map((line) => {
+          const unitPrice = Number(line.unitPrice ?? 0);
+          const quantity = line.sampleQuantity ?? 1;
+          return {
+            description: line.serviceName || 'Testing Service',
+            quantity: String(quantity),
+            unitPrice: String(unitPrice),
+            total: String(unitPrice * quantity),
+          };
+        }),
+      );
+      const invoiceSubtotal = invoiceLines.reduce((s, l) => s + (parseFloat(l.total) || 0), 0);
+      const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+      const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
+      const invDoc = await this.docHelper.generateDocument({
+        documentType: DOCUMENT_TYPES.LAB_INVOICE,
+        entityId: existing.labContractId,
+        requestedBy: userId,
+        outputFormat: 'pdf',
+        parameters: {
+          invoiceNumber: `INV-${existing.requestNumber}`,
+          customerName,
+          customerAddress: customer?.address || existing.projectLocation || '-',
+          invoiceDate: new Date().toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          subtotal: String(invoiceSubtotal),
+          taxPercent: String(taxPercent),
+          taxAmount: String(invoiceTaxAmount),
+          totalAmount: String(invoiceTotal),
+          status: 'issued',
+          authorizedByName: userName || 'Lab Authorized',
+        },
+        lines: invoiceLines.length > 0 ? invoiceLines : [{ description: `Contract Testing (${existing.projectName || '-'})`, quantity: '1', unitPrice: '0', total: '0' }],
+      });
+      existing.invoiceDocumentUrl = invDoc.id;
+      await this.repository.save(existing);
+      void this.activityLog.log({
+        testingRequestId: id,
+        action: 'documents_regenerated',
+        performedBy: userId,
+        performedByName: userName,
+        performedByRole: 'admin',
+        details: { invoiceDoc: invDoc.id },
+      });
+      return existing;
+    }
+  }
 }

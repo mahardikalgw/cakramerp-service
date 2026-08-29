@@ -314,4 +314,17 @@ export class TestingRequestController {
       userName,
     );
   }
+
+  @Post('testing-requests/:id/regenerate-documents')
+  @RequirePermissions('testing-requests:approve')
+  async regenerateDocuments(@Param('id') id: string, @Req() req: any) {
+    const user = req.user ?? {};
+    const userName =
+      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
+    return this.testingRequestService.regenerateDocuments(
+      id,
+      user.id ?? 'unknown',
+      userName,
+    );
+  }
 }
