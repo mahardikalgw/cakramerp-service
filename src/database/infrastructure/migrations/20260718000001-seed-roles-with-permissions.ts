@@ -138,8 +138,13 @@ export class SeedRolesWithPermissions20260718000001
     ];
 
     const customerPermissions = [
-      // Testing requests (read-only)
+      // Testing requests — customer portal workflow (create/submit + upload payment proof & signed doc)
       'testing-requests:read',
+      'testing-requests:create',
+      'testing-requests:update',
+      'testing-requests:submit',
+      'testing-requests:cancel',
+      'testing-requests:upload-document',
       // Schedules (read-only)
       'schedules:read',
       // Test results (read-only)
