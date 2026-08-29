@@ -13,6 +13,7 @@ import { CUSTOMER_REPOSITORY } from './domain/repositories/customer-repository.p
 import { CUSTOMER_SERVICE } from './application/ports/customer-service.port';
 import { UserModule } from '../user/user.module';
 import { LaboratoryModule } from '../laboratory/laboratory.module';
+import { FinanceModule } from '../finance/finance.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LaboratoryModule } from '../laboratory/laboratory.module';
     }),
     UserModule,
     forwardRef(() => LaboratoryModule),
+    forwardRef(() => FinanceModule),
   ],
   controllers: [
     CustomerController,
