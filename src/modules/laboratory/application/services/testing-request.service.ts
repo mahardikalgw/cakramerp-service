@@ -374,8 +374,8 @@ export class TestingRequestService {
             return {
               description: line.serviceName || 'Testing Service',
               quantity: String(quantity),
-              unitPrice: String(unitPrice),
-              total: String(unitPrice * quantity),
+              unitPrice: Number(unitPrice).toLocaleString('id-ID'),
+              total: Number(unitPrice * quantity).toLocaleString('id-ID'),
             };
           }),
         );
@@ -402,10 +402,10 @@ export class TestingRequestService {
             dueDate: new Date(Date.now() + 30 * 86400000)
               .toISOString()
               .split('T')[0],
-            subtotal: String(invoiceSubtotal),
+            subtotal: invoiceSubtotal.toLocaleString('id-ID'),
             taxPercent: String(taxPercent),
-            taxAmount: String(invoiceTaxAmount),
-            totalAmount: String(invoiceTotal),
+            taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
+            totalAmount: invoiceTotal.toLocaleString('id-ID'),
             status: 'issued',
             authorizedByName: userName || 'Lab Authorized',
           },
@@ -630,18 +630,18 @@ export class TestingRequestService {
               dueDate: new Date(Date.now() + 30 * 86400000)
                 .toISOString()
                 .split('T')[0],
-              subtotal: String(invoiceSubtotal),
+              subtotal: invoiceSubtotal.toLocaleString('id-ID'),
               taxPercent: String(taxPercent),
-              taxAmount: String(invoiceTaxAmount),
-              totalAmount: String(invoiceTotal),
+              taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
+              totalAmount: invoiceTotal.toLocaleString('id-ID'),
               status: 'issued',
               authorizedByName: userName || 'Lab Authorized',
             },
             lines: po.lines.map((l) => ({
               description: l.serviceName || 'Testing Service',
               quantity: String(l.quantity ?? 1),
-              unitPrice: l.unitPrice != null ? String(l.unitPrice) : '0',
-              total: l.total != null ? String(l.total) : '0',
+              unitPrice: l.unitPrice != null ? Number(l.unitPrice).toLocaleString('id-ID') : '0',
+              total: l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
             })),
           });
           existing.invoiceDocumentUrl = invDoc.id;
@@ -1755,18 +1755,18 @@ export class TestingRequestService {
           customerAddress: customer?.address || '',
           invoiceDate: new Date().toISOString().split('T')[0],
           dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-          subtotal: String(invoiceSubtotal),
+          subtotal: invoiceSubtotal.toLocaleString('id-ID'),
           taxPercent: String(taxPercent),
-          taxAmount: String(invoiceTaxAmount),
-          totalAmount: String(invoiceTotal),
+          taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
+          totalAmount: invoiceTotal.toLocaleString('id-ID'),
           status: 'issued',
           authorizedByName: userName || 'Lab Authorized',
         },
         lines: po.lines.map((l) => ({
           description: l.serviceName || 'Testing Service',
           quantity: String(l.quantity ?? 1),
-          unitPrice: l.unitPrice != null ? String(l.unitPrice) : '0',
-          total: l.total != null ? String(l.total) : '0',
+          unitPrice: l.unitPrice != null ? Number(l.unitPrice).toLocaleString('id-ID') : '0',
+          total: l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
         })),
       });
       existing.invoiceDocumentUrl = invDoc.id;
@@ -1797,8 +1797,8 @@ export class TestingRequestService {
           return {
             description: line.serviceName || 'Testing Service',
             quantity: String(quantity),
-            unitPrice: String(unitPrice),
-            total: String(unitPrice * quantity),
+            unitPrice: Number(unitPrice).toLocaleString('id-ID'),
+            total: Number(unitPrice * quantity).toLocaleString('id-ID'),
           };
         }),
       );
@@ -1816,10 +1816,10 @@ export class TestingRequestService {
           customerAddress: customer?.address || existing.projectLocation || '-',
           invoiceDate: new Date().toISOString().split('T')[0],
           dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-          subtotal: String(invoiceSubtotal),
+          subtotal: invoiceSubtotal.toLocaleString('id-ID'),
           taxPercent: String(taxPercent),
-          taxAmount: String(invoiceTaxAmount),
-          totalAmount: String(invoiceTotal),
+          taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
+          totalAmount: invoiceTotal.toLocaleString('id-ID'),
           status: 'issued',
           authorizedByName: userName || 'Lab Authorized',
         },
