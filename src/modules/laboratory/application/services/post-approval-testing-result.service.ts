@@ -331,11 +331,14 @@ export class PostApprovalTestingResultService {
   async findByUnit(
     scheduleSampleId: string,
     sampleUnit: number,
-  ): Promise<PostApprovalTestingResult | null> {
-    return this.repository.findByScheduleSampleUnit(
+  ): Promise<Record<string, any> | null> {
+    const result = await this.repository.findByScheduleSampleUnit(
       scheduleSampleId,
       sampleUnit,
     );
+    if (!result) return null;
+    // Enrich like findByIdEnriched so create?sampleUnit and detail use same shape
+    return this.findByIdEnriched(result.id);
   }
 
   async createOrUpdate(data: {
