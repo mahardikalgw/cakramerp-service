@@ -13,7 +13,7 @@ export type LabContractSampleStatus =
 export class LabContractSample extends BaseEntity {
   declare id: string;
   declare contractId: string;
-  declare sampleId: string;
+  declare sampleId: string | null;
   declare testingServiceId: string | null;
   declare serviceName: string;
   declare sampleCode: string | null;
@@ -29,7 +29,7 @@ export class LabContractSample extends BaseEntity {
   constructor(
     props: Partial<LabContractSample> & {
       contractId: string;
-      sampleId: string;
+      sampleId: string | null;
       serviceName: string;
     },
   ) {

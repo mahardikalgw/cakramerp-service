@@ -6,8 +6,8 @@ export class PostApprovalLabContractSampleTypeOrmEntity extends SoftDeletableTyp
   @Column({ type: 'uuid' })
   declare contractId: string;
 
-  @Column({ type: 'uuid' })
-  declare sampleId: string;
+  @Column({ type: 'uuid', nullable: true })
+  declare sampleId: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   declare testingServiceId: string;
