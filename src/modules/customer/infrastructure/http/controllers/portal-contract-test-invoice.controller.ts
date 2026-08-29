@@ -9,17 +9,20 @@ import {
   UseInterceptors,
   Req,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../../auth/infrastructure/guards/jwt-auth.guard';
-import { ContractTestInvoiceService } from '../../../../laboratory/application/services/contract-test-invoice.service';
+import { AR_INVOICE_SERVICE } from '../../../../finance/application/ports/ar-invoice-service.port';
+import type { ARInvoiceServicePort } from '../../../../finance/application/ports/ar-invoice-service.port';
 
 @Controller('portal/lab/contract-test-invoices')
 @UseGuards(JwtAuthGuard, ThrottlerGuard)
 export class PortalContractTestInvoiceController {
   constructor(
-    private readonly contractTestInvoiceService: ContractTestInvoiceService,
+    @Inject(AR_INVOICE_SERVICE)
+    private readonly arInvoiceService: ARInvoiceServicePort,
   ) {}
 
   @Get()
@@ -33,7 +36,7 @@ export class PortalContractTestInvoiceController {
     if (!customerId) {
       throw new BadRequestException('Customer context not available');
     }
-    return this.contractTestInvoiceService.findByCustomerId(customerId, {
+    return this.arInvoiceService.findByCustomerId(customerId, {
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
@@ -42,12 +45,12 @@ export class PortalContractTestInvoiceController {
 
   @Get(':id')
   async detailForCustomer(@Param('id') id: string) {
-    return this.contractTestInvoiceService.findById(id);
+    return this.arInvoiceService.findById(id);
   }
 
   @Get(':id/download')
   async downloadForCustomer(@Param('id') id: string) {
-    return this.contractTestInvoiceService.getDownloadUrl(id);
+    return this.arInvoiceService.getDownloadUrl(id);
   }
 
   @Patch(':id/upload-payment-proof')
@@ -63,7 +66,7 @@ export class PortalContractTestInvoiceController {
     const user = req.user ?? {};
     const userName =
       `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined;
-    return this.contractTestInvoiceService.uploadPaymentProof(
+    return this.arInvoiceService.uploadPaymentProof(
       id,
       file,
       user.id ?? 'unknown',

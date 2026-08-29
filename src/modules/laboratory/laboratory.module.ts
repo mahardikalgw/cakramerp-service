@@ -2,6 +2,8 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { LabPurchasingAdapter } from './application/adapters/lab-purchasing.adapter';
+import { LabBillingAdapter } from './application/adapters/lab-billing.adapter';
+import { FinanceModule } from '../finance/finance.module';
 
 // Phase 1: Master Data
 import { TestingServiceController } from './infrastructure/http/controllers/testing-service.controller';
@@ -97,18 +99,9 @@ import { ClosingTypeOrmRepository } from './infrastructure/repositories/closing-
 import { CLOSING_REPOSITORY } from './domain/repositories/closing-repository.port';
 
 // Phase 10: Contract Invoice Module
-import { ContractInvoiceTypeOrmEntity } from './infrastructure/entities/contract-invoice-typeorm.entity';
-import { ContractInvoiceTypeOrmRepository } from './infrastructure/repositories/contract-invoice-typeorm.repository';
-import { CONTRACT_INVOICE_REPOSITORY } from './domain/repositories/contract-invoice-repository.port';
-import { ContractInvoiceService } from './application/services/contract-invoice.service';
 import { ContractInvoiceController } from './infrastructure/http/controllers/contract-invoice.controller';
 
 // Phase 11: Contract Test Invoice Module (per-schedule billing for sample tests)
-import { ContractTestInvoiceTypeOrmEntity } from './infrastructure/entities/contract-test-invoice-typeorm.entity';
-import { ContractTestInvoiceResultTypeOrmEntity } from './infrastructure/entities/contract-test-invoice-result-typeorm.entity';
-import { ContractTestInvoiceTypeOrmRepository } from './infrastructure/repositories/contract-test-invoice-typeorm.repository';
-import { CONTRACT_TEST_INVOICE_REPOSITORY } from './domain/repositories/contract-test-invoice-repository.port';
-import { ContractTestInvoiceService } from './application/services/contract-test-invoice.service';
 import { ContractTestInvoiceController } from './infrastructure/http/controllers/contract-test-invoice.controller';
 
 // Phase 10: Report Distribution & Archive
@@ -241,13 +234,11 @@ import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-para
       PostApprovalLabContractSampleTypeOrmEntity,
       PostApprovalDocumentArchiveTypeOrmEntity,
       LabScheduleSampleTypeOrmEntity,
-      ContractInvoiceTypeOrmEntity,
-      ContractTestInvoiceTypeOrmEntity,
-      ContractTestInvoiceResultTypeOrmEntity,
       TestingParameterTypeOrmEntity,
     ]),
     DocumentGenerationModule,
     SalesModule,
+    FinanceModule,
     forwardRef(() => CustomerModule),
     UserModule,
   ],
@@ -309,6 +300,7 @@ import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-para
     LabContractService,
     LabPOService,
     LabPurchasingAdapter,
+    LabBillingAdapter,
     { provide: SAMPLE_REPOSITORY, useClass: SampleTypeOrmRepository },
     {
       provide: TESTING_SCHEDULE_REPOSITORY,
@@ -398,16 +390,6 @@ import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-para
       useClass: PostApprovalLabContractTypeOrmRepository,
     },
     {
-      provide: CONTRACT_INVOICE_REPOSITORY,
-      useClass: ContractInvoiceTypeOrmRepository,
-    },
-    ContractInvoiceService,
-    {
-      provide: CONTRACT_TEST_INVOICE_REPOSITORY,
-      useClass: ContractTestInvoiceTypeOrmRepository,
-    },
-    ContractTestInvoiceService,
-    {
       provide: LAB_CONTRACT_SAMPLE_REPOSITORY,
       useClass: LabContractSampleTypeOrmRepository,
     },
@@ -456,6 +438,7 @@ import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-para
     LabContractService,
     LabPOService,
     LabPurchasingAdapter,
+    LabBillingAdapter,
     SampleService,
     TestingScheduleService,
     TestResultService,
@@ -479,9 +462,6 @@ import { TESTING_PARAMETER_REPOSITORY } from './domain/repositories/testing-para
     POST_APPROVAL_TESTING_RESULT_REPOSITORY,
     POST_APPROVAL_DOCUMENT_ARCHIVE_REPOSITORY,
     LAB_SCHEDULE_SAMPLE_REPOSITORY,
-    CONTRACT_INVOICE_REPOSITORY,
-    ContractInvoiceService,
-    ContractTestInvoiceService,
     TESTING_PARAMETER_REPOSITORY,
     TestingParameterService,
   ],

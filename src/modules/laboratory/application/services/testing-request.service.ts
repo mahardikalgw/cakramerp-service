@@ -33,6 +33,8 @@ import { POST_APPROVAL_LAB_CONTRACT_REPOSITORY } from '../../domain/repositories
 import { NotificationEventService } from './notification-event.service';
 import { USER_REPOSITORY } from '../../../user/domain/repositories/user-repository.port';
 import type { UserRepositoryPort } from '../../../user/domain/repositories/user-repository.port';
+import { AR_INVOICE_SERVICE } from '../../../finance/application/ports/ar-invoice-service.port';
+import type { ARInvoiceServicePort } from '../../../finance/application/ports/ar-invoice-service.port';
 
 @Injectable()
 export class TestingRequestService {
@@ -63,6 +65,8 @@ export class TestingRequestService {
     private readonly notificationEventService: NotificationEventService,
     @Inject(POST_APPROVAL_LAB_CONTRACT_REPOSITORY)
     private readonly postApprovalContractRepo: PostApprovalLabContractRepositoryPort,
+    @Inject(AR_INVOICE_SERVICE)
+    private readonly arInvoiceService: ARInvoiceServicePort,
   ) {}
 
   async findAll(options?: {
@@ -1235,21 +1239,13 @@ export class TestingRequestService {
     // Mark linked AR invoice as paid
     if (existing.salesOrderId) {
       try {
-        const arInvoice = await this.dataSource.query(
-          `SELECT id, status, amount FROM ar_invoices WHERE sales_order_id = $1 LIMIT 1`,
-          [existing.salesOrderId],
+        const invoice = await this.arInvoiceService.markAsPaidBySalesOrderId(
+          existing.salesOrderId,
+          adminUserId,
+          adminUserName,
         );
-        if (
-          arInvoice.length > 0 &&
-          ['draft', 'sent', 'overdue'].includes(arInvoice[0].status)
-        ) {
-          await this.dataSource.query(
-            `UPDATE ar_invoices SET status = 'paid', paid_amount = amount, updated_at = NOW() WHERE id = $1`,
-            [arInvoice[0].id],
-          );
-          this.logger.log(
-            `[VERIFY] AR Invoice ${arInvoice[0].id} marked as paid`,
-          );
+        if (invoice) {
+          this.logger.log(`[VERIFY] AR Invoice ${invoice.id} marked as paid`);
         }
       } catch (err: any) {
         this.logger.warn(

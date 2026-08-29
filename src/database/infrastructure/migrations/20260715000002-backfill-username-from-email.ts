@@ -7,7 +7,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * the unique-index constraint.
  *
  * Examples:
- *   "admin@cakraerp.id"   -> username = "admin"
+ *   "admin@cakramerp.id"   -> username = "admin"
  *   "john.doe@acme.co.id" -> username = "john.doe"
  *
  * If a generated username would collide with an existing one (very

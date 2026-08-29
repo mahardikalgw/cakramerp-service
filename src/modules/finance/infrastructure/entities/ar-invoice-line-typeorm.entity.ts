@@ -20,4 +20,10 @@ export class ARInvoiceLineTypeOrmEntity extends TypeOrmBaseEntity {
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
   declare amount: number;
+
+  @Column({ type: 'uuid', nullable: true, name: 'test_result_id' })
+  declare testResultId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'sample_code' })
+  declare sampleCode: string | null;
 }

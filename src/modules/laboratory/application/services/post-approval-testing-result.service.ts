@@ -25,7 +25,7 @@ import type { LabScheduleSampleRepositoryPort } from '../../domain/repositories/
 import { POST_APPROVAL_TESTING_SCHEDULE_REPOSITORY } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 import type { PostApprovalTestingScheduleRepositoryPort } from '../../domain/repositories/post-approval-testing-schedule-repository.port';
 import { NotificationEventService } from './notification-event.service';
-import { ContractTestInvoiceService } from './contract-test-invoice.service';
+import { LabBillingAdapter } from '../adapters/lab-billing.adapter';
 
 @Injectable()
 export class PostApprovalTestingResultService {
@@ -50,7 +50,7 @@ export class PostApprovalTestingResultService {
     private readonly attachmentRepo: Repository<TestResultAttachmentTypeOrmEntity>,
     private readonly activityLog: LabActivityLogService,
     private readonly notificationEventService: NotificationEventService,
-    private readonly contractTestInvoiceService: ContractTestInvoiceService,
+    private readonly labBillingAdapter: LabBillingAdapter,
   ) {}
 
   async findAll(options?: {
@@ -202,7 +202,12 @@ export class PostApprovalTestingResultService {
     const createdDate = this.toDateStr((enriched as any).createdDate);
     const testingDateVal = this.toDateStr((enriched as any).testingDate);
     let sampleAge = '';
-    if (createdDate && testingDateVal && createdDate !== '-' && testingDateVal !== '-') {
+    if (
+      createdDate &&
+      testingDateVal &&
+      createdDate !== '-' &&
+      testingDateVal !== '-'
+    ) {
       const created = new Date(createdDate);
       const testing = new Date(testingDateVal);
       const diffMs = testing.getTime() - created.getTime();
@@ -644,7 +649,12 @@ export class PostApprovalTestingResultService {
       const certCreatedDate = this.toDateStr((enriched as any).createdDate);
       const certTestingDate = this.toDateStr((enriched as any).testingDate);
       let certSampleAge = '';
-      if (certCreatedDate && certTestingDate && certCreatedDate !== '-' && certTestingDate !== '-') {
+      if (
+        certCreatedDate &&
+        certTestingDate &&
+        certCreatedDate !== '-' &&
+        certTestingDate !== '-'
+      ) {
         const created = new Date(certCreatedDate);
         const testing = new Date(certTestingDate);
         const diffMs = testing.getTime() - created.getTime();
@@ -728,21 +738,15 @@ export class PostApprovalTestingResultService {
             .catch(() => {});
 
           if (confirmedContract.billingType === 'contract') {
-            void this.contractTestInvoiceService
-              .generateForSchedule(
-                saved.contractId,
-                saved.scheduleId,
-                userId,
-                userName,
-                'customer',
-              )
+            void this.labBillingAdapter
+              .createContractScheduleInvoice(saved.contractId, saved.scheduleId)
               .then((invoice) => {
                 if (invoice) {
                   void this.notificationEventService
                     .onContractTestInvoiceIssued(invoice, confirmedContract)
                     .catch(() => {});
                   this.logger.log(
-                    `Auto-generated invoice ${invoice.invoiceNumber} for completed schedule ${saved.scheduleId}`,
+                    `Auto-generated AR invoice ${invoice.invoiceNumber} for completed schedule ${saved.scheduleId}`,
                   );
                 }
               })

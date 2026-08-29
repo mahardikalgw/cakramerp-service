@@ -24,7 +24,8 @@ import { PostApprovalTestingScheduleService } from '../../../../laboratory/appli
 import { PostApprovalTestingResultService } from '../../../../laboratory/application/services/post-approval-testing-result.service';
 import { PostApprovalDocumentArchiveService } from '../../../../laboratory/application/services/post-approval-document-archive.service';
 import { TestingRequestService } from '../../../../laboratory/application/services/testing-request.service';
-import { ContractInvoiceService } from '../../../../laboratory/application/services/contract-invoice.service';
+import { AR_INVOICE_SERVICE } from '../../../../finance/application/ports/ar-invoice-service.port';
+import type { ARInvoiceServicePort } from '../../../../finance/application/ports/ar-invoice-service.port';
 import { DocumentGenerationHelper } from '../../../../shared/infrastructure/document-generation/document-generation.helper';
 import { CustomerPortalService } from '../../../application/services/customer-portal.service';
 import type { CustomerRepositoryPort } from '../../../domain/repositories/customer-repository.port';
@@ -40,9 +41,10 @@ export class CustomerPortalLabController {
     private readonly testingResultService: PostApprovalTestingResultService,
     private readonly archiveService: PostApprovalDocumentArchiveService,
     private readonly testingRequestService: TestingRequestService,
-    private readonly contractInvoiceService: ContractInvoiceService,
     private readonly portalService: CustomerPortalService,
     private readonly docHelper: DocumentGenerationHelper,
+    @Inject(AR_INVOICE_SERVICE)
+    private readonly arInvoiceService: ARInvoiceServicePort,
     @Inject(CUSTOMER_REPOSITORY)
     private readonly customerRepo: CustomerRepositoryPort,
     @Inject(USER_REPOSITORY)
@@ -393,7 +395,7 @@ export class CustomerPortalLabController {
     });
     const allInvoices: any[] = [];
     for (const contract of contracts.data) {
-      const invoices = await this.contractInvoiceService.findByContractId(
+      const invoices = await this.arInvoiceService.findByContractId(
         contract.id,
       );
       allInvoices.push(
@@ -409,7 +411,7 @@ export class CustomerPortalLabController {
   @Get('contract-invoices/:id/download')
   @UseGuards(JwtAuthGuard)
   async downloadMyContractInvoice(@Req() req: any, @Param('id') id: string) {
-    return this.contractInvoiceService.getDownloadUrl(id);
+    return this.arInvoiceService.getDownloadUrl(id);
   }
 
   @Get('closed-contracts')

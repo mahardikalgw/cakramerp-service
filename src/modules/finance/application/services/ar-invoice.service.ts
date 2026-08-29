@@ -1,6 +1,11 @@
 import { Decimal } from 'decimal.js';
 import { ARInvoiceServicePort } from '../ports/ar-invoice-service.port';
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AR_INVOICE_LINE_REPOSITORY,
@@ -25,6 +30,7 @@ import { UpdateARInvoiceCommand } from '../commands/update-ar-invoice.command';
 import { RecordPaymentCommand } from '../commands/record-payment.command';
 import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 import { DOCUMENT_TYPES } from '../../../shared/infrastructure/document-generation/document-generation.constants';
+import { MinioClientService } from '../../../shared/infrastructure/document-generation/minio-client.service';
 
 export interface InvoiceWithLines {
   id: string;
@@ -50,6 +56,21 @@ export interface InvoiceWithLines {
   journalEntryId: string | null;
   journalEntryNumber: string | null;
   journalEntryStatus: string | null;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  contractId?: string | null;
+  testingScheduleId?: string | null;
+  billingPeriodStart?: string | null;
+  billingPeriodEnd?: string | null;
+  totalSamples?: number;
+  initialFeeApplied?: number;
+  amountDue?: number | null;
+  paymentProofUrl?: string | null;
+  paymentProofFilename?: string | null;
+  paymentProofUploadedAt?: Date | string | null;
+  paymentVerifiedAt?: Date | string | null;
+  paymentVerifiedBy?: string | null;
+  paymentVerifiedByName?: string | null;
   lines: {
     id: string;
     description: string;
@@ -57,6 +78,8 @@ export interface InvoiceWithLines {
     unitPrice: number;
     taxPercent: number;
     amount: number;
+    testResultId?: string | null;
+    sampleCode?: string | null;
   }[];
 }
 
@@ -76,6 +99,7 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     @Inject(ACCOUNT_REPOSITORY)
     private readonly accountRepo: AccountRepositoryPort,
     private readonly docHelper: DocumentGenerationHelper,
+    private readonly minioService: MinioClientService,
   ) {
     this.invoiceRepo = dataSource.getRepository(ARInvoiceTypeOrmEntity);
     this.queueRepo = dataSource.getRepository(GlPostingQueueTypeOrmEntity);
@@ -85,6 +109,11 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     status?: string;
     clientId?: string;
     customerId?: string;
+    sourceType?: string;
+    contractId?: string;
+    testingScheduleId?: string;
+    billingPeriodStart?: string;
+    billingPeriodEnd?: string;
     page?: number;
     limit?: number;
   }): Promise<{ data: InvoiceWithLines[]; total: number }> {
@@ -99,6 +128,31 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     if (filters?.customerId) {
       qb.andWhere('inv.customerId = :customerId', {
         customerId: filters.customerId,
+      });
+    }
+    if (filters?.sourceType) {
+      qb.andWhere('inv.sourceType = :sourceType', {
+        sourceType: filters.sourceType,
+      });
+    }
+    if (filters?.contractId) {
+      qb.andWhere('inv.contractId = :contractId', {
+        contractId: filters.contractId,
+      });
+    }
+    if (filters?.testingScheduleId) {
+      qb.andWhere('inv.testingScheduleId = :testingScheduleId', {
+        testingScheduleId: filters.testingScheduleId,
+      });
+    }
+    if (filters?.billingPeriodStart) {
+      qb.andWhere('inv.billingPeriodStart = :billingPeriodStart', {
+        billingPeriodStart: filters.billingPeriodStart,
+      });
+    }
+    if (filters?.billingPeriodEnd) {
+      qb.andWhere('inv.billingPeriodEnd = :billingPeriodEnd', {
+        billingPeriodEnd: filters.billingPeriodEnd,
       });
     }
 
@@ -127,6 +181,15 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     return await this.toInvoiceWithLines(inv, lines);
   }
 
+  async findBySalesOrderId(
+    salesOrderId: string,
+  ): Promise<InvoiceWithLines | null> {
+    const inv = await this.invoiceRepo.findOne({ where: { salesOrderId } });
+    if (!inv) return null;
+    const lines = await this.lineRepo.findByInvoiceId(inv.id);
+    return await this.toInvoiceWithLines(inv, lines);
+  }
+
   async create(
     command: CreateARInvoiceCommand,
     asDraft = true,
@@ -148,12 +211,24 @@ export class ARInvoiceService implements ARInvoiceServicePort {
         unitPrice: line.unitPrice,
         taxPercent: line.taxPercent,
         amount: lineAmount + lineTax,
+        testResultId: (line as any).testResultId ?? null,
+        sampleCode: (line as any).sampleCode ?? null,
       });
     }
 
     const grandTotal = subtotal + taxTotal;
     const additionalDiscount = command.additionalDiscount ?? 0;
     const finalTotal = grandTotal - additionalDiscount;
+
+    // Initial fee credit application (lab contract billing). If the credit
+    // covers the full amount the invoice is auto-marked paid.
+    const initialFeeApplied = Number(command.initialFeeApplied ?? 0);
+    const amountDue = Math.max(
+      0,
+      Math.round((finalTotal - initialFeeApplied) * 100) / 100,
+    );
+    const fullyPaidByCredit = finalTotal > 0 && amountDue <= 0;
+    const status = fullyPaidByCredit ? 'paid' : asDraft ? 'draft' : 'sent';
 
     const invoice = await this.invoiceRepo.save(
       this.invoiceRepo.create({
@@ -164,13 +239,28 @@ export class ARInvoiceService implements ARInvoiceServicePort {
         projectId: command.projectId,
         segment: command.segment,
         amount: finalTotal,
-        paidAmount: 0,
+        paidAmount: fullyPaidByCredit ? finalTotal : 0,
         dueDate: new Date(command.dueDate),
         issueDate: new Date(command.invoiceDate),
-        status: asDraft ? 'draft' : 'sent',
+        status,
         paymentTermDays: command.paymentTermDays,
         paymentTermLabel: command.paymentTermLabel,
         additionalDiscount,
+        sourceType: command.sourceType ?? null,
+        sourceId: command.sourceId ?? null,
+        contractId: command.contractId ?? null,
+        testingScheduleId: command.testingScheduleId ?? null,
+        billingPeriodStart: command.billingPeriodStart
+          ? new Date(command.billingPeriodStart)
+          : null,
+        billingPeriodEnd: command.billingPeriodEnd
+          ? new Date(command.billingPeriodEnd)
+          : null,
+        totalSamples: command.totalSamples ?? 0,
+        initialFeeApplied,
+        amountDue,
+        paidAt: fullyPaidByCredit ? new Date() : null,
+        paymentVerifiedAt: fullyPaidByCredit ? new Date() : null,
       }),
     );
 
@@ -311,6 +401,188 @@ export class ARInvoiceService implements ARInvoiceServicePort {
     }
 
     const lines = await this.lineRepo.findByInvoiceId(id);
+    return this.toInvoiceWithLines(saved, lines);
+  }
+
+  async verifyLabPayment(
+    id: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<InvoiceWithLines> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (inv.status === 'paid') {
+      throw new BadRequestException('Invoice is already paid');
+    }
+    if (inv.status === 'cancelled') {
+      throw new BadRequestException(
+        'Cannot verify payment on cancelled invoice',
+      );
+    }
+    if (!inv.paymentProofUrl) {
+      throw new BadRequestException(
+        'Cannot verify payment before customer uploads proof',
+      );
+    }
+
+    const amountDue = Number(inv.amountDue ?? inv.amount);
+    inv.status = 'paid';
+    inv.paidAt = new Date();
+    inv.paidAmount = amountDue;
+    inv.paymentVerifiedAt = new Date();
+    inv.paymentVerifiedBy = adminUserId;
+    inv.paymentVerifiedByName = adminUserName ?? null;
+
+    const saved = await this.invoiceRepo.save(inv);
+
+    // Record the GL posting for the received payment.
+    await this.enqueueGlPosting(saved, 'payment_received', amountDue);
+
+    const lines = await this.lineRepo.findByInvoiceId(id);
+    return this.toInvoiceWithLines(saved, lines);
+  }
+
+  async findByContractId(contractId: string): Promise<InvoiceWithLines[]> {
+    const entities = await this.invoiceRepo.find({
+      where: { contractId } as any,
+      order: { issueDate: 'DESC' },
+    });
+    return Promise.all(
+      entities.map(async (inv) => {
+        const lines = await this.lineRepo.findByInvoiceId(inv.id);
+        return this.toInvoiceWithLines(inv, lines);
+      }),
+    );
+  }
+
+  async findByCustomerId(
+    customerId: string,
+    options?: { status?: string; page?: number; limit?: number },
+  ): Promise<{ data: InvoiceWithLines[]; total: number }> {
+    const filters: {
+      status?: string;
+      customerId?: string;
+      page?: number;
+      limit?: number;
+    } = { customerId, page: options?.page, limit: options?.limit };
+    if (options?.status) filters.status = options.status;
+    return this.findAll(filters);
+  }
+
+  async getDownloadUrl(id: string): Promise<{ url: string; filename: string }> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (!inv.invoiceDocumentUrl) {
+      throw new NotFoundException('Invoice document not yet generated');
+    }
+    const url = await this.docHelper.getDownloadUrl(inv.invoiceDocumentUrl);
+    return { url, filename: `${inv.invoiceNumber}.pdf` };
+  }
+
+  async uploadPaymentProof(
+    id: string,
+    file: any,
+    _userId: string,
+    _userName?: string,
+  ): Promise<InvoiceWithLines> {
+    if (!file) throw new BadRequestException('Payment proof file is required');
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (inv.status !== 'issued' && inv.status !== 'overdue') {
+      throw new BadRequestException(
+        `Cannot upload proof for invoice in status: ${inv.status}`,
+      );
+    }
+
+    const objectName = `ar-invoices/${id}/${Date.now()}_${file.originalname}`;
+    const url = await this.minioService.uploadFile(
+      'documents',
+      objectName,
+      file.buffer,
+      file.mimetype,
+    );
+    inv.paymentProofUrl = url;
+    inv.paymentProofFilename = file.originalname;
+    inv.paymentProofUploadedAt = new Date();
+
+    const saved = await this.invoiceRepo.save(inv);
+    const lines = await this.lineRepo.findByInvoiceId(id);
+    return this.toInvoiceWithLines(saved, lines);
+  }
+
+  async getPaymentProofDownloadUrl(
+    id: string,
+  ): Promise<{ url: string; filename: string }> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (!inv.paymentProofUrl) {
+      throw new NotFoundException('Payment proof not uploaded');
+    }
+    const url = await this.docHelper.getDownloadUrl(inv.paymentProofUrl);
+    return { url, filename: inv.paymentProofFilename ?? 'payment-proof' };
+  }
+
+  async delete(id: string): Promise<void> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (inv.status === 'paid') {
+      throw new BadRequestException('Cannot delete a paid invoice');
+    }
+    await this.invoiceRepo.softDelete(id);
+  }
+
+  async markAsPaid(
+    id: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<InvoiceWithLines> {
+    const inv = await this.invoiceRepo.findOne({ where: { id } });
+    if (!inv) throw new BadRequestException('Invoice not found');
+    if (inv.status === 'paid') {
+      throw new BadRequestException('Invoice is already paid');
+    }
+    if (inv.status === 'cancelled') {
+      throw new BadRequestException('Cannot mark cancelled invoice as paid');
+    }
+
+    const amount = Number(inv.amountDue ?? inv.amount);
+    inv.status = 'paid';
+    inv.paidAt = new Date();
+    inv.paidAmount = amount;
+    inv.paymentVerifiedAt = new Date();
+    inv.paymentVerifiedBy = adminUserId;
+    inv.paymentVerifiedByName = adminUserName ?? null;
+
+    const saved = await this.invoiceRepo.save(inv);
+    await this.enqueueGlPosting(saved, 'payment_received', amount);
+
+    const lines = await this.lineRepo.findByInvoiceId(id);
+    return this.toInvoiceWithLines(saved, lines);
+  }
+
+  async markAsPaidBySalesOrderId(
+    salesOrderId: string,
+    adminUserId: string,
+    adminUserName?: string,
+  ): Promise<InvoiceWithLines | null> {
+    const inv = await this.invoiceRepo.findOne({ where: { salesOrderId } });
+    if (!inv) return null;
+    if (inv.status === 'paid' || inv.status === 'cancelled') {
+      const lines = await this.lineRepo.findByInvoiceId(inv.id);
+      return this.toInvoiceWithLines(inv, lines);
+    }
+
+    const amount = Number(inv.amountDue ?? inv.amount);
+    inv.status = 'paid';
+    inv.paidAt = new Date();
+    inv.paidAmount = amount;
+    inv.paymentVerifiedAt = new Date();
+    inv.paymentVerifiedBy = adminUserId;
+    inv.paymentVerifiedByName = adminUserName ?? null;
+
+    const saved = await this.invoiceRepo.save(inv);
+
+    const lines = await this.lineRepo.findByInvoiceId(inv.id);
     return this.toInvoiceWithLines(saved, lines);
   }
 
@@ -522,6 +794,27 @@ export class ARInvoiceService implements ARInvoiceServicePort {
       journalEntryId,
       journalEntryNumber,
       journalEntryStatus,
+      sourceType: inv.sourceType ?? undefined,
+      sourceId: inv.sourceId ?? undefined,
+      contractId: inv.contractId ?? undefined,
+      testingScheduleId: inv.testingScheduleId ?? undefined,
+      billingPeriodStart: inv.billingPeriodStart
+        ? (inv.billingPeriodStart.toISOString?.() ??
+          String(inv.billingPeriodStart))
+        : null,
+      billingPeriodEnd: inv.billingPeriodEnd
+        ? (inv.billingPeriodEnd.toISOString?.() ?? String(inv.billingPeriodEnd))
+        : null,
+      totalSamples: Number(inv.totalSamples ?? 0),
+      initialFeeApplied: Number(inv.initialFeeApplied ?? 0),
+      amountDue:
+        inv.amountDue != null ? Number(inv.amountDue) : Number(inv.amount),
+      paymentProofUrl: inv.paymentProofUrl ?? undefined,
+      paymentProofFilename: inv.paymentProofFilename ?? undefined,
+      paymentProofUploadedAt: inv.paymentProofUploadedAt ?? undefined,
+      paymentVerifiedAt: inv.paymentVerifiedAt ?? undefined,
+      paymentVerifiedBy: inv.paymentVerifiedBy ?? undefined,
+      paymentVerifiedByName: inv.paymentVerifiedByName ?? undefined,
       lines: lines.map((l) => ({
         id: l.id,
         description: l.description,
@@ -529,6 +822,8 @@ export class ARInvoiceService implements ARInvoiceServicePort {
         unitPrice: Number(l.unitPrice),
         taxPercent: Number(l.taxPercent),
         amount: Number(l.amount),
+        testResultId: l.testResultId ?? undefined,
+        sampleCode: l.sampleCode ?? undefined,
       })),
     };
   }

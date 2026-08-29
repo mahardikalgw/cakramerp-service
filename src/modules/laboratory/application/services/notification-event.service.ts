@@ -11,7 +11,6 @@ import { Customer } from '../../../customer/domain/entities/customer.entity';
 import { PostApprovalTestingSchedule } from '../../domain/entities/post-approval-testing-schedule.entity';
 import { PostApprovalTestingResult } from '../../domain/entities/post-approval-testing-result.entity';
 import { PostApprovalLabContract } from '../../domain/entities/post-approval-lab-contract.entity';
-import { ContractTestInvoice } from '../../domain/entities/contract-test-invoice.entity';
 
 @Injectable()
 export class NotificationEventService {
@@ -515,7 +514,7 @@ export class NotificationEventService {
    * Failures are logged but never thrown (fire-and-forget friendly).
    */
   async onContractTestInvoiceIssued(
-    invoice: ContractTestInvoice,
+    invoice: any,
     contract: PostApprovalLabContract,
   ): Promise<void> {
     try {

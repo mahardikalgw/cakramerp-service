@@ -1,12 +1,15 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { DataSource } from 'typeorm';
 import type { PostApprovalLabContractRepositoryPort } from '../../domain/repositories/post-approval-lab-contract-repository.port';
 import { POST_APPROVAL_LAB_CONTRACT_REPOSITORY } from '../../domain/repositories/post-approval-lab-contract-repository.port';
-import type { ContractInvoiceRepositoryPort } from '../../domain/repositories/contract-invoice-repository.port';
-import { CONTRACT_INVOICE_REPOSITORY } from '../../domain/repositories/contract-invoice-repository.port';
 import type { TestResultRepositoryPort } from '../../domain/repositories/test-result-repository.port';
 import { TEST_RESULT_REPOSITORY } from '../../domain/repositories/test-result-repository.port';
-import { ContractInvoice } from '../../domain/entities/contract-invoice.entity';
+import { AR_INVOICE_SERVICE } from '../../../finance/application/ports/ar-invoice-service.port';
+import type { ARInvoiceServicePort } from '../../../finance/application/ports/ar-invoice-service.port';
+import { CreateARInvoiceCommand } from '../../../finance/application/commands/create-ar-invoice.command';
+
+const TAX_PERCENT = 11;
 
 @Injectable()
 export class ContractMonthlyBillingJob {
@@ -15,16 +18,17 @@ export class ContractMonthlyBillingJob {
   constructor(
     @Inject(POST_APPROVAL_LAB_CONTRACT_REPOSITORY)
     private readonly contractRepo: PostApprovalLabContractRepositoryPort,
-    @Inject(CONTRACT_INVOICE_REPOSITORY)
-    private readonly invoiceRepo: ContractInvoiceRepositoryPort,
     @Inject(TEST_RESULT_REPOSITORY)
     private readonly testResultRepo: TestResultRepositoryPort,
+    @Inject(AR_INVOICE_SERVICE)
+    private readonly arInvoiceService: ARInvoiceServicePort,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Cron('0 1 25 * *')
   async generateMonthlyInvoices() {
     this.logger.log(
-      '[CRON] Generating monthly invoices for active unlimited contracts...',
+      '[CRON] Generating monthly AR invoices for active unlimited contracts...',
     );
     try {
       const result = await this.contractRepo.findAll({
@@ -47,20 +51,20 @@ export class ContractMonthlyBillingJob {
           const billingEnd = new Date();
           billingEnd.setDate(25);
 
-          // Skip if invoice already exists for this period
-          const existing = await this.invoiceRepo.findByBillingPeriod(
+          // Skip if invoice already exists for this period.
+          const existing = await this.findInvoiceForPeriod(
             contract.id,
             new Date(billingStart),
             billingEnd,
           );
           if (existing) {
             this.logger.log(
-              `[CRON] Invoice already exists for contract ${contract.id}, skipping`,
+              `[CRON] AR invoice already exists for contract ${contract.id}, skipping`,
             );
             continue;
           }
 
-          // Count confirmed testing results in period
+          // Count confirmed testing results in period.
           const results =
             await this.testResultRepo.findCompletedByContractAndPeriod(
               contract.id,
@@ -75,42 +79,47 @@ export class ContractMonthlyBillingJob {
             continue;
           }
 
-          const totalSamples = results.length;
-          let baseAmount = 0;
-          for (const result of results) {
-            baseAmount += Number((result as any).unitPrice ?? 0);
-          }
+          const today = new Date().toISOString().slice(0, 10);
+          const dueDate = new Date(Date.now() + 30 * 86400000)
+            .toISOString()
+            .slice(0, 10);
 
-          const taxPercent = 11;
-          const taxAmount =
-            Math.round(baseAmount * (taxPercent / 100) * 100) / 100;
-          const totalAmount = baseAmount + taxAmount;
+          const command = new CreateARInvoiceCommand(
+            contract.customerId,
+            contract.customerName,
+            today,
+            dueDate,
+            results.map((r: any) => ({
+              description: r.serviceName ?? 'Testing Service',
+              quantity: 1,
+              unitPrice: Number(r.unitPrice ?? 0),
+              taxPercent: TAX_PERCENT,
+              testResultId: r.id,
+              sampleCode: r.sampleCode ?? undefined,
+            })),
+            contract.customerId,
+            undefined, // segment
+            undefined, // projectId
+            undefined, // sendEmail
+            undefined, // paymentTermDays
+            undefined, // paymentTermLabel
+            undefined, // additionalDiscount
+            true, // asDraft
+            'lab_contract',
+            contract.id,
+            contract.id,
+            undefined, // testingScheduleId
+            new Date(billingStart).toISOString().slice(0, 10),
+            billingEnd.toISOString().slice(0, 10),
+            results.length,
+            undefined, // initialFeeApplied
+          );
 
-          // generateNextInvoiceNumber() atomically picks the next free
-          // CI-NNNNNN value under a PostgreSQL advisory lock and includes
-          // soft-deleted rows in the MAX query, so the sequence never
-          // collides with a soft-deleted record's UNIQUE constraint.
-          const invoiceNumber =
-            await this.invoiceRepo.generateNextInvoiceNumber();
-
-          const invoice = new ContractInvoice({
-            invoiceNumber,
-            contractId: contract.id,
-            billingPeriodStart: new Date(billingStart),
-            billingPeriodEnd: billingEnd,
-            totalSamples,
-            baseAmount,
-            taxPercent,
-            taxAmount,
-            totalAmount,
-            status: 'issued',
-          });
-
-          await this.invoiceRepo.save(invoice);
+          const created = await this.arInvoiceService.create(command, true);
           (contract as any).lastBillingDate = billingEnd;
           await this.contractRepo.save(contract);
           this.logger.log(
-            `[CRON] Generated invoice ${invoiceNumber} for contract ${contract.id}`,
+            `[CRON] Generated AR invoice ${created.invoiceNumber} for contract ${contract.id}`,
           );
         } catch (err: any) {
           this.logger.error(
@@ -124,5 +133,20 @@ export class ContractMonthlyBillingJob {
         err?.stack,
       );
     }
+  }
+
+  private async findInvoiceForPeriod(
+    contractId: string,
+    periodStart: Date,
+    periodEnd: Date,
+  ): Promise<any> {
+    const { data } = await this.arInvoiceService.findAll({
+      contractId,
+      billingPeriodStart: periodStart.toISOString().slice(0, 10),
+      billingPeriodEnd: periodEnd.toISOString().slice(0, 10),
+      page: 1,
+      limit: 1,
+    });
+    return data.length > 0 ? data[0] : null;
   }
 }
