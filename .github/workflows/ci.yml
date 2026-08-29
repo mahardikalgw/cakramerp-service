@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 env:
   NODE_VERSION: '22'
@@ -193,22 +194,17 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
+            set -e
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
-            docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest
+            # Fallback: if GHCR_PAT login fails, try GITHUB_TOKEN (push uses GITHUB_TOKEN)
+            if ! docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}; then
+              echo "Retrying with GITHUB_TOKEN..."
+              echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+              docker pull ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }}
+            fi
+            docker tag ${{ env.IMAGE_NAME }}:sha-${{ steps.sha.outputs.short }} ${{ env.IMAGE_NAME }}:latest || true
 
-            echo "▶ Dropping and recreating database..."
-            export $(grep -v '^#' /opt/cakramerp/app.env | xargs)
-            docker run --rm --network host \
-              -e PGPASSWORD="$DB_PASSWORD" \
-              postgres:16-alpine \
-              psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres \
-              -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();" \
-              -c "DROP DATABASE IF EXISTS ${DB_NAME};" \
-              -c "CREATE DATABASE ${DB_NAME};"
-            echo "✓ Database recreated"
-
-            echo "▶ Running database migrations..."
+            echo "▶ Running database migrations (no drop)..."
             docker run --rm \
               --network host \
               --env-file /opt/cakramerp/app.env \
