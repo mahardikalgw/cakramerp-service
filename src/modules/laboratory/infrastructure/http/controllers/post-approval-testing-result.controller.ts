@@ -43,12 +43,14 @@ export class PostApprovalTestingResultController {
   async findAll(
     @Query('status') status?: string,
     @Query('contractId') contractId?: string,
+    @Query('scheduleId') scheduleId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.service.findAll({
       status,
       contractId,
+      scheduleId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
