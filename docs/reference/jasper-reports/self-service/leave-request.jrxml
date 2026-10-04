@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="leave-request"
+              pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40"
+              topMargin="50" bottomMargin="50">
+
+    <style name="Title" isBold="true" fontName="DejaVu Sans" fontSize="18"/>
+    <style name="Subtitle" fontName="DejaVu Sans" fontSize="12"/>
+    <style name="SectionLabel" isBold="true" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="Header" isBold="true" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Body" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Small" fontName="DejaVu Sans" fontSize="8"/>
+    <style name="Note" isItalic="true" fontName="DejaVu Sans" fontSize="7"/>
+
+    <parameter name="ENTITY_ID" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+            SELECT
+                lr.id,
+                lr.start_date,
+                lr.end_date,
+                lr.working_days,
+                lr.reason,
+                lr.status,
+                lr.created_at,
+                lt.name AS leave_type_name,
+                e.full_name AS employee_name,
+                e.employee_number
+            FROM leave_requests lr
+            JOIN leave_types lt ON lt.id = lr.leave_type_id
+            JOIN employees e ON e.id = lr.employee_id
+            WHERE lr.id = $P{ENTITY_ID}::uuid
+        ]]>
+    </queryString>
+
+    <field name="id" class="java.util.UUID"/>
+    <field name="start_date" class="java.time.LocalDate"/>
+    <field name="end_date" class="java.time.LocalDate"/>
+    <field name="working_days" class="java.lang.Integer"/>
+    <field name="reason" class="java.lang.String"/>
+    <field name="status" class="java.lang.String"/>
+    <field name="created_at" class="java.time.LocalDateTime"/>
+    <field name="leave_type_name" class="java.lang.String"/>
+    <field name="employee_name" class="java.lang.String"/>
+    <field name="employee_number" class="java.lang.String"/>
+
+    <title>
+        <band height="80">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="30"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[FORM PENGAJUAN CUTI / LEAVE REQUEST]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="60" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#000000"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <detail>
+        <band height="210">
+            <staticText>
+                <reportElement x="0" y="0" width="150" height="20"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Employee Information]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="25" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Employee Number:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="25" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{employee_number}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="40" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Employee Name:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="40" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{employee_name}]]></textFieldExpression>
+            </textField>
+            <!-- Section divider -->
+            <staticText>
+                <reportElement x="0" y="58" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="70" width="150" height="20"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Leave Details]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="95" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Leave Type:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="95" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{leave_type_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="110" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Start Date:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="110" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{start_date} != null ? $F{start_date}.toString() : ""]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="125" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[End Date:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="125" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{end_date} != null ? $F{end_date}.toString() : ""]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="140" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Working Days:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="140" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{working_days}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="155" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Reason:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="155" width="395" height="30"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{reason}]]></textFieldExpression>
+            </textField>
+            <!-- Section divider -->
+            <staticText>
+                <reportElement x="0" y="188" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="193" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Status:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="193" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{status}.toUpperCase()]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="10" width="515" height="15"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="8" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

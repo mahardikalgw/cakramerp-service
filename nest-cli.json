@@ -3,6 +3,17 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      {
+        "include": "modules/shared/infrastructure/document-generation/reports/assets/**/*",
+        "outDir": "dist"
+      },
+      {
+        "include": "modules/shared/infrastructure/document-generation/infrastructure/pdf/fonts/**/*",
+        "outDir": "dist"
+      }
+    ],
+    "watchAssets": true
   }
 }

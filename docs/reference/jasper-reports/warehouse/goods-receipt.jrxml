@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="goods-receipt"
+              pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40"
+              topMargin="50" bottomMargin="50">
+
+    <style name="Title" isBold="true" fontName="DejaVu Sans" fontSize="18"/>
+    <style name="Subtitle" fontName="DejaVu Sans" fontSize="12"/>
+    <style name="SectionLabel" isBold="true" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="Header" isBold="true" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Body" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Small" fontName="DejaVu Sans" fontSize="8"/>
+    <style name="Note" isItalic="true" fontName="DejaVu Sans" fontSize="7"/>
+
+    <parameter name="ENTITY_ID" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+            SELECT
+                gr.receipt_number,
+                gr.receipt_date,
+                gr.status,
+                gr.notes,
+                po.po_number,
+                s.name AS supplier_name,
+                grl.line_number,
+                grl.item_name,
+                grl.quantity_received,
+                grl.uom,
+                grl.condition_notes
+            FROM goods_receipts gr
+            JOIN purchase_orders po ON po.id = gr.po_id
+            JOIN suppliers s ON s.id = po.supplier_id
+            JOIN goods_receipt_lines grl ON grl.goods_receipt_id = gr.id
+            WHERE gr.id = $P{ENTITY_ID}::uuid
+            ORDER BY grl.line_number
+        ]]>
+    </queryString>
+
+    <field name="receipt_number" class="java.lang.String"/>
+    <field name="receipt_date" class="java.time.LocalDate"/>
+    <field name="status" class="java.lang.String"/>
+    <field name="notes" class="java.lang.String"/>
+    <field name="po_number" class="java.lang.String"/>
+    <field name="supplier_name" class="java.lang.String"/>
+    <field name="line_number" class="java.lang.Integer"/>
+    <field name="item_name" class="java.lang.String"/>
+    <field name="quantity_received" class="java.lang.Integer"/>
+    <field name="uom" class="java.lang.String"/>
+    <field name="condition_notes" class="java.lang.String"/>
+
+    <title>
+        <band height="80">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="30"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[GOODS RECEIPT NOTE]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="35" width="515" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA["GRN #: " + $F{receipt_number}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="60" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#000000"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <pageHeader>
+        <band height="60">
+            <staticText>
+                <reportElement x="0" y="0" width="100" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PO Number:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="100" y="0" width="200" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{po_number}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="15" width="100" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Supplier:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="100" y="15" width="200" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{supplier_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="350" y="0" width="165" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Receipt Date:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="350" y="15" width="165" height="15"/>
+                <textElement>
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{receipt_date} != null ? $F{receipt_date}.toString() : ""]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageHeader>
+
+    <columnHeader>
+        <band height="25">
+            <staticText>
+                <reportElement x="0" y="0" width="30" height="25" mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[#]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="30" y="0" width="180" height="25" mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Item Name]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="210" y="0" width="80" height="25" mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Qty Received]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="290" y="0" width="60" height="25" mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[UOM]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="350" y="0" width="165" height="25" mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Condition Notes]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="25">
+            <textField isStretchWithOverflow="true"   >
+            <reportElement style="Small" x="0" y="0" width="30" height="25"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{line_number}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true"   >
+            <reportElement style="Small" x="30" y="0" width="180" height="25"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{item_name}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true"   >
+            <reportElement style="Small" x="210" y="0" width="80" height="25"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{quantity_received}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true"   >
+            <reportElement style="Small" x="290" y="0" width="60" height="25"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{uom}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true"   >
+            <reportElement style="Small" x="350" y="0" width="165" height="25"/>
+                <box>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </box>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{condition_notes}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="10" width="515" height="15"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="8" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

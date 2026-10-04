@@ -2,66 +2,50 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { envConfig } from '../../../../config/env.config';
-import { DocumentGenerationRestClient } from './document-generation-rest-client.service';
-import { MinioClientService } from './minio-client.service';
 import { GeneratedDocumentTypeOrmEntity } from './entities/generated-document.entity';
+import {
+  DocumentGenerationService,
+  GenerateDocumentInput,
+} from './application/document-generation.service';
 
+/**
+ * Backwards-compatible facade used by every feature module. The public method
+ * signatures are unchanged from the previous REST-client implementation; only
+ * the transport (now in-process rendering, optionally queued) differs.
+ */
 @Injectable()
 export class DocumentGenerationHelper {
   private readonly logger = new Logger(DocumentGenerationHelper.name);
 
   constructor(
-    private readonly restClient: DocumentGenerationRestClient,
-    private readonly minioClient: MinioClientService,
+    private readonly service: DocumentGenerationService,
     @InjectRepository(GeneratedDocumentTypeOrmEntity)
     private readonly docRepo: Repository<GeneratedDocumentTypeOrmEntity>,
   ) {}
 
   async generateDocument(request: {
     documentType: string;
-    entityId?: string;
+    entityId: string;
     requestedBy?: string;
     outputFormat?: string;
     parameters?: Record<string, any>;
     lines?: Record<string, any>[];
+    watermark?: string;
   }): Promise<GeneratedDocumentTypeOrmEntity> {
-    const result = await this.restClient.generateSync(request);
-
-    // requested_by must be a valid UUID (NOT NULL constraint)
-    const uuidPattern =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const requestedBy = uuidPattern.test(request.requestedBy ?? '')
-      ? request.requestedBy
-      : '00000000-0000-0000-0000-000000000000';
-
-    const partial: Partial<GeneratedDocumentTypeOrmEntity> = {
+    return this.service.generateSync({
       documentType: request.documentType,
       entityId: request.entityId,
-      minioPath: result.minioPath || '',
-      minioBucket: result.minioBucket || '',
-      fileName: result.fileName || '',
-      fileSize: result.fileSize || 0,
-      contentType: result.contentType || 'application/pdf',
-      status: 'completed',
-      outputFormat: request.outputFormat || 'pdf',
-      parameters: request.parameters || {},
-      requestedBy: requestedBy as any,
-      requestedAt: new Date(),
-      completedAt: new Date(),
-    };
-    const entity = this.docRepo.create(partial as any);
-    const saved = (await this.docRepo.save(
-      entity,
-    )) as unknown as GeneratedDocumentTypeOrmEntity;
-    this.logger.log(
-      `Document record saved: ${saved.id} (${request.documentType})`,
-    );
-    return saved;
+      requestedBy: request.requestedBy,
+      outputFormat: request.outputFormat,
+      parameters: request.parameters,
+      lines: request.lines,
+      watermark: request.watermark,
+    });
   }
 
   /**
-   * Backward-compatible wrapper that converts old-style async request
-   * to new sync REST call.
+   * Fire-and-forget generation. Creates a `pending` record and enqueues the
+   * render job; failures are persisted as `failed` rows (FR-006 / Q4=A).
    */
   async generateAsync(request: {
     requestId?: string;
@@ -71,6 +55,7 @@ export class DocumentGenerationHelper {
     requestedBy?: string;
     outputFormat?: string;
     parameters?: Record<string, any>;
+    lines?: Record<string, any>[];
     watermark?: string;
   }): Promise<GeneratedDocumentTypeOrmEntity> {
     const params: Record<string, any> = {
@@ -82,45 +67,22 @@ export class DocumentGenerationHelper {
       params.entityId = request.entityId;
     }
 
-    let result: Awaited<ReturnType<typeof this.restClient.generateSync>>;
-    try {
-      result = await this.restClient.generateSync({
-        documentType: request.documentType,
-        entityId: request.entityId,
-        outputFormat: request.outputFormat || 'pdf',
-        watermark: request.watermark,
-        parameters: params,
-      });
-    } catch (err: any) {
-      this.logger.warn(
-        `Document generation skipped (service unavailable): ${err?.message ?? err}`,
-      );
-      return {} as GeneratedDocumentTypeOrmEntity;
-    }
-
-    if (result.status === 'failed') {
-      this.logger.warn(
-        `Document generation failed (non-fatal): ${result.errorMessage}`,
-      );
-      return {} as GeneratedDocumentTypeOrmEntity;
-    }
-
-    const partial: Partial<GeneratedDocumentTypeOrmEntity> = {
+    const input: GenerateDocumentInput = {
       documentType: request.documentType,
-      minioPath: result.minioPath || '',
-      minioBucket: result.minioBucket || '',
-      fileName: result.fileName || '',
-      fileSize: result.fileSize || 0,
-      contentType: result.contentType || 'application/pdf',
-      status: 'completed',
+      entityId: request.entityId ?? '',
+      requestedBy: request.requestedBy,
       outputFormat: request.outputFormat || 'pdf',
       parameters: params,
-      completedAt: new Date(),
+      lines: request.lines ?? [],
+      watermark: request.watermark,
     };
-    const entity = this.docRepo.create(partial as any);
-    return this.docRepo
-      .save(entity)
-      .then((r) => r as unknown as GeneratedDocumentTypeOrmEntity);
+
+    try {
+      return await this.service.generateQueued(input);
+    } catch (err: any) {
+      this.logger.warn(`Document generation skipped: ${err?.message ?? err}`);
+      return {} as GeneratedDocumentTypeOrmEntity;
+    }
   }
 
   async getDocument(

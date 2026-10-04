@@ -25,6 +25,24 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Document & report generation (in-house)
+
+All business documents (PDF) and laboratory spreadsheet reports (XLSX) are
+generated **in-process**; the former external `cakramerp-document` and
+spreadsheet-report services are retired.
+
+- Module: `src/modules/shared/infrastructure/document-generation/`
+- PDF engine: `pdfmake`; XLSX engine: `exceljs`; objects stored in MinIO and
+  tracked in the `generated_documents` table.
+- Renderer strategies: payload-driven (laboratory contracts/POs/invoices/
+  certificates) and SQL-backed (purchasing/sales/finance/HR/self-service).
+- Fire-and-forget generation runs on the `document-generation` BullMQ queue;
+  synchronous callers (laboratory) render inline and receive the record id.
+- Legacy JRXML templates are kept as a read-only parity reference under
+  `docs/reference/jasper-reports/`.
+
+No `DOCUMENT_SERVICE_URL` / `EXCEL_REPORT_SERVICE_URL` configuration is needed.
+
 ## Project setup
 
 ```bash

@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="payslip"
+              pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40"
+              topMargin="50" bottomMargin="50">
+
+    <style name="Title" isBold="true" fontName="DejaVu Sans" fontSize="18"/>
+    <style name="Subtitle" fontName="DejaVu Sans" fontSize="12"/>
+    <style name="SectionLabel" isBold="true" fontName="DejaVu Sans" fontSize="10"/>
+    <style name="Header" isBold="true" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Body" fontName="DejaVu Sans" fontSize="9"/>
+    <style name="Small" fontName="DejaVu Sans" fontSize="8"/>
+    <style name="Note" isItalic="true" fontName="DejaVu Sans" fontSize="7"/>
+
+    <parameter name="ENTITY_ID" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+            SELECT
+                e.employee_number,
+                e.full_name AS employee_name,
+                d.name AS department_name,
+                pr.payroll_period,
+                pd.basic_salary,
+                pd.allowances,
+                pd.overtime_pay,
+                pd.gross_pay,
+                pd.pph21_deduction,
+                pd.bpjs_employee_deduction,
+                pd.other_deductions,
+                pd.total_deductions,
+                pd.net_pay
+            FROM payroll_details pd
+            JOIN payroll_runs pr ON pr.id = pd.payroll_run_id
+            JOIN employees e ON e.id = pd.employee_id
+            LEFT JOIN departments d ON d.id = e.department_id
+            WHERE pd.id = $P{ENTITY_ID}::uuid
+        ]]>
+    </queryString>
+
+    <field name="employee_number" class="java.lang.String"/>
+    <field name="employee_name" class="java.lang.String"/>
+    <field name="department_name" class="java.lang.String"/>
+    <field name="payroll_period" class="java.lang.String"/>
+    <field name="basic_salary" class="java.math.BigDecimal"/>
+    <field name="allowances" class="java.math.BigDecimal"/>
+    <field name="overtime_pay" class="java.math.BigDecimal"/>
+    <field name="gross_pay" class="java.math.BigDecimal"/>
+    <field name="pph21_deduction" class="java.math.BigDecimal"/>
+    <field name="bpjs_employee_deduction" class="java.math.BigDecimal"/>
+    <field name="other_deductions" class="java.math.BigDecimal"/>
+    <field name="total_deductions" class="java.math.BigDecimal"/>
+    <field name="net_pay" class="java.math.BigDecimal"/>
+
+    <title>
+        <band height="80">
+            <staticText>
+                <reportElement x="0" y="0" width="515" height="30"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[SLIP GAJI / PAYSLIP]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="35" width="515" height="20"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Periode: " + $F{payroll_period}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="60" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="1.0" lineColor="#000000"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <detail>
+        <band height="247">
+            <!-- Employee Information -->
+            <staticText>
+                <reportElement x="0" y="0" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[No. Karyawan:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="0" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{employee_number}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="15" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Nama:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="15" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{employee_name}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="30" width="120" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Departemen:]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="120" y="30" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{department_name}]]></textFieldExpression>
+            </textField>
+            <!-- Employee section divider -->
+            <staticText>
+                <reportElement x="0" y="50" width="515" height="1"/>
+                <box>
+                    <bottomPen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <!-- Earnings Section -->
+            <staticText>
+                <reportElement x="0" y="56" width="515" height="20" mode="Opaque" backcolor="#4472C4" forecolor="#FFFFFF"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PENDAPATAN / EARNINGS]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="80" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Gaji Pokok / Basic Salary]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="80" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{basic_salary}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="95" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Tunjangan / Allowances]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="95" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{allowances}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="110" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Lembur / Overtime]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="110" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{overtime_pay}]]></textFieldExpression>
+            </textField>
+            <!-- Subtotal divider -->
+            <staticText>
+                <reportElement x="0" y="128" width="515" height="1"/>
+                <box>
+                    <topPen lineWidth="0.5" lineColor="#999999"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <!-- Gross Pay -->
+            <staticText>
+                <reportElement x="0" y="132" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Total Pendapatan / Gross Pay]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="132" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{gross_pay}]]></textFieldExpression>
+            </textField>
+            <!-- Deductions Section -->
+            <staticText>
+                <reportElement x="0" y="152" width="515" height="20" mode="Opaque" backcolor="#C00000" forecolor="#FFFFFF"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[POTONGAN / DEDUCTIONS]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="175" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[PPh 21]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="175" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{pph21_deduction}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="190" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[BPJS Karyawan]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="190" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{bpjs_employee_deduction}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="205" width="250" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <text><![CDATA[Potongan Lainnya / Other]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="205" width="165" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{other_deductions}]]></textFieldExpression>
+            </textField>
+            <!-- Net Pay (formerly in columnFooter) -->
+            <staticText>
+                <reportElement x="0" y="222" width="515" height="1"/>
+                <box>
+                    <topPen lineWidth="2.0" lineColor="#000000"/>
+                </box>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="227" width="250" height="20"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[GAJI BERSIH / NET PAY]]></text>
+            </staticText>
+            <textField isStretchWithOverflow="true" pattern="Rp #,##0">
+                <reportElement x="350" y="227" width="165" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{net_pay}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="10" width="515" height="15"/>
+                <textElement textAlignment="Center">
+                    <font fontName="DejaVu Sans" size="8" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+</jasperReport>

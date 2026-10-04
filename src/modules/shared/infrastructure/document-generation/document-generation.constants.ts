@@ -52,6 +52,7 @@ export const DOCUMENT_TYPES = {
   // Laboratory
   TESTING_REQUEST: 'testing_request',
   TEST_RESULT_CERTIFICATE: 'test_result_certificate',
+  TESTING_RESULT_CERTIFICATE: 'testing_result_certificate',
   LAB_CONTRACT: 'lab_contract',
   LAB_PURCHASE_ORDER: 'lab_purchase_order',
   LAB_INVOICE: 'lab_invoice',
@@ -61,6 +62,7 @@ export const DOCUMENT_TYPES = {
   LAB_FINAL_REPORT: 'lab_final_report',
   LAB_POST_APPROVAL_CONTRACT: 'lab_post_approval_contract',
   LAB_TAX_INVOICE: 'lab_tax_invoice',
+  CONTRACT_MONTHLY_INVOICE: 'contract_monthly_invoice',
   TESTING_RESULT_CERTIFICATE_POST: 'testing_result_certificate_post',
 
   // Asset

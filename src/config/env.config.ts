@@ -40,7 +40,4 @@ export const envConfig = {
   // In production this should point to the domain serving the cakramerp-service API,
   // e.g. https://api.labmuliajo.com/api/v1
   apiUrl: process.env.API_URL || 'http://localhost:3000/api/v1',
-  documentService: {
-    url: process.env.DOCUMENT_SERVICE_URL || 'http://localhost:8080',
-  },
 };
