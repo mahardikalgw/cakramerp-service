@@ -29,6 +29,13 @@ export const envConfig = {
     password: process.env.REDIS_PASSWORD || undefined,
     ttl: parseInt(process.env.CACHE_TTL || '300', 10),
   },
+  // Object storage (RustFS, S3-compatible) for generated documents,
+  // certificates, payment proofs, and archives. The S3 API port is 9000.
+  // NOTE: the credential defaults below are the retired product's publicly
+  // known demo pair and MUST NOT be relied on in production — they exist only
+  // so local development starts. Feature 011 (specs/011-rustfs-object-storage)
+  // removes them and renames these variables to the canonical object-storage
+  // vocabulary, at which point absent configuration fails fast instead.
   minio: {
     endpoint: process.env.MINIO_ENDPOINT || 'localhost',
     port: parseInt(process.env.MINIO_PORT || '9000', 10),
