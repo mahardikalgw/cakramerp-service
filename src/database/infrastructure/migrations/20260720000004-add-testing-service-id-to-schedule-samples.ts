@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTestingServiceIdToScheduleSamples20260720000004
-  implements MigrationInterface
-{
+export class AddTestingServiceIdToScheduleSamples20260720000004 implements MigrationInterface {
   name = 'AddTestingServiceIdToScheduleSamples20260720000004';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

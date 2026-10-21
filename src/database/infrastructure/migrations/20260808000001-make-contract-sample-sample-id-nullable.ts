@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MakeContractSampleSampleIdNullable20260808000001
-  implements MigrationInterface
-{
+export class MakeContractSampleSampleIdNullable20260808000001 implements MigrationInterface {
   name = 'MakeContractSampleSampleIdNullable20260808000001';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

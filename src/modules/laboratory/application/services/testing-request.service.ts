@@ -640,8 +640,12 @@ export class TestingRequestService {
             lines: po.lines.map((l) => ({
               description: l.serviceName || 'Testing Service',
               quantity: String(l.quantity ?? 1),
-              unitPrice: l.unitPrice != null ? Number(l.unitPrice).toLocaleString('id-ID') : '0',
-              total: l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
+              unitPrice:
+                l.unitPrice != null
+                  ? Number(l.unitPrice).toLocaleString('id-ID')
+                  : '0',
+              total:
+                l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
             })),
           });
           existing.invoiceDocumentUrl = invDoc.id;
@@ -1694,7 +1698,9 @@ export class TestingRequestService {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException('Testing request not found');
     if (existing.status !== 'approved') {
-      throw new BadRequestException('Only approved requests can regenerate documents');
+      throw new BadRequestException(
+        'Only approved requests can regenerate documents',
+      );
     }
     const taxPercent = existing.taxPercent ?? 0;
 
@@ -1742,7 +1748,8 @@ export class TestingRequestService {
 
       // Invoice doc
       const invoiceSubtotal = po.lines.reduce((s, l) => s + (l.total ?? 0), 0);
-      const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+      const invoiceTaxAmount =
+        Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
       const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
       const invDoc = await this.docHelper.generateDocument({
         documentType: DOCUMENT_TYPES.LAB_INVOICE,
@@ -1754,7 +1761,9 @@ export class TestingRequestService {
           customerName: customer?.name || po.customerName || '',
           customerAddress: customer?.address || '',
           invoiceDate: new Date().toISOString().split('T')[0],
-          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 30 * 86400000)
+            .toISOString()
+            .split('T')[0],
           subtotal: invoiceSubtotal.toLocaleString('id-ID'),
           taxPercent: String(taxPercent),
           taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
@@ -1765,8 +1774,12 @@ export class TestingRequestService {
         lines: po.lines.map((l) => ({
           description: l.serviceName || 'Testing Service',
           quantity: String(l.quantity ?? 1),
-          unitPrice: l.unitPrice != null ? Number(l.unitPrice).toLocaleString('id-ID') : '0',
-          total: l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
+          unitPrice:
+            l.unitPrice != null
+              ? Number(l.unitPrice).toLocaleString('id-ID')
+              : '0',
+          total:
+            l.total != null ? Number(l.total).toLocaleString('id-ID') : '0',
         })),
       });
       existing.invoiceDocumentUrl = invDoc.id;
@@ -1787,9 +1800,15 @@ export class TestingRequestService {
       }
       const contract = await this.contractRepo.findById(existing.labContractId);
       const customer = contract
-        ? await this.customerRepo.findById(contract.customerId).catch(() => null)
+        ? await this.customerRepo
+            .findById(contract.customerId)
+            .catch(() => null)
         : null;
-      const customerName = customer?.name || contract?.customerName || existing.customerName || '-';
+      const customerName =
+        customer?.name ||
+        contract?.customerName ||
+        existing.customerName ||
+        '-';
       const invoiceLines = await Promise.all(
         (existing.lines || []).map((line) => {
           const unitPrice = Number(line.unitPrice ?? 0);
@@ -1802,8 +1821,12 @@ export class TestingRequestService {
           };
         }),
       );
-      const invoiceSubtotal = invoiceLines.reduce((s, l) => s + (parseFloat(l.total) || 0), 0);
-      const invoiceTaxAmount = Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
+      const invoiceSubtotal = invoiceLines.reduce(
+        (s, l) => s + (parseFloat(l.total) || 0),
+        0,
+      );
+      const invoiceTaxAmount =
+        Math.round(invoiceSubtotal * (taxPercent / 100) * 100) / 100;
       const invoiceTotal = invoiceSubtotal + invoiceTaxAmount;
       const invDoc = await this.docHelper.generateDocument({
         documentType: DOCUMENT_TYPES.LAB_INVOICE,
@@ -1815,7 +1838,9 @@ export class TestingRequestService {
           customerName,
           customerAddress: customer?.address || existing.projectLocation || '-',
           invoiceDate: new Date().toISOString().split('T')[0],
-          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          dueDate: new Date(Date.now() + 30 * 86400000)
+            .toISOString()
+            .split('T')[0],
           subtotal: invoiceSubtotal.toLocaleString('id-ID'),
           taxPercent: String(taxPercent),
           taxAmount: invoiceTaxAmount.toLocaleString('id-ID'),
@@ -1823,7 +1848,17 @@ export class TestingRequestService {
           status: 'issued',
           authorizedByName: userName || 'Lab Authorized',
         },
-        lines: invoiceLines.length > 0 ? invoiceLines : [{ description: `Contract Testing (${existing.projectName || '-'})`, quantity: '1', unitPrice: '0', total: '0' }],
+        lines:
+          invoiceLines.length > 0
+            ? invoiceLines
+            : [
+                {
+                  description: `Contract Testing (${existing.projectName || '-'})`,
+                  quantity: '1',
+                  unitPrice: '0',
+                  total: '0',
+                },
+              ],
       });
       existing.invoiceDocumentUrl = invDoc.id;
       await this.repository.save(existing);

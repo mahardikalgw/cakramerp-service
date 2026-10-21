@@ -11,6 +11,8 @@ import type { LabCertificateRepositoryPort } from '../../domain/repositories/lab
 import { LAB_CERTIFICATE_REPOSITORY } from '../../domain/repositories/lab-certificate-repository.port';
 import type { TestingRequestRepositoryPort } from '../../domain/repositories/testing-request-repository.port';
 import { TESTING_REQUEST_REPOSITORY } from '../../domain/repositories/testing-request-repository.port';
+import type { TestResultRepositoryPort } from '../../domain/repositories/test-result-repository.port';
+import { TEST_RESULT_REPOSITORY } from '../../domain/repositories/test-result-repository.port';
 import { DocumentGenerationHelper } from '../../../shared/infrastructure/document-generation/document-generation.helper';
 import {
   DOCUMENT_TYPES,
@@ -25,6 +27,8 @@ export class LabCertificateService {
     private readonly certificateRepo: LabCertificateRepositoryPort,
     @Inject(TESTING_REQUEST_REPOSITORY)
     private readonly testingRequestRepo: TestingRequestRepositoryPort,
+    @Inject(TEST_RESULT_REPOSITORY)
+    private readonly testResultRepo: TestResultRepositoryPort,
     private readonly docHelper: DocumentGenerationHelper,
     private readonly activityLog: LabActivityLogService,
   ) {}
@@ -109,6 +113,20 @@ export class LabCertificateService {
 
     const saved = await this.certificateRepo.save(certificate);
 
+    // Populate the certificate with the request's test-result parameters so
+    // the rendered PDF contains the measured results (FR-011 parity).
+    const results = await this.testResultRepo.findByTestingRequestId(
+      request.id,
+    );
+    const lines = results.map((r) => ({
+      parameter: r.parameter,
+      name: r.parameter,
+      value: r.resultValue,
+      result: r.resultValue,
+      unit: r.unit ?? '-',
+    }));
+    const first = results[0];
+
     const docRequest = await this.docHelper.generateAsync({
       requestId: uuidv4(),
       documentType: DOCUMENT_TYPES.TEST_RESULT_CERTIFICATE,
@@ -121,8 +139,22 @@ export class LabCertificateService {
         testingRequestId: request.id,
         testingRequestNumber: request.requestNumber,
         customerId: request.customerId,
+        customerName: (request as any).customerName ?? '-',
+        projectName: (request as any).projectName ?? '-',
+        sampleCode: first?.sampleCode ?? '-',
+        resultNumber: first?.resultNumber ?? '',
+        testingServiceName: first?.serviceName ?? '-',
+        submittedByName: (request as any).submittedByName ?? '-',
+        certificateDate: new Date().toISOString().split('T')[0],
+        createdDate: first?.createdAt
+          ? new Date(first.createdAt).toISOString().split('T')[0]
+          : undefined,
+        testingDate: first?.testedAt
+          ? new Date(first.testedAt).toISOString().split('T')[0]
+          : undefined,
         qrHash,
       },
+      lines,
     });
 
     void this.activityLog.log({

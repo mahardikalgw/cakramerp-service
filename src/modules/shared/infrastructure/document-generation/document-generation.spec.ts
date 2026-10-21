@@ -117,4 +117,92 @@ describe('Document generation (in-house)', () => {
     expect(formatCurrencyId(1234.5)).toBe('1.234,50');
     expect(formatDateId('2026-10-04')).toBe('4 Oktober 2026');
   });
+
+  /**
+   * SC-005 parity guard: fields the legacy JRXML templates rendered MUST reach
+   * the new document definition. These regressions were found during the
+   * side-by-side parity review (T075) and must not silently return.
+   */
+  it('keeps legacy lab-contract and certificate fields in the rendered model', () => {
+    const contract = JSON.stringify(
+      TEMPLATES[DOCUMENT_TYPES.LAB_CONTRACT]({
+        parameters: {
+          contractNumber: 'CT-1',
+          customerName: 'PT Uji',
+          customerAddress: 'Jl. Contoh 1',
+          projectName: 'Proyek A',
+          totalQuota: '10',
+          usedQuota: '0',
+          remainingQuota: '10',
+          baseAmount: '1.000,00',
+          taxPercent: '11%',
+          taxAmount: '110,00',
+          totalAmount: '1.110,00',
+          scopeOfTesting: 'Lingkup lengkap',
+          isCash: 'false',
+          paymentTerms: 'Bulanan',
+          downPaymentAmount: '500,00',
+          dpDueDate: '2026-11-01',
+          labSignatureName: 'Lab Sig',
+          customerSignatureName: 'Cust Sig',
+        },
+        lines: [
+          {
+            serviceName: 'Uji',
+            sampleCode: 'S-1',
+            sampleQuantity: '2',
+            unitPrice: '500,00',
+            totalPrice: '1.000,00',
+          },
+        ],
+      }),
+    );
+    for (const v of [
+      'Lingkup lengkap',
+      'Bulanan',
+      '500,00',
+      'Lab Sig',
+      'Cust Sig',
+      '1.000,00',
+    ]) {
+      expect(contract).toContain(v);
+    }
+
+    const cert = JSON.stringify(
+      TEMPLATES[DOCUMENT_TYPES.TEST_RESULT_CERTIFICATE]({
+        parameters: {
+          certificateNumber: 'CERT-1',
+          sampleCode: 'S-9',
+          resultNumber: '7',
+          sampleUnit: '3',
+          customerName: 'PT Uji',
+          submittedByName: 'Penerima',
+          testingDate: '2026-10-03',
+          createdDate: '2026-10-01',
+          berat: '1200',
+          luas: '10',
+          retakan: 'tidak ada',
+          mutu: 'K-300',
+          produk: 'Beton',
+          resultNotes: 'Lulus',
+        },
+        lines: [
+          { parameter: 'Kuat Tekan', value: '30', unit: 'MPa', method: 'SNI' },
+        ],
+      }),
+    );
+    for (const v of [
+      'Penerima',
+      '3 Oktober 2026',
+      '1 Oktober 2026',
+      '1200',
+      'K-300',
+      'Beton',
+      'Lulus',
+      'Kuat Tekan',
+      'MPa',
+    ]) {
+      expect(cert).toContain(v);
+    }
+  });
 });

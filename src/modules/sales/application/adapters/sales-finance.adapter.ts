@@ -199,9 +199,7 @@ export class SalesFinanceAdapter {
     return { glPostingQueueId: entry.id };
   }
 
-  async recordSOPaidGl(
-    soId: string,
-  ): Promise<{ glPostingQueueId: string }> {
+  async recordSOPaidGl(soId: string): Promise<{ glPostingQueueId: string }> {
     const so: any[] = await this.dataSource.query(
       `SELECT id, so_number, customer_id, customer_name, grand_total
        FROM sales_orders WHERE id = $1 LIMIT 1`,

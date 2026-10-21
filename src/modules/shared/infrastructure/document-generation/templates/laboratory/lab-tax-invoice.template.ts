@@ -13,6 +13,9 @@ export const labTaxInvoiceTemplate = ({ parameters: p, lines }: any) =>
       ['Customer', safeText(p.customerName)],
       ['Alamat', safeText(p.customerAddress)],
       ['NPWP', safeText(p.customerNpwp)],
+      ['Penjual', safeText(p.supplierName)],
+      ['NPWP Penjual', safeText(p.supplierNpwp)],
+      ['Alamat Penjual', safeText(p.supplierAddress)],
     ],
     columns: [
       { header: 'Deskripsi', width: '*' },
@@ -24,10 +27,10 @@ export const labTaxInvoiceTemplate = ({ parameters: p, lines }: any) =>
       cell(l.description),
       cell(l.quantity, '0'),
       safeText(l.unitPrice, '0'),
-      safeText(l.total, '0'),
+      safeText(l.total ?? l.totalPrice, '0'),
     ]),
     totals: [
-      ['DPP', safeText(p.subtotal, '0')],
+      ['DPP', safeText(p.baseAmount ?? p.subtotal, '0')],
       [`PPN ${safeText(p.taxPercent, '0')}%`, safeText(p.taxAmount, '0')],
       ['Total', safeText(p.totalAmount, '0')],
     ],

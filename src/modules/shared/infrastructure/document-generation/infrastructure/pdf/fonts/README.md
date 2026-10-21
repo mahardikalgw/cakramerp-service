@@ -1,27 +1,31 @@
 # Document fonts
 
-`pdfmake` needs real TrueType font files at runtime. This directory is the
-provisioning point for the document font.
+`pdfmake` needs real TrueType font files at runtime. This directory holds the
+bundled document font so rendering is self-contained in every environment.
 
-## Current behaviour
+## Bundled font
 
-The PDF adapter resolves fonts in this order:
+The four DejaVu Sans faces are committed here and copied into `dist/` by
+`nest-cli.json` at build time (`assets` entry for this directory):
 
-1. **DejaVu Sans** – if all of these files exist here:
-   - `DejaVuSans.ttf` (normal)
-   - `DejaVuSans-Bold.ttf` (bold)
-   - `DejaVuSans-Oblique.ttf` (italics)
-   - `DejaVuSans-BoldOblique.ttf` (bold italics)
-2. **Roboto** – the font bundled with the installed `pdfmake` package
-   (`node_modules/pdfmake/fonts/Roboto/`). This is the default fallback so the
-   service renders out of the box.
+- `DejaVuSans.ttf` (normal)
+- `DejaVuSans-Bold.ttf` (bold)
+- `DejaVuSans-Oblique.ttf` (italics)
+- `DejaVuSans-BoldOblique.ttf` (bold italics)
 
-The JRXML templates were standardised on DejaVu Sans, but the confirmed parity
-level is "substantially equivalent layout/branding", so Roboto is acceptable.
-To match the legacy look exactly, drop the four DejaVu Sans TTFs above into this
-directory and restart the service.
+`PdfmakeAdapter` resolves them from this directory and logs
+`PDF font provider initialized with "DejaVuSans"`.
 
-## Container note
+DejaVu Sans matches the font the legacy JRXML templates were standardised on, so
+in-house PDFs keep the same visual shape as the retired JasperReports output.
 
-The Docker image does not install DejaVu by default. If exact parity is needed
-in production, copy the TTFs into this directory at build time or mount them.
+## Fallback
+
+If any of the four files is missing, the adapter falls back to the Roboto font
+bundled with the installed `pdfmake` package so the service still renders. This
+fallback is a safety net only — production images are expected to ship DejaVu.
+
+## Licence
+
+DejaVu fonts are distributed under the Bitstream Vera / DejaVu licence; see
+`LICENSE.txt` in this directory.

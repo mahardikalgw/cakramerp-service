@@ -11,7 +11,8 @@ import { MinioClientService } from '../../src/modules/shared/infrastructure/docu
  *   RUN_DB_TESTS=1 pnpm exec jest --config ./test/jest-e2e.json \
  *     test/integration/document-generation.e2e-spec.ts
  */
-const describeLive = process.env.RUN_DB_TESTS === '1' ? describe : describe.skip;
+const describeLive =
+  process.env.RUN_DB_TESTS === '1' ? describe : describe.skip;
 
 async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -112,7 +113,9 @@ describeLive('document generation — DB + MinIO round trip', () => {
 
     for (const doc of [first, second]) {
       const objectName = doc.minioPath.replace(`${doc.minioBucket}/`, '');
-      await minio.deleteFile(doc.minioBucket, objectName).catch(() => undefined);
+      await minio
+        .deleteFile(doc.minioBucket, objectName)
+        .catch(() => undefined);
     }
     await dataSource.query(
       'DELETE FROM generated_documents WHERE document_type = $1 AND entity_id = $2',

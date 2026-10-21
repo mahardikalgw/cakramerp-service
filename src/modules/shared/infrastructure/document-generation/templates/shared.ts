@@ -35,6 +35,9 @@ export function tableMaster(opts: {
   columns: TableColumn[];
   rows: (string | number)[][];
   totals?: [string, string][];
+  /** Extra labelled paragraph blocks rendered after the totals (e.g. DP, terms). */
+  sections?: { heading?: string; lines: string[] }[];
+  signatures?: [string, string][];
   note?: string;
   footerNote?: string;
 }): TDocumentDefinitions {
@@ -105,6 +108,39 @@ export function tableMaster(opts: {
         ]),
       },
       layout: 'noBorders',
+    });
+  }
+
+  if (opts.sections?.length) {
+    for (const section of opts.sections) {
+      if (section.heading) {
+        content.push({
+          text: section.heading,
+          style: 'SectionLabel',
+          margin: [0, 12, 0, 0],
+        });
+      }
+      for (const line of section.lines) {
+        content.push({ text: line, style: 'Body', margin: [0, 2, 0, 0] });
+      }
+    }
+  }
+
+  if (opts.signatures?.length) {
+    content.push({
+      margin: [0, 30, 0, 0],
+      columns: opts.signatures.map(([label, value]) => ({
+        width: '*',
+        stack: [
+          { text: label, style: 'Body', alignment: 'center' },
+          {
+            text: value,
+            style: 'SectionLabel',
+            alignment: 'center',
+            margin: [0, 40, 0, 0],
+          },
+        ],
+      })),
     });
   }
 

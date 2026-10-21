@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateTestingParameters20260720000001
-  implements MigrationInterface
-{
+export class CreateTestingParameters20260720000001 implements MigrationInterface {
   name = 'CreateTestingParameters20260720000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SeedRolesWithPermissions20260718000001
-  implements MigrationInterface
-{
+export class SeedRolesWithPermissions20260718000001 implements MigrationInterface {
   name = 'SeedRolesWithPermissions20260718000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -10,7 +8,8 @@ export class SeedRolesWithPermissions20260718000001
     const roles = [
       {
         name: 'laboran',
-        description: 'Laboratory technician who performs testing and enters results',
+        description:
+          'Laboratory technician who performs testing and enters results',
       },
       {
         name: 'staff',

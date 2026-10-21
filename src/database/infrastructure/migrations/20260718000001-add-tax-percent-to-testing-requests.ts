@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTaxPercentToTestingRequests20260718000001
-  implements MigrationInterface
-{
+export class AddTaxPercentToTestingRequests20260718000001 implements MigrationInterface {
   name = 'AddTaxPercentToTestingRequests20260718000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

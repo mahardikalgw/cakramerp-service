@@ -12,6 +12,7 @@ export const labDraftReportTemplate = ({ parameters: p, lines }: any) =>
       ['Proyek', safeText(p.projectName)],
       ['Lokasi', safeText(p.projectLocation)],
       ['Customer', safeText(p.customerName)],
+      ['Alamat', safeText(p.customerAddress)],
       ['Telepon', safeText(p.customerPhone)],
       ['Email', safeText(p.customerEmail)],
       ['Tanggal Jadwal', formatDateId(p.scheduleDate)],

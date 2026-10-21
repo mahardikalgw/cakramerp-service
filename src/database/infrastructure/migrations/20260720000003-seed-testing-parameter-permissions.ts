@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SeedTestingParameterPermissions20260720000003
-  implements MigrationInterface
-{
+export class SeedTestingParameterPermissions20260720000003 implements MigrationInterface {
   name = 'SeedTestingParameterPermissions20260720000003';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

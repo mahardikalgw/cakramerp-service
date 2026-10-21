@@ -15,9 +15,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * This migration re-grants the missing testing-request permissions to
  * the customer role and ensures the permission row exists.
  */
-export class FixCustomerTestingRequestUploadPermissions20260807000001
-  implements MigrationInterface
-{
+export class FixCustomerTestingRequestUploadPermissions20260807000001 implements MigrationInterface {
   name = 'FixCustomerTestingRequestUploadPermissions20260807000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -26,7 +24,11 @@ export class FixCustomerTestingRequestUploadPermissions20260807000001
       ['testing-requests:update', 'testing-requests', 'update'],
       ['testing-requests:submit', 'testing-requests', 'submit'],
       ['testing-requests:cancel', 'testing-requests', 'cancel'],
-      ['testing-requests:upload-document', 'testing-requests', 'upload-document'],
+      [
+        'testing-requests:upload-document',
+        'testing-requests',
+        'upload-document',
+      ],
     ];
 
     for (const [name, resource, action] of missingPermissions) {
